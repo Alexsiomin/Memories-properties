@@ -35,7 +35,7 @@ export async function signInWithGoogle(nextPath = '/account', extraParams?: Reco
   storeAuthNext(nextPath);
 
   return lovable.auth.signInWithOAuth('google', {
-    redirect_uri: window.location.origin,
+    redirect_uri: `${window.location.origin}/auth/callback`,
     extraParams,
   });
 }
