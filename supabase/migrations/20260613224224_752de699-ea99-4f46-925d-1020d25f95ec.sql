@@ -1,0 +1,1 @@
+UPDATE public.properties SET location = 'Paphos, Universal Area' WHERE location = 'Paphos · Pearl Park Residences';

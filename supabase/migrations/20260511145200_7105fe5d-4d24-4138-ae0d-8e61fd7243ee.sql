@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Active templates viewable by everyone" ON public.email_templates;

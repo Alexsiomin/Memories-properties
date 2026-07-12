@@ -1,0 +1,13 @@
+REVOKE EXECUTE ON FUNCTION public.log_client_stage_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.trg_property_match() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.compute_property_matches(uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.log_property_status_change() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.set_updated_at() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.bootstrap_first_admin() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.generate_property_reference() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.set_client_created_by() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.validate_client_pipeline_stage() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.validate_property_seller_type() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.set_property_slug() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.update_updated_at_column() FROM PUBLIC;

@@ -1,0 +1,457 @@
+/* Fonts are loaded non-render-blocking from index.html (see <head>). */
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Modern minimal — white, ink, electric blue */
+    --background: 0 0% 100%;
+    --foreground: 222 24% 11%;        /* near-black ink */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 24% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 24% 11%;
+
+    --primary: 222 24% 11%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;         /* very light grey surface */
+    --secondary-foreground: 222 24% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 222 14% 34%;  /* darker for WCAG AA contrast */
+
+    --accent: 222 89% 55%;            /* modern electric blue */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 24% 11% / 0.08;
+    --input: 220 14% 92%;
+    --ring: 222 89% 55%;
+    --menu: 212 100% 6%;
+    --menu-foreground: 0 0% 100%;
+
+    --radius: 0.875rem;
+
+    --rule: 222 24% 11%;
+
+    --sidebar-background: 42 38% 97%;
+    --sidebar-foreground: 0 0% 7%;
+    --sidebar-primary: 0 0% 7%;
+    --sidebar-primary-foreground: 42 38% 97%;
+    --sidebar-accent: 42 25% 92%;
+    --sidebar-accent-foreground: 0 0% 7%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 0 0% 7%;
+  }
+
+  .dark {
+    --background: 0 0% 7%;
+    --foreground: 42 38% 97%;
+    --card: 0 0% 7%;
+    --card-foreground: 42 38% 97%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 42 38% 97%;
+    --primary: 42 38% 97%;
+    --primary-foreground: 0 0% 7%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 42 38% 97%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 0 65% 50%;
+    --accent-foreground: 42 38% 97%;
+    --border: 42 38% 97% / 0.15;
+    --input: 0 0% 20%;
+    --ring: 42 38% 97%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /* Single global sans-serif rule — applies to every element */
+  html, body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, li, label {
+    font-family: 'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  }
+
+  html {
+    max-width: 100%;
+    overflow-x: clip;
+    scroll-behavior: smooth;
+  }
+  body {
+    overflow-x: clip;
+    max-width: 100%;
+    position: relative;
+    width: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "liga" 1, "kern" 1;
+  }
+
+  ::selection {
+    background-color: hsl(var(--accent) / 0.15);
+    color: hsl(var(--accent));
+  }
+}
+
+@layer utilities {
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .font-montserrat {
+    font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif !important;
+    /* Editorial restyle: refined light weight instead of heavy extra-bold,
+       with airy tracking — gives the minimal Marshall White feel in sans-serif. */
+    font-weight: 500 !important;
+    letter-spacing: 0.01em;
+  }
+  /* Stay Updated section — match Marshall White: bold uppercase near-black,
+     no airy tracking. Higher specificity beats the global editorial weight. */
+  .stay-updated h2 {
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+  }
+  .stay-updated h3 {
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+  }
+  .label {
+    @apply font-mono uppercase tracking-[0.08em] font-semibold text-xl;
+  }
+  .label-lg {
+    @apply font-mono uppercase tracking-[0.1em] text-sm;
+  }
+  .light-panel {
+    background-color: hsl(var(--card));
+    color: hsl(var(--foreground));
+  }
+  .soft-shadow {
+    box-shadow: 0 20px 50px -12px hsl(var(--foreground) / 0.08);
+  }
+  .rule-thick {
+    border-top: 4px solid hsl(var(--foreground));
+  }
+
+  /* ============================================================
+     Canonical site-wide CTA button — outline / minimal.
+     Transparent with a thin ink border; fills navy on hover.
+     Use .btn-cta everywhere for a consistent button language.
+     ============================================================ */
+  .btn-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 1.5rem;
+    border: 1px solid hsl(var(--foreground));
+    background-color: transparent;
+    color: hsl(var(--foreground));
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    border-radius: 0;
+    cursor: pointer;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    white-space: nowrap;
+  }
+  .btn-cta:hover {
+    background-color: hsl(var(--foreground));
+    color: hsl(var(--background));
+  }
+  .btn-cta:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  /* Solid variant — same shape, filled by default, hollows on hover. */
+  .btn-cta-solid {
+    background-color: hsl(var(--foreground));
+    color: hsl(var(--background));
+  }
+  .btn-cta-solid:hover {
+    background-color: transparent;
+    color: hsl(var(--foreground));
+  }
+  /* Compact size for dense toolbars / inline actions. */
+  .btn-cta-sm {
+    min-height: 36px;
+    padding: 0 1rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+  }
+  /* Full width helper (useful on mobile). */
+  .btn-cta-block {
+    width: 100%;
+  }
+
+  /* Scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 1s cubic-bezier(0.22, 1, 0.36, 1),
+                filter 1s cubic-bezier(0.22, 1, 0.36, 1);
+    filter: blur(6px);
+    will-change: opacity, transform, filter;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .faq-tab-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .faq-tab-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+  .faq-tab-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .faq-tab-scroll::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  .story-link {
+    @apply relative inline-block;
+  }
+  .story-link::after {
+    content: '';
+    @apply absolute left-0 -bottom-0.5 w-full h-px bg-current origin-right scale-x-0 transition-transform duration-500;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .story-link:hover::after {
+    @apply origin-left scale-x-100;
+  }
+
+  .story-link-group {
+    @apply relative inline-block;
+  }
+  .story-link-group::after {
+    content: '';
+    @apply absolute left-0 -bottom-0.5 w-full h-px bg-current origin-right scale-x-0 transition-transform duration-500;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .group:hover .story-link-group::after {
+    @apply origin-left scale-x-100;
+  }
+
+  .img-hover { overflow: hidden; }
+  .img-hover img {
+    transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .img-hover:hover img { transform: scale(1.05); }
+
+  .ticker-mask {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  }
+
+  .letter-underline {
+    position: relative;
+    display: inline-block;
+    letter-spacing: -0.03em;
+  }
+  .letter-underline::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1.5px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .group:hover .letter-underline::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .group:hover .letter-underline:nth-child(1)::after  { transition-delay: 0ms; }
+  .group:hover .letter-underline:nth-child(2)::after  { transition-delay: 25ms; }
+  .group:hover .letter-underline:nth-child(3)::after  { transition-delay: 50ms; }
+  .group:hover .letter-underline:nth-child(4)::after  { transition-delay: 75ms; }
+  .group:hover .letter-underline:nth-child(5)::after  { transition-delay: 100ms; }
+  .group:hover .letter-underline:nth-child(6)::after  { transition-delay: 125ms; }
+  .group:hover .letter-underline:nth-child(7)::after  { transition-delay: 150ms; }
+  .group:hover .letter-underline:nth-child(8)::after  { transition-delay: 175ms; }
+  .group:hover .letter-underline:nth-child(9)::after  { transition-delay: 200ms; }
+  .group:hover .letter-underline:nth-child(10)::after { transition-delay: 225ms; }
+  .group:hover .letter-underline:nth-child(11)::after { transition-delay: 250ms; }
+  .group:hover .letter-underline:nth-child(12)::after { transition-delay: 275ms; }
+  .group:hover .letter-underline:nth-child(13)::after { transition-delay: 300ms; }
+  .group:hover .letter-underline:nth-child(14)::after { transition-delay: 325ms; }
+  .group:hover .letter-underline:nth-child(15)::after { transition-delay: 350ms; }
+  .group:hover .letter-underline:nth-child(16)::after { transition-delay: 375ms; }
+  .group:hover .letter-underline:nth-child(17)::after { transition-delay: 400ms; }
+  .group:hover .letter-underline:nth-child(18)::after { transition-delay: 425ms; }
+
+  /* Always-visible wide-spaced variant (reference: Marshall White style) */
+  .letter-underline-visible {
+    position: relative;
+    display: inline-block;
+    letter-spacing: 0.35em;
+  }
+  .letter-underline-visible::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -3px;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; filter: none; }
+  }
+}
+
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .mw-header-hamburger {
+    background: none;
+    padding: 8px 0 0;
+    border: none;
+    box-shadow: none;
+    width: 16px;
+    height: 16px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+  }
+  .mw-header-hamburger:focus { outline: none; }
+  .mw-header-hamburger-lines,
+  .mw-header-hamburger-lines::before,
+  .mw-header-hamburger-lines::after {
+    width: 16px;
+    height: 1px;
+    background: currentColor;
+    position: absolute;
+    content: "";
+    transition: all ease .3s;
+    display: block;
+    left: 0;
+  }
+  .mw-header-hamburger-lines {
+    position: relative;
+  }
+  .mw-header-hamburger-lines::before {
+    top: -6px;
+    transform-origin: top left;
+  }
+  .mw-header-hamburger-lines::after {
+    top: 6px;
+    transform-origin: top left;
+  }
+  .mw-header-hamburger.active .mw-header-hamburger-lines {
+    background: transparent;
+  }
+  .mw-header-hamburger.active .mw-header-hamburger-lines::before {
+    transform: rotate(45deg) translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+  }
+  .mw-header-hamburger.active .mw-header-hamburger-lines::after {
+    transform: rotate(-45deg) translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+  }
+  .input-base {
+    @apply w-full h-10 px-3 rounded-none border border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors;
+  }
+}
+
+@layer base {
+  /* Deter casual image saving across the site. Note: anyone determined can still
+     grab images from the network tab — this only blocks right-click / drag / long-press. */
+  img {
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* Shift pointer events from images to their clickable parent so the browser
+     never targets the <img> element directly. */
+  button img,
+  a img {
+    pointer-events: none;
+  }
+}
+
+/* ================================================================
+   Google Translate Widget — hide native UI, custom dropdown
+   ================================================================ */
+
+/* Hide top banner */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+}
+html.translated-ltr body,
+html.translated-rtl body,
+body {
+  top: 0 !important;
+}
+
+/* Hide the native widget completely */
+#google_translate_element,
+#google_translate_element * {
+  position: absolute !important;
+  left: -9999px !important;
+  top: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide remaining Google branding */
+.goog-logo-link,
+.goog-logo-link:link,
+.goog-logo-link:visited,
+.goog-logo-link:hover,
+.goog-logo-link:active,
+.goog-te-balloon div,
+.goog-te-balloon span {
+  display: none !important;
+}
+.goog-te-banner .goog-te-banner-info,
+#goog-gt-tt,
+.goog-te-ftab,
+.goog-te-complex {
+  display: none !important;
+}

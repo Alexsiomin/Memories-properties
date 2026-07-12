@@ -1,0 +1,1 @@
+ALTER TABLE public.enquiries ADD COLUMN IF NOT EXISTS message text;

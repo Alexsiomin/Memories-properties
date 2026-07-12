@@ -1,0 +1,27 @@
+# Memories Properties
+
+> Memories is a private real estate practice sourcing off-market investment projects, development land, and prestige property for a discreet roster of investors and family offices. By introduction only.
+
+Memories has operated since 2014, headquartered in Cyprus with a focused presence across select Mediterranean and European markets. The practice specialises in investment-grade mandates: development land, agricultural estates, coastal plots, mixed-use assets, and off-market residential portfolios.
+
+## Pages
+
+- [Home](/): Overview of the private practice and featured investment projects.
+- [Properties](/properties): Curated portfolio of investment projects, land, and off-market real estate.
+- [About](/about): The story, values, and approach of the practice since 2014.
+- [Insights](/insights): Quarterly market briefings on selectivity, asset mix, and ticket sizes.
+- [Common Questions](/common-questions): Answers about off-market real estate, private viewings, and how to work with the practice.
+- [Off-Market Investing Guide](/guides/off-market-investing): How to find and acquire off-market investment properties.
+- [Contact](/contact): Begin a conversation with the practice.
+
+## Regions
+
+- [Paphos](/properties/region/paphos): Investment properties, development land, and coastal homes in Paphos, Cyprus.
+- [Limassol](/properties/region/limassol): Investment properties, development land, and prestige real estate in Limassol, Cyprus.
+
+## Optional
+
+- [Privacy Policy](/privacy): How personal data is handled under GDPR.
+- [Terms](/terms): Terms of use.
+- [Cookies](/cookies): Cookie policy.
+- [Disclosure](/disclosure): Service and regulatory disclosures.

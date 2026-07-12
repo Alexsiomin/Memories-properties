@@ -1,0 +1,1 @@
+DELETE FROM public.brand_words WHERE word = 'PRIVATE.';

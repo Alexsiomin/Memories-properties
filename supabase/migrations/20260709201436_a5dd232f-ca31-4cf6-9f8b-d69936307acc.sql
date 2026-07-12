@@ -1,0 +1,1 @@
+update public.properties set share_title = 'Custom Preview Test — Blossom Park Luxury Villas', share_description = 'This is a custom social share description override.' where slug = 'blossom-park-geroskipou-7d57';

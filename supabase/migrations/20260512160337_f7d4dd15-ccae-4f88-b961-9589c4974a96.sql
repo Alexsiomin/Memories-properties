@@ -1,0 +1,1 @@
+UPDATE public.properties SET baths = beds WHERE baths IS NULL AND beds IS NOT NULL AND beds > 0;

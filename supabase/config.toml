@@ -1,0 +1,13 @@
+project_id = "wlugjzfztcwmlmgqfgno"
+
+[functions.sitemap]
+verify_jwt = false
+
+[functions.prerender]
+verify_jwt = false
+
+[functions.fetch-xml]
+verify_jwt = false
+
+[functions.translate]
+verify_jwt = false

@@ -1,0 +1,1 @@
+DELETE FROM public.properties WHERE location ILIKE '%nicosia%';

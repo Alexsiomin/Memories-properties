@@ -1,0 +1,1 @@
+UPDATE properties SET size = REPLACE(size, 'sq meters', 'm²') WHERE size ILIKE '%sq meters%';

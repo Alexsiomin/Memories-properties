@@ -1,0 +1,1 @@
+update public.properties set share_title = null, share_description = null where slug = 'blossom-park-geroskipou-7d57';

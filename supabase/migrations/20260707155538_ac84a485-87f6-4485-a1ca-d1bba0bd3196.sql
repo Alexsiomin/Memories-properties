@@ -1,0 +1,1 @@
+UPDATE public.properties SET category = 'Hotel' WHERE category = 'Boutique Hotel';

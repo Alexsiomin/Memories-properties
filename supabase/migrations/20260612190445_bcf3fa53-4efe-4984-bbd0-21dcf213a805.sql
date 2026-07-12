@@ -1,0 +1,1 @@
+UPDATE public.brand_words SET word = 'PRIVATE.' WHERE id = '40b96b1f-3c56-44ef-b098-5b5c9a8d5a06';
