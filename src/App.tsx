@@ -163,6 +163,12 @@ const App = () => (
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/auth/callback" element={<AuthCallback />} />
+              {/* Alias: Google's registered redirect URIs for this OAuth
+                  client use the "~oauth/callback" path pattern (set up when
+                  this project was hosted directly through Lovable). Handle
+                  it with the same logic so sign-in completes correctly on
+                  this custom Vercel domain too. */}
+              <Route path="/~oauth/callback" element={<AuthCallback />} />
               <Route path="/auth" element={<Auth />} />
               {/* Russian (/ru) and default (English) share the same tree via
                   descendant routes, so /ru/* URLs are real, indexable pages. */}
