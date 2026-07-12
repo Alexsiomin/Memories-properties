@@ -2,7 +2,15 @@
 
 import { createLovableAuth } from "@lovable.dev/cloud-auth-js";
 import { supabase } from "../supabase/client";
-const lovableAuth = createLovableAuth();
+// NOTE: modified from the Lovable-generated default. The default relative
+// broker path ("/~oauth/initiate") only resolves when a site is hosted
+// directly through Lovable's own infrastructure, which transparently proxies
+// that path. Since this project is deployed independently (Vercel), we point
+// it at Lovable's hosted OAuth broker explicitly so Google/Apple/Microsoft
+// sign-in works the same way it did inside the Lovable editor.
+const lovableAuth = createLovableAuth({
+  oauthBrokerUrl: "https://oauth.lovable.app/~oauth/initiate",
+});
 
 type SignInOptions = {
   redirect_uri?: string;
