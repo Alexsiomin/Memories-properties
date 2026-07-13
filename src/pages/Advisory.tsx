@@ -5,9 +5,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 
-import advisorsAsset from '@/assets/advisory-paphos-castle.jpg.asset.json';
-
-const advisorsImg = advisorsAsset.url;
+import advisorsImg from '@/assets/advisory-paphos-castle.jpg';
 
 
 const PAGE_TITLE = 'Property Advocacy in Cyprus';
