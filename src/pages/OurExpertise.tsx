@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 
-import heroAsset from '@/assets/expertise-hero.jpg.asset.json';
-import buyImg from '@/assets/our-story-2.jpg.asset.json';
-import sellImg from '@/assets/cyprus-sunset-villas.jpg.asset.json';
+import heroAsset from '@/assets/expertise-hero.jpg';
+import buyImg from '@/assets/our-story-2.jpg';
+import sellImg from '@/assets/cyprus-sunset-villas.jpg';
 
-import newDevImg from '@/assets/new-development.jpg.asset.json';
-import agentsImg from '@/assets/Cyprus_properties.png.asset.json';
-import insightsImg from '@/assets/market-insights.png.asset.json';
-import locationsImg from '@/assets/filed_in_Pegeia.png.asset.json';
+import newDevImg from '@/assets/new-development.jpg';
+import agentsImg from '@/assets/Cyprus_properties.jpg';
+import insightsImg from '@/assets/market-insights.jpg';
+import locationsImg from '@/assets/filed_in_Pegeia.jpg';
 
 const SECTIONS = [
   {
@@ -16,7 +16,7 @@ const SECTIONS = [
     body:
       'We offer a bespoke property buying experience, featuring an extensive and diverse collection of exceptional real estate across Cyprus. Catering to a range of preferences — from luxurious family residences and modern coastal apartments to prime investment opportunities — our dedicated team works collaboratively to align properties seamlessly with your lifestyle and aspirations, supported by unrivalled local market knowledge.',
     cta: { label: 'View Properties', to: '/properties' },
-    image: buyImg.url,
+    image: buyImg,
     alt: 'Luxury Cyprus residence for sale',
   },
   {
@@ -24,7 +24,7 @@ const SECTIONS = [
     body:
       'Our strategy for selling your property combines a personalised and strategic approach, emphasising its unique characteristics to attract the ideal buyer. By leveraging our in-depth market insights and expansive network, we maximise your property’s appeal — ensuring a seamless and successful sale that is efficient and perfectly aligned with your specific objectives.',
     cta: { label: 'Request a Valuation', to: '/sell' },
-    image: sellImg.url,
+    image: sellImg,
     alt: 'Elegant villa interior prepared for sale',
   },
   {
@@ -32,15 +32,15 @@ const SECTIONS = [
     body:
       'Experience the pinnacle of sophisticated living with our off-the-plan projects, meticulously crafted with ultimate luxury and environmental responsibility in mind. Each development combines timeless elegance and cutting-edge design, appealing to those who seek unparalleled quality and modern convenience across Cyprus’ most desirable locations.',
     cta: { label: 'View More', to: '/developments' },
-    image: newDevImg.url,
+    image: newDevImg,
     alt: 'New development project in Cyprus',
   },
 ] as const;
 
 const CTA_CARDS = [
-  { title: 'New Developments', to: '/developments', image: agentsImg.url, alt: 'New developments' },
-  { title: 'Market Insights', to: '/insights', image: insightsImg.url, alt: 'Market insights' },
-  { title: 'Browse by Location', to: '/locations', image: locationsImg.url, alt: 'Browse by location' },
+  { title: 'New Developments', to: '/developments', image: agentsImg, alt: 'New developments' },
+  { title: 'Market Insights', to: '/insights', image: insightsImg, alt: 'Market insights' },
+  { title: 'Browse by Location', to: '/locations', image: locationsImg, alt: 'Browse by location' },
 ];
 
 const OurExpertise = () => {
@@ -54,7 +54,7 @@ const OurExpertise = () => {
       {/* HERO */}
       <section className="relative -mt-px h-screen min-h-[600px] w-full overflow-hidden">
         <img
-          src={heroAsset.url}
+          src={heroAsset}
           alt="Iconic Cyprus architecture"
           className="absolute inset-0 h-full w-full object-cover"
         />
