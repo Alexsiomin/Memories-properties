@@ -10,7 +10,7 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import SEO from '@/components/SEO';
-import sellHero from '@/assets/sell-hero-coast.jpg.asset.json';
+import sellHero from '@/assets/sell-hero.jpg';
 import sellVilla from '@/assets/cyclopes-map.png.asset.json';
 import sellKitchen from '@/assets/sell-kitchen.jpg';
 import ParticleText from '@/components/ParticleText';
@@ -65,7 +65,7 @@ const SellWithUs = () => {
       {/* ─── Hero ─── */}
       <section className="relative w-full h-screen min-h-[600px] overflow-hidden">
         <img
-          src={sellHero.url}
+          src={sellHero}
           alt="Cyprus coastline with turquoise sea"
           className="absolute inset-0 w-full h-full object-cover"
           width={1440}
