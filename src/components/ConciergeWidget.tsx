@@ -6,8 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import conciergeAgentAsset from '@/assets/concierge-agent.jpg.asset.json';
-const conciergeAgent = conciergeAgentAsset.url;
+import conciergeAgent from '@/assets/concierge-agent.jpg';
 
 interface Msg {
   role: 'user' | 'assistant';

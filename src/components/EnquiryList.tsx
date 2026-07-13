@@ -5,8 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { ChevronDown, ArrowRight } from 'lucide-react';
-import portraitAsset from '@/assets/concierge-agent.jpg.asset.json';
-const portrait = portraitAsset.url;
+import portrait from '@/assets/concierge-agent.jpg';
 
 type DropdownProps = {
   value: string;

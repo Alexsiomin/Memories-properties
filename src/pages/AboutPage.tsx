@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import heroVilla from '@/assets/about-hero-villa.jpg';
-import portraitAsset from '@/assets/concierge-agent.jpg.asset.json';
-const portrait = portraitAsset.url;
+import portrait from '@/assets/concierge-agent.jpg';
 import eraCyprus from '@/assets/about-era-cyprus.jpg';
 import era3 from '@/assets/about-era-3.jpg';
 
