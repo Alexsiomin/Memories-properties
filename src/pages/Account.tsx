@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import { Star, Search, Trash2, LogOut, Save, MessageCircle, Clock, LogIn, User as UserIcon, Mail, ShieldCheck, Sparkles, BadgeCheck, X, Home, Key, FileCheck2, SearchCheck, Camera, Loader2, Bell } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 import { publicTitle } from '@/lib/propertyDisplay';
@@ -523,6 +524,8 @@ const Account = () => {
               </div>
             </section>
 
+            <SecuritySection user={user} />
+
             <section className="rounded-none border border-border bg-card shadow-sm">
               <header className="px-6 sm:px-8 pt-6 pb-4 border-b border-border text-xs flex items-center gap-2">
                 <Clock size={16} className="text-muted-foreground" />
@@ -771,6 +774,82 @@ const Field = ({ label, children, className = 'text-base' }: { label: string; ch
     {children}
   </div>
 );
+
+const SecuritySection = ({ user }: { user: SupabaseUser | null }) => {
+  const hasPassword = user?.identities?.some((i) => i.provider === 'email') ?? false;
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSetPassword = async () => {
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(hasPassword ? 'Password updated' : 'Password set — you can now sign in with your email too');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
+  return (
+    <section className="rounded-none border border-border bg-card shadow-sm">
+      <header className="px-6 sm:px-8 pt-6 pb-4 border-b border-border text-xs flex items-center gap-2">
+        <Key size={16} className="text-muted-foreground" />
+        <h3 className="font-montserrat uppercase tracking-[0.04em] font-extrabold text-base">Security</h3>
+      </header>
+      <div className="px-6 sm:px-8 py-6 space-y-4">
+        <p className="text-sm text-muted-foreground">
+          {hasPassword
+            ? `Update the password for ${user?.email ?? 'your account'}. You can use it to sign in even if Google sign-in is ever unavailable.`
+            : `Your account (${user?.email ?? ''}) currently only signs in with Google. Set a password below as a backup way to log in with your email.`}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <Field label={hasPassword ? 'New password' : 'Password'}>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              className="input-base h-11 text-base"
+              autoComplete="new-password"
+            />
+          </Field>
+          <Field label="Confirm password">
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat password"
+              className="input-base h-11 text-base"
+              autoComplete="new-password"
+            />
+          </Field>
+        </div>
+      </div>
+      <div className="px-6 sm:px-8 py-5 border-t border-border bg-secondary/40 rounded-none flex justify-end">
+        <button
+          onClick={handleSetPassword}
+          disabled={saving || !newPassword || !confirmPassword}
+          className="inline-flex items-center justify-center gap-2 h-11 px-6 rounded-none bg-accent text-accent-foreground font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 text-base"
+        >
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Key size={16} />}
+          {saving ? 'Saving…' : hasPassword ? 'Update password' : 'Set password'}
+        </button>
+      </div>
+    </section>
+  );
+};
 
 const EmptyState = ({ icon, title, description, cta, href }: { icon: React.ReactNode; title: string; description: string; cta: string; href: string }) => (
   <div className="py-16 sm:py-20 text-center border border-dashed border-border rounded-none bg-card">
