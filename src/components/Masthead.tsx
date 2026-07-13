@@ -3,9 +3,22 @@ import { User as UserIcon, Facebook, Home, Handshake, BarChart3, Search, Star } 
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { useIsAdmin } from '@/hooks/use-is-admin';
-import mLogo from '@/assets/memories-m-logo.png.asset.json';
-import mLogoScroll from '@/assets/memories-m-logo-scroll-v2.png.asset.json';
 import LanguageToggle from '@/components/LanguageToggle';
+
+// Compact "M" monogram — replaces the scroll-state logo. Drawn inline as SVG
+// (rather than a hosted image asset) so it inherits text color via
+// currentColor and never depends on an external asset URL.
+const MonogramM = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 30 30" className={className} fill="none" aria-hidden="true">
+    <polyline
+      points="3,27 3,3 15,18 27,3 27,27"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinejoin="round"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
 type NavItem = { label: string; to: string; icon?: boolean; children?: { label: string; to: string }[] };
 
@@ -125,10 +138,8 @@ const Masthead = () => {
             >
               Memories
             </span>
-            <img
-              src={mLogoScroll.url}
-              alt="Memories"
-              className={`h-[35px] w-auto absolute left-0 ${
+            <MonogramM
+              className={`h-[26px] w-[26px] absolute left-0 transition-opacity duration-500 ${inkClass} ${
                 scrolled ? 'opacity-100' : 'opacity-0'
               }`}
             />
@@ -244,7 +255,7 @@ const Masthead = () => {
                 onClick={() => setOpen(false)}
                 className="absolute top-3.5 left-4 md:left-6 flex items-center"
               >
-                <img src={mLogoScroll.url} alt="Memories" className="h-[35px] w-auto" />
+                <MonogramM className="h-7 w-7 text-menu-foreground" />
               </Link>
 
               <div className="flex-1 overflow-y-auto px-5 pt-[70px] pb-10 md:px-11 flex flex-col justify-between">
@@ -298,9 +309,25 @@ const Masthead = () => {
                 </nav>
 
 
-                {/* Google sign-in temporarily disabled */}
-
                 <div className="mt-auto pt-16 pb-8 space-y-6">
+                  {user ? (
+                    <Link
+                      to="/account"
+                      onClick={() => setOpen(false)}
+                      className="inline-flex items-center gap-2 text-menu-foreground font-montserrat font-extrabold uppercase tracking-normal text-lg hover:text-accent transition-colors"
+                    >
+                      <UserIcon size={20} /> My account
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`${pathname}?auth=1`}
+                      onClick={() => setOpen(false)}
+                      className="inline-flex items-center gap-2 text-menu-foreground font-montserrat font-extrabold uppercase tracking-normal text-lg hover:text-accent transition-colors"
+                    >
+                      <UserIcon size={20} /> Sign in
+                    </Link>
+                  )}
+
                   <LanguageToggle tone="text-menu-foreground" />
 
                   <div className="flex flex-col gap-4 text-base">
@@ -336,25 +363,22 @@ export const MobileBottomNav = () => {
   const { pathname } = useLocation();
   const { user } = useAuth();
   const isHome = pathname === '/';
-  const [visible, setVisible] = useState(!isHome);
+  // Always visible on load; on the homepage it additionally hides while
+  // actively scrolling down (to stay out of the way of the hero) and
+  // reappears on scroll-up. It must never start hidden.
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    if (!isHome) {
-      setVisible(true);
-      return;
-    }
-    setVisible(false);
+    setVisible(true);
+    if (!isHome) return;
     let lastY = window.scrollY;
-    let hasScrolledDown = false;
     const onScroll = () => {
       const y = window.scrollY;
       if (y <= 0) {
-        setVisible(false);
-        hasScrolledDown = false;
+        setVisible(true);
       } else if (y > lastY && y > 80) {
-        hasScrolledDown = true;
         setVisible(false);
-      } else if (y < lastY && hasScrolledDown) {
+      } else if (y < lastY) {
         setVisible(true);
       }
       lastY = y;
