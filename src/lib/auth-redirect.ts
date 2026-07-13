@@ -1,4 +1,4 @@
-import { lovable } from '@/integrations/lovable/index';
+import { supabase } from '@/integrations/supabase/client';
 
 const OAUTH_NEXT_KEY = 'memories:oauth-next';
 
@@ -31,11 +31,19 @@ export function peekAuthNext() {
   return next ? sanitizeAuthNext(next) : null;
 }
 
-export async function signInWithGoogle(nextPath = '/account', extraParams?: Record<string, string>) {
+export async function signInWithGoogle(nextPath = '/account') {
   storeAuthNext(nextPath);
 
-  return lovable.auth.signInWithOAuth('google', {
-    redirect_uri: `${window.location.origin}/auth/callback`,
-    extraParams,
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    },
   });
+  if (error) return { error };
+  if (data?.url) {
+    window.location.href = data.url;
+    return { error: null, redirected: true };
+  }
+  return { error: new Error('No redirect URL returned from Supabase.') };
 }
