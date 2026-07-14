@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import mapPin from "@/assets/memories-map-pin.png.asset.json";
 import { GOOGLE_MAPS_BROWSER_KEY as BROWSER_KEY, GOOGLE_MAPS_TRACKING_ID as TRACKING_ID } from "@/lib/maps-key";
 
 declare global {
@@ -9,43 +8,19 @@ declare global {
   }
 }
 
-// Crops the logo into a circular pin and returns a data URL.
-function buildCircleMarker(size = 56): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-    const px = size * dpr;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = px;
-      canvas.height = px;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return reject(new Error("no ctx"));
-      const r = px / 2;
-      // white ring background
-      ctx.beginPath();
-      ctx.arc(r, r, r, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.fillStyle = "#ffffff";
-      ctx.fill();
-      // clip logo into inner circle (cover-fit), leaving a thin white ring
-      const border = px * 0.06;
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(r, r, r - border, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-      const scale = Math.max((px - border * 2) / img.width, (px - border * 2) / img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
-      ctx.drawImage(img, r - w / 2, r - h / 2, w, h);
-      ctx.restore();
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = reject;
-    img.src = mapPin.url;
-  });
+// Brand ink navy, matching --foreground in index.css (hsl(222 24% 11%)).
+const PIN_INK = "#15191f";
+
+// Builds the map marker icon as a self-contained inline SVG: a white
+// circular pin with the same "M" monogram used in the header. No external
+// image file is involved, so this can never 404 or silently fail to load.
+function buildPinIconUrl(size = 52): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 52 52">` +
+    `<circle cx="26" cy="26" r="24.5" fill="#ffffff" stroke="${PIN_INK}" stroke-width="1.5"/>` +
+    `<polyline points="19.4,32.6 19.4,19.4 26,27.65 32.6,19.4 32.6,32.6" fill="none" stroke="${PIN_INK}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `</svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
 
@@ -134,16 +109,11 @@ export default function PropertyMap({
         });
         const marker = new window.google.maps.Marker({ position, map, title });
         const SIZE = 52;
-        buildCircleMarker(SIZE)
-          .then((iconUrl) => {
-            if (cancelled || !iconUrl) return;
-            marker.setIcon({
-              url: iconUrl,
-              scaledSize: new window.google.maps.Size(SIZE, SIZE),
-              anchor: new window.google.maps.Point(SIZE / 2, SIZE / 2),
-            });
-          })
-          .catch(() => {});
+        marker.setIcon({
+          url: buildPinIconUrl(SIZE),
+          scaledSize: new window.google.maps.Size(SIZE, SIZE),
+          anchor: new window.google.maps.Point(SIZE / 2, SIZE / 2),
+        });
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
