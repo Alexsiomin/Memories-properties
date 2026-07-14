@@ -180,7 +180,7 @@ const EnquiryList = () => {
             alt="Memories private real estate advisor"
             loading="lazy"
             decoding="async"
-            className="mt-8 w-full max-w-[160px] sm:max-w-[220px] md:max-w-[280px] rounded-md object-cover mx-auto sm:mx-0"
+            className="mt-8 w-full max-w-[220px] sm:max-w-[320px] md:max-w-none md:w-4/5 lg:w-3/4 aspect-[3/4] rounded-md object-cover object-top mx-auto sm:mx-0"
           />
         </div>
 
