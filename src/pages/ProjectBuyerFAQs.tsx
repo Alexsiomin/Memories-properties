@@ -8,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import heroAsset from '@/assets/project-buyer-faqs-hero.jpg.asset.json';
+import heroAsset from '@/assets/project-buyer-faqs-hero.jpg';
 
 type Faq = { question: string; answer: string[] };
 type Tab = { id: string; label: string; intro?: string; items: Faq[] };
@@ -278,7 +278,7 @@ const ProjectBuyerFAQs = () => {
       {/* HERO */}
       <section className="relative h-screen min-h-[600px] w-full overflow-hidden">
         <img
-          src={heroAsset.url}
+          src={heroAsset}
           alt="Brand new off-the-plan development in Cyprus"
           className="absolute inset-0 h-full w-full object-cover object-left"
         />
