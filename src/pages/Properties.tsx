@@ -1338,7 +1338,7 @@ const Properties = () => {
                   setRegion('');
                   setParams(new URLSearchParams({ mode: mode.toLowerCase() }), { replace: true });
                 }}
-                className="btn-cta-solid btn-cta btn-cta-block sm:w-56 group"
+                className="btn-cta btn-cta-block sm:w-56 group bg-white text-foreground border-white hover:bg-transparent hover:text-white"
               >
                 {'Reset all filters'.split('').map((char, i) => (
                   <span key={i} className="letter-underline">{char === ' ' ? '\u00A0' : char}</span>
