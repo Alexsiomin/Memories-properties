@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import heroAsset from '@/assets/project-expertise-hero.jpg';
+import currentProjectsImg from '@/assets/new-development.jpg';
+import soldProjectsImg from '@/assets/proj-coastal.jpg';
+import buyerFaqsImg from '@/assets/project-buyer-faqs-hero.jpg';
 
 const BODY_PARAGRAPHS = [
   'At Memories Properties, we believe successful developments are built on more than exceptional design and construction — they are built on strategic planning, market understanding, and trusted partnerships.',
@@ -16,18 +19,21 @@ const BODY_PARAGRAPHS = [
 const LINKS = [
   {
     title: 'Current Projects',
-    body: 'Explore new developments currently available across Cyprus.',
     to: '/developments',
+    image: currentProjectsImg,
+    alt: 'Current development projects in Cyprus',
   },
   {
     title: 'Sold Projects',
-    body: 'A track record of developments successfully brought to market.',
     to: '/sold-projects',
+    image: soldProjectsImg,
+    alt: 'Sold development projects in Cyprus',
   },
   {
     title: 'Project Buyer FAQs',
-    body: 'Answers to the questions buyers ask most about off-the-plan purchases.',
     to: '/project-buyer-faqs',
+    image: buyerFaqsImg,
+    alt: 'Project buyer frequently asked questions',
   },
 ];
 
@@ -68,19 +74,37 @@ const ProjectExpertise = () => {
         </div>
       </section>
 
+      {/* ─── CTA ─── */}
+      <div className="flex justify-center pb-16">
+        <Link
+          to="/contact?intent=project"
+          className="inline-block bg-[hsl(212_100%_10%)] text-white text-sm font-semibold uppercase tracking-wide px-8 py-4 hover:bg-[hsl(212_100%_16%)] transition-colors"
+        >
+          Tell Us About Your Project
+        </Link>
+      </div>
+
       {/* ─── Link cards ─── */}
-      <section className="max-w-5xl mx-auto px-4 md:px-6 pb-20">
+      <section className="max-w-6xl mx-auto px-4 md:px-6 pb-24">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {LINKS.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="block border border-border rounded-lg p-6 hover:border-foreground transition-colors"
-            >
-              <h3 className="font-montserrat font-extrabold uppercase text-lg text-foreground">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{item.body}</p>
+            <Link key={item.to} to={item.to} className="group block">
+              <div className="aspect-[4/5] overflow-hidden">
+                <img
+                  src={item.image}
+                  alt={item.alt}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+              <div className="px-4 py-5 bg-white text-foreground group-hover:bg-[hsl(212_100%_10%)] group-hover:text-white transition-colors">
+                <h3 className="font-montserrat font-extrabold uppercase text-base">
+                  {item.title}
+                </h3>
+                <span className="mt-2 inline-block text-sm underline underline-offset-4">
+                  View More
+                </span>
+              </div>
             </Link>
           ))}
         </div>
