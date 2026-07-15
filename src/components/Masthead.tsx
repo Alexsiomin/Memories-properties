@@ -56,6 +56,7 @@ const NAV: NavItem[] = [
       { label: 'CURRENT PROJECTS', to: '/developments' },
       { label: 'OFF-THE-PLAN', to: '/developments' },
       { label: 'SOLD PROJECTS', to: '/sold-projects' },
+      { label: 'PROJECT EXPERTISE', to: '/project-expertise' },
     ],
   },
   { label: 'ADVOCACY', to: '/advisory' },

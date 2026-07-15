@@ -48,6 +48,7 @@ const BlogCategory = lazy(() => import("./pages/BlogCategory"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const CommonQuestions = lazy(() => import("./pages/CommonQuestions"));
 const ProjectBuyerFAQs = lazy(() => import("./pages/ProjectBuyerFAQs"));
+const ProjectExpertise = lazy(() => import("./pages/ProjectExpertise"));
 const TransferFeesCalculator = lazy(() => import("./pages/TransferFeesCalculator"));
 const SellingExpensesCalculator = lazy(() => import("./pages/SellingExpensesCalculator"));
 const GuideOffMarketInvesting = lazy(() => import("./pages/guides/OffMarketInvesting"));
@@ -115,6 +116,7 @@ const LocalizedRoutes = () => (
       <Route path="blog/:slug" element={<BlogPost />} />
       <Route path="common-questions" element={<CommonQuestions />} />
       <Route path="project-buyer-faqs" element={<ProjectBuyerFAQs />} />
+      <Route path="project-expertise" element={<ProjectExpertise />} />
       <Route path="projects-faqs" element={<ProjectBuyerFAQs />} />
       <Route path="transfer-fees-calculator" element={<TransferFeesCalculator />} />
       <Route path="selling-expenses-calculator" element={<SellingExpensesCalculator />} />

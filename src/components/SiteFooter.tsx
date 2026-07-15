@@ -39,6 +39,7 @@ const navColumns = [
     title: 'Projects',
     links: [
       { label: 'New Developments', to: '/developments' },
+      { label: 'Project Expertise', to: '/project-expertise' },
       { label: 'Project Buyer FAQs', to: '/project-buyer-faqs' },
       { label: 'Market Insights', to: '/insights' },
       { label: 'Blog', to: '/blog' },
