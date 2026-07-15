@@ -154,7 +154,10 @@ const Masthead = () => {
         </div>
 
 
-        <nav className={`${open ? 'hidden' : 'hidden lg:flex'} items-center gap-6 xl:gap-8 2xl:gap-10 min-w-0 ${scrolled || pathname === '/our-expertise' || isProjectExpertisePage ? 'absolute left-1/2 -translate-x-1/2 z-10 pointer-events-none' : 'ml-auto'}`}>
+        {(() => {
+          const navCentered = scrolled || pathname === '/our-expertise' || isProjectExpertisePage;
+          return (
+        <nav className={`${open ? 'hidden' : 'hidden lg:flex'} items-center gap-6 xl:gap-8 2xl:gap-10 min-w-0 ${navCentered ? 'absolute left-1/2 -translate-x-1/2 z-10 pointer-events-none' : 'ml-auto'}`}>
           {NAV.filter((item) => item.label !== 'HOME').map((item) => {
             const [itemPath, itemQs] = item.to.split('?');
             const itemIntent = new URLSearchParams(itemQs ?? '').get('intent');
@@ -171,27 +174,48 @@ const Masthead = () => {
                   {item.icon ? <Home size={20} strokeWidth={2} /> : item.label}
                 </Link>
                 {item.children && item.children.length > 0 && (
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="bg-[hsl(212_100%_8%)] py-6 px-8 min-w-[280px] shadow-xl">
-                      <ul className="flex flex-col gap-3">
-                        {item.children.map((child) => (
-                          <li key={child.label}>
-                            <Link
-                              to={child.to}
-                              className="story-link text-white text-lg [font-variant-caps:all-small-caps] font-montserrat font-extrabold whitespace-nowrap pb-0.5"
-                            >
-                              {child.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
+                  navCentered ? (
+                    <div className="fixed left-0 right-0 top-[49px] md:top-[63px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="bg-white border-t border-b border-[hsl(212_100%_10%)]/10 shadow-lg py-8 px-4 md:px-6">
+                        <ul className="max-w-7xl mx-auto flex flex-col gap-4">
+                          {item.children.map((child) => (
+                            <li key={child.label}>
+                              <Link
+                                to={child.to}
+                                className="story-link text-[hsl(212_100%_10%)] text-base uppercase tracking-[0.06em] font-montserrat font-extrabold whitespace-nowrap pb-0.5 hover:opacity-70 transition-opacity"
+                              >
+                                {child.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="bg-[hsl(212_100%_8%)] py-6 px-8 min-w-[280px] shadow-xl">
+                        <ul className="flex flex-col gap-3">
+                          {item.children.map((child) => (
+                            <li key={child.label}>
+                              <Link
+                                to={child.to}
+                                className="story-link text-white text-lg [font-variant-caps:all-small-caps] font-montserrat font-extrabold whitespace-nowrap pb-0.5"
+                              >
+                                {child.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )
                 )}
               </div>
             );
           })}
         </nav>
+          );
+        })()}
 
           <div className="flex items-center gap-6">
             <div className={`items-center gap-6 ${open ? 'hidden' : 'flex'}`}>
