@@ -11,14 +11,30 @@ declare global {
 // Brand ink navy, matching --foreground in index.css (hsl(222 24% 11%)).
 const PIN_INK = "#15191f";
 
+// The same traced logo mark used in the header (Masthead.tsx MonogramM),
+// embedded as a nested <svg> so it scales to fit inside the pin circle.
+const LOGO_MARK_INNER =
+  `<g transform="translate(-263.994806,887.794883) scale(0.1,-0.1)">` +
+  `<path d="M4919 8873 c-4 -36 -5 -113 -7 -495 l-2 -437 -437 4 c-241 2 -448 2` +
+  `-460 -2 l-23 -5 0 -259 0 -259 -255 0 -255 0 0 259 0 258 -62 5 c-35 2 -223 4` +
+  `-418 3 l-355 0 -3 -1888 -2 -1887 1595 0 1595 0 2 733 3 732 452 3 453 2 2` +
+  `-732 3 -733 1578 -3 1577 -2 -2 1886 -3 1885 -395 0 -395 -1 -3 -260 -2 -260` +
+  `-255 0 -255 0 -2 260 -3 261 -395 0 c-217 0 -423 3 -457 6 l-63 5 -2 462 -3` +
+  `461 -1372 3 c-755 1 -1373 -1 -1374 -5z"/>` +
+  `</g>`;
+
 // Builds the map marker icon as a self-contained inline SVG: a white
-// circular pin with the same "M" monogram used in the header. No external
+// circular pin with the same logo mark used in the header. No external
 // image file is involved, so this can never 404 or silently fail to load.
 function buildPinIconUrl(size = 52): string {
+  const markW = 17;
+  const markH = markW / (726.010389 / 470.801074);
+  const markX = size / 2 - markW / 2;
+  const markY = size / 2 - markH / 2;
   const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 52 52">` +
-    `<circle cx="26" cy="26" r="24.5" fill="#ffffff" stroke="${PIN_INK}" stroke-width="1.5"/>` +
-    `<polyline points="19.4,32.6 19.4,19.4 26,27.65 32.6,19.4 32.6,32.6" fill="none" stroke="${PIN_INK}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
+    `<circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 1.5}" fill="#ffffff" stroke="${PIN_INK}" stroke-width="1.5"/>` +
+    `<svg x="${markX}" y="${markY}" width="${markW}" height="${markH}" viewBox="0 0 726.010389 470.801074" fill="${PIN_INK}">${LOGO_MARK_INNER}</svg>` +
     `</svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }

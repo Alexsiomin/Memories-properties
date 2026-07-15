@@ -5,18 +5,19 @@ import { useAuth } from '@/hooks/use-auth';
 import { useIsAdmin } from '@/hooks/use-is-admin';
 import LanguageToggle from '@/components/LanguageToggle';
 
-// Compact "M" monogram — replaces the scroll-state logo. Drawn inline as SVG
-// (rather than a hosted image asset) so it inherits text color via
-// currentColor and never depends on an external asset URL.
+// Compact logo mark. Drawn inline as SVG (rather than a hosted image asset)
+// so it inherits text color via currentColor and never depends on an
+// external asset URL.
 const MonogramM = ({ className = '' }: { className?: string }) => (
-  <svg viewBox="0 0 30 30" className={className} fill="none" aria-hidden="true">
-    <polyline
-      points="3,27 3,3 15,18 27,3 27,27"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinejoin="round"
-      strokeLinecap="round"
-    />
+  <svg viewBox="0 0 726.010389 470.801074" className={className} fill="currentColor" aria-hidden="true">
+    <g transform="translate(-263.994806,887.794883) scale(0.1,-0.1)">
+      <path d="M4919 8873 c-4 -36 -5 -113 -7 -495 l-2 -437 -437 4 c-241 2 -448 2
+-460 -2 l-23 -5 0 -259 0 -259 -255 0 -255 0 0 259 0 258 -62 5 c-35 2 -223 4
+-418 3 l-355 0 -3 -1888 -2 -1887 1595 0 1595 0 2 733 3 732 452 3 453 2 2
+-732 3 -733 1578 -3 1577 -2 -2 1886 -3 1885 -395 0 -395 -1 -3 -260 -2 -260
+-255 0 -255 0 -2 260 -3 261 -395 0 c-217 0 -423 3 -457 6 l-63 5 -2 462 -3
+461 -1372 3 c-755 1 -1373 -1 -1374 -5z" />
+    </g>
   </svg>
 );
 
