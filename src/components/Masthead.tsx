@@ -144,7 +144,7 @@ const Masthead = () => {
               Memories
             </span>
             <MonogramM
-              className={`h-9 w-auto absolute left-0 top-1/2 -translate-y-1/2 transition-opacity duration-500 ${inkClass} ${
+              className={`h-[30px] w-auto absolute left-0 top-1/2 -translate-y-1/2 transition-opacity duration-500 ${inkClass} ${
                 isProjectExpertisePage
                   ? 'opacity-100 group-hover:opacity-0'
                   : scrolled ? 'opacity-100' : 'opacity-0'
