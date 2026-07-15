@@ -133,7 +133,7 @@ const Masthead = () => {
           <Link to="/" className="relative flex flex-col items-center group h-7 w-[168px] md:w-[178px] lg:w-[188px]">
             <span
               translate="no"
-              className={`notranslate font-light text-2xl sm:text-3xl lg:text-2xl uppercase tracking-[0.28em] transition-colors ${inkClass} leading-none absolute left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-0.5 after:bottom-0 after:left-0 after:bg-current after:scale-x-0 after:origin-bottom-right after:transition-transform after:duration-300 group-hover:after:scale-x-100 group-hover:after:origin-bottom-left ${
+              className={`notranslate font-montserrat font-extrabold text-2xl sm:text-3xl lg:text-2xl uppercase tracking-wide transition-colors ${inkClass} leading-none absolute left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-0.5 after:bottom-0 after:left-0 after:bg-current after:scale-x-0 after:origin-bottom-right after:transition-transform after:duration-300 group-hover:after:scale-x-100 group-hover:after:origin-bottom-left ${
                 scrolled ? 'opacity-0' : 'opacity-100'
               }`}
             >
