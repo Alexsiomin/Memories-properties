@@ -53,7 +53,7 @@ const Layout = () => {
 
   // Google sign-in temporarily disabled — listing click interceptor removed.
 
-  const isHeroRoute = pathname === '/' || pathname === '/about' || pathname === '/advisory' || pathname === '/sell' || pathname === '/our-expertise' || pathname === '/project-buyer-faqs';
+  const isHeroRoute = pathname === '/' || pathname === '/about' || pathname === '/advisory' || pathname === '/sell' || pathname === '/our-expertise' || pathname === '/project-buyer-faqs' || pathname === '/project-expertise';
   const isDevPage = pathname.startsWith('/developments') || pathname.startsWith('/sold-projects');
   // Only development/sold DETAIL pages have a full-bleed hero (and only on mobile).
   // Listing pages never have a hero, so they always need the spacer.
