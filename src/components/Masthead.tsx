@@ -74,7 +74,7 @@ const Masthead = () => {
   
 
   // Transparent overlay only on routes with a full-bleed hero
-  const isHeroRoute = pathname === '/' || pathname === '/about' || pathname === '/advisory' || pathname === '/sell' || pathname === '/our-expertise' || pathname === '/project-buyer-faqs';
+  const isHeroRoute = pathname === '/' || pathname === '/about' || pathname === '/advisory' || pathname === '/sell' || pathname === '/our-expertise' || pathname === '/project-buyer-faqs' || pathname === '/project-expertise';
 
   // Listing pages (and Insights) show the full "Memories" text logo at the top,
   // then switch to the square "M" on scroll, but they do NOT have a hero image
@@ -108,6 +108,7 @@ const Masthead = () => {
   }, [open]);
 
   const isDevPage = isDevDetail;
+  const isProjectExpertisePage = pathname === '/project-expertise';
   const transparent = (isHeroRoute || isDevPage) && !scrolled;
   // Dev pages have a full-bleed hero image only on mobile, so use white text on
   // mobile but dark on desktop while transparent. Hero routes are full-bleed at all sizes.
@@ -135,21 +136,25 @@ const Masthead = () => {
             <span
               translate="no"
               className={`notranslate font-montserrat font-extrabold text-2xl sm:text-3xl lg:text-2xl uppercase tracking-wide transition-colors ${inkClass} leading-none absolute left-1/2 -translate-x-1/2 after:content-[''] after:absolute after:w-full after:h-0.5 after:bottom-0 after:left-0 after:bg-current after:scale-x-0 after:origin-bottom-right after:transition-transform after:duration-300 group-hover:after:scale-x-100 group-hover:after:origin-bottom-left ${
-                scrolled ? 'opacity-0' : 'opacity-100'
+                isProjectExpertisePage
+                  ? 'opacity-0 group-hover:opacity-100'
+                  : scrolled ? 'opacity-0' : 'opacity-100'
               }`}
             >
               Memories
             </span>
             <MonogramM
               className={`h-9 w-auto absolute left-0 top-1/2 -translate-y-1/2 transition-opacity duration-500 ${inkClass} ${
-                scrolled ? 'opacity-100' : 'opacity-0'
+                isProjectExpertisePage
+                  ? 'opacity-100 group-hover:opacity-0'
+                  : scrolled ? 'opacity-100' : 'opacity-0'
               }`}
             />
           </Link>
         </div>
 
 
-        <nav className={`${open ? 'hidden' : 'hidden lg:flex'} items-center gap-6 xl:gap-8 2xl:gap-10 min-w-0 ${scrolled || pathname === '/our-expertise' ? 'absolute left-1/2 -translate-x-1/2 z-10 pointer-events-none' : 'ml-auto'}`}>
+        <nav className={`${open ? 'hidden' : 'hidden lg:flex'} items-center gap-6 xl:gap-8 2xl:gap-10 min-w-0 ${scrolled || pathname === '/our-expertise' || isProjectExpertisePage ? 'absolute left-1/2 -translate-x-1/2 z-10 pointer-events-none' : 'ml-auto'}`}>
           {NAV.filter((item) => item.label !== 'HOME').map((item) => {
             const [itemPath, itemQs] = item.to.split('?');
             const itemIntent = new URLSearchParams(itemQs ?? '').get('intent');
