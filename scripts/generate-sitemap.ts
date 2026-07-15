@@ -56,6 +56,7 @@ export const staticEntries: SitemapEntry[] = [
   { path: "/about", changefreq: "monthly", priority: "0.7" },
   { path: "/advisory", changefreq: "monthly", priority: "0.7" },
   { path: "/our-expertise", changefreq: "monthly", priority: "0.7" },
+  { path: "/project-expertise", changefreq: "monthly", priority: "0.7" },
   { path: "/sell", changefreq: "monthly", priority: "0.7" },
   { path: "/insights", changefreq: "weekly", priority: "0.7" },
   { path: "/insights/limassol", changefreq: "weekly", priority: "0.7" },
