@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/accordion';
 import SEO from '@/components/SEO';
 import sellHero from '@/assets/sell-hero.jpg';
-import sellVilla from '@/assets/cyclopes-map.png.asset.json';
+import sellVilla from '@/assets/cyclopes-map.jpg';
 import sellKitchen from '@/assets/sell-kitchen.jpg';
 import ParticleText from '@/components/ParticleText';
 
@@ -178,8 +178,8 @@ const SellWithUs = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-12 lg:gap-20 items-center reveal">
           <div className="img-hover rounded-lg overflow-hidden">
             <img
-              src={sellVilla.url}
-              alt="Map of property locations across Paphos"
+              src={sellVilla}
+              alt="Historic Cyprus architecture"
               loading="lazy"
               width={1440}
               height={800}
