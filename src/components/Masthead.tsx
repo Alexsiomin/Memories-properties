@@ -321,21 +321,23 @@ const Masthead = () => {
                     <Link
                       to="/account"
                       onClick={() => setOpen(false)}
-                      className="inline-flex items-center gap-2 text-menu-foreground font-montserrat font-extrabold uppercase tracking-normal text-lg hover:text-accent transition-colors"
+                      className="inline-flex items-center justify-center gap-2 border border-menu-foreground text-menu-foreground px-4 py-1.5 text-sm font-montserrat font-normal hover:bg-menu-foreground hover:text-menu transition-colors w-fit"
                     >
-                      <UserIcon size={20} /> My account
+                      <UserIcon size={16} /> My account
                     </Link>
                   ) : (
                     <Link
                       to={`${pathname}?auth=1`}
                       onClick={() => setOpen(false)}
-                      className="inline-flex items-center gap-2 text-menu-foreground font-montserrat font-extrabold uppercase tracking-normal text-lg hover:text-accent transition-colors"
+                      className="inline-flex items-center justify-center gap-2 border border-menu-foreground text-menu-foreground px-4 py-1.5 text-sm font-montserrat font-normal hover:bg-menu-foreground hover:text-menu transition-colors w-fit"
                     >
-                      <UserIcon size={20} /> Sign in
+                      <UserIcon size={16} /> Sign in
                     </Link>
                   )}
 
-                  <LanguageToggle tone="text-menu-foreground" />
+                  <div className="block">
+                    <LanguageToggle tone="text-menu-foreground" />
+                  </div>
 
                   <div className="flex flex-col gap-4 text-base">
                     <a href="https://www.facebook.com/profile.php?id=61590658206461" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-menu-foreground/90 hover:text-accent transition-colors">
