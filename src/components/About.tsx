@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import investmentsBgAsset from '@/assets/investments-bg.jpg.asset.json';
+import investmentsBg from '@/assets/investments-bg.jpg';
 
 const About = () => {
   return (
@@ -7,7 +7,7 @@ const About = () => {
       id="investments"
       className="mt-20 relative overflow-hidden"
       style={{
-        backgroundImage: `url(${investmentsBgAsset.url})`,
+        backgroundImage: `url(${investmentsBg})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
