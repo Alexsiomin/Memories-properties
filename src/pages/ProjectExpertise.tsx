@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import heroAsset from '@/assets/project-expertise-hero.jpg';
 import currentProjectsImg from '@/assets/new-development.jpg';
-import soldProjectsImg from '@/assets/proj-coastal.jpg';
+import soldProjectsImg from '@/assets/proj-sold-thumb.jpg';
 import buyerFaqsImg from '@/assets/project-buyer-faqs-hero.jpg';
 
 const BODY_PARAGRAPHS = [
