@@ -618,30 +618,6 @@ const PropertyDetail = () => {
   const metaTitle = (property.share_title && property.share_title.trim()) || autoShareTitle;
   const metaDescription = (property.share_description && property.share_description.trim()) || autoShareDescription;
 
-  const productJsonLd: Record<string, unknown> = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    '@id': `${origin}/properties/${property.id}`,
-    name: displayTitle,
-    description: safeDescription,
-    image: galleryImages,
-    sku: property.reference_code || property.id,
-    productID: property.id,
-    identifier: property.reference_code || property.id,
-    category: property.category,
-    brand: { '@type': 'Brand', name: 'Memories' },
-    ...(property.tags?.length ? { keywords: property.tags.filter((t) => !t.startsWith('hidden:')).join(', ') } : {}),
-    offers: {
-      '@type': 'Offer',
-      url: `${origin}/properties/${property.id}`,
-      price: property.price_value,
-      priceCurrency: 'EUR',
-      availability: isSold ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
-      itemCondition: 'https://schema.org/UsedCondition',
-      seller: { '@type': 'Organization', name: 'Memories' },
-    },
-  };
-
   const realEstateJsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': property.category?.toLowerCase().includes('land') ? 'Place' : 'Residence',
@@ -738,7 +714,7 @@ const PropertyDetail = () => {
         type="article"
         image={ogImage}
         preloadImage={img}
-        jsonLd={[productJsonLd, realEstateListingJsonLd, realEstateJsonLd, breadcrumbJsonLd]}
+        jsonLd={[realEstateListingJsonLd, realEstateJsonLd, breadcrumbJsonLd]}
       />
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 md:px-8 pt-3 pb-2">
