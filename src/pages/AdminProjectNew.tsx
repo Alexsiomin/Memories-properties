@@ -927,15 +927,7 @@ export default function AdminProjectNew() {
 
   const validate = (): string | null => {
     if (!project.title.trim()) return 'Project name is required';
-    if (!project.region) return 'District is required';
-    if (!project.city) return 'Town / area is required';
-    if (pin.lat == null || pin.lng == null) return 'Location pin is required';
     if (lots.length === 0) return 'Add at least one unit';
-    for (let i = 0; i < lots.length; i++) {
-      const l = lots[i];
-      if (!l.category) return `Row ${i + 1}: category is required`;
-      if (!l.price_value || Number(l.price_value) <= 0) return `Row ${i + 1}: price is required`;
-    }
     return null;
   };
 
