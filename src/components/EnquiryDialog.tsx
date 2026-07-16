@@ -127,7 +127,7 @@ const EnquiryDialog = ({ property, open, onOpenChange }: Props) => {
 
         <form onSubmit={handleSubmit} className="space-y-5 mt-2">
           <div className="border border-foreground/20 px-4 py-3 text-sm text-foreground/80">
-            Interest in {[property?.referenceCode, publicTitle(property?.title)].filter(Boolean).join(' · ')}{property?.price ? ` — ${publicPrice(property.price)}` : ''}
+            Interest in {[property?.referenceCode, publicTitle(property?.title)].filter(Boolean).join(' · ')}{property?.price ? ` — ${publicPrice(property.price, undefined, property.status)}` : ''}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">

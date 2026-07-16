@@ -22,6 +22,7 @@ export type TourProperty = {
   baths?: number | null;
   size?: string | null;
   totalCoveredArea?: string | null;
+  status?: string | null;
 };
 
 const TIME_SLOTS = [
@@ -222,7 +223,7 @@ const TourDialog = ({ open, onOpenChange, property }: TourDialogProps) => {
                 </div>
                 <div className="p-3">
                   {property.price && (
-                    <p className="text-lg font-bold text-menu-foreground leading-none">{publicPrice(property.price)}</p>
+                    <p className="text-lg font-bold text-menu-foreground leading-none">{publicPrice(property.price, undefined, property.status)}</p>
                   )}
                   
                   {stats.length > 0 && (

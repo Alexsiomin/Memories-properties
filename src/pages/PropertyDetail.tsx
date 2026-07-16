@@ -1446,6 +1446,7 @@ const PropertyDetail = () => {
           baths: property.baths,
           size: property.size,
           totalCoveredArea,
+          status: property.status,
         }}
       />
     </main>
