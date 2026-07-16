@@ -64,6 +64,14 @@ const isColumnEmpty = (units: UnitRow[], key: string) => {
       return units.every((u) => !tagValue(u.tags, /^basement\s+/i));
     case 'storage_room':
       return units.every((u) => !tagValue(u.tags, /^storage room\s+/i));
+    case 'roof_garden':
+      return units.every((u) => !tagValue(u.tags, /^roof garden\s+/i));
+    case 'parking':
+      return units.every((u) => !u.parking_spaces);
+    case 'covered_parking':
+      return units.every((u) => !tagValue(u.tags, /^covered parking\s+/i));
+    case 'floor':
+      return units.every((u) => !tagValue(u.tags, /^floor level\s+/i));
     case 'baths':
       return units.every((u) => u.baths == null);
     case 'lot_size':
@@ -87,7 +95,7 @@ const DevelopmentDetail = () => {
     (async () => {
       const { data } = await supabase
         .from('properties')
-        .select('id, slug, title, location, category, price, price_value, beds, baths, status, listing_type, cover_image, images, internal_area, size, covered_verandas, tags, lot_size, latitude, longitude')
+        .select('id, slug, title, location, category, price, price_value, beds, baths, status, listing_type, cover_image, images, internal_area, size, covered_verandas, tags, lot_size, parking_spaces, latitude, longitude')
         .not('developer_id', 'is', null)
         .limit(2000);
       if (!cancelled) {
@@ -435,9 +443,13 @@ const DevelopmentDetail = () => {
                         {!colHidden(units[0]?.tags, 'uncovered_verandas') && !isColumnEmpty(units, 'uncovered_verandas') && <th className="px-4 py-3 font-medium">Uncovered veranda</th>}
                         {!colHidden(units[0]?.tags, 'basement') && !isColumnEmpty(units, 'basement') && <th className="px-4 py-3 font-medium">Basement</th>}
                         {!colHidden(units[0]?.tags, 'storage_room') && !isColumnEmpty(units, 'storage_room') && <th className="px-4 py-3 font-medium">Storage room</th>}
+                        {!colHidden(units[0]?.tags, 'roof_garden') && !isColumnEmpty(units, 'roof_garden') && <th className="px-4 py-3 font-medium">Roof garden</th>}
+                        {!colHidden(units[0]?.tags, 'floor') && !isColumnEmpty(units, 'floor') && <th className="px-4 py-3 font-medium">Floor</th>}
                         <th className="px-4 py-3 font-medium">Beds</th>
                         {!colHidden(units[0]?.tags, 'baths') && !isColumnEmpty(units, 'baths') && <th className="px-4 py-3 font-medium">Baths</th>}
                         {!colHidden(units[0]?.tags, 'lot_size') && !isColumnEmpty(units, 'lot_size') && <th className="px-4 py-3 font-medium">Land</th>}
+                        {!colHidden(units[0]?.tags, 'parking') && !isColumnEmpty(units, 'parking') && <th className="px-4 py-3 font-medium">Parking</th>}
+                        {!colHidden(units[0]?.tags, 'covered_parking') && !isColumnEmpty(units, 'covered_parking') && <th className="px-4 py-3 font-medium">Covered parking</th>}
                         <th className="px-4 py-3 font-medium text-right">Price</th>
                       </tr>
                     </thead>
@@ -467,9 +479,13 @@ const DevelopmentDetail = () => {
                           {!colHidden(u.tags, 'uncovered_verandas') && !isColumnEmpty(units, 'uncovered_verandas') && <td className="px-4 py-4 text-muted-foreground">{tagValue(u.tags, /^uncovered verandas?\s+/i) || '—'}</td>}
                           {!colHidden(u.tags, 'basement') && !isColumnEmpty(units, 'basement') && <td className="px-4 py-4 text-muted-foreground">{tagValue(u.tags, /^basement\s+/i) || '—'}</td>}
                           {!colHidden(u.tags, 'storage_room') && !isColumnEmpty(units, 'storage_room') && <td className="px-4 py-4 text-muted-foreground">{tagValue(u.tags, /^storage room\s+/i) || '—'}</td>}
+                          {!colHidden(u.tags, 'roof_garden') && !isColumnEmpty(units, 'roof_garden') && <td className="px-4 py-4 text-muted-foreground">{tagValue(u.tags, /^roof garden\s+/i) || '—'}</td>}
+                          {!colHidden(u.tags, 'floor') && !isColumnEmpty(units, 'floor') && <td className="px-4 py-4 text-muted-foreground">{tagValue(u.tags, /^floor level\s+/i) || '—'}</td>}
                           <td className="px-4 py-4 text-muted-foreground">{u.beds ?? '—'}</td>
                           {!colHidden(u.tags, 'baths') && !isColumnEmpty(units, 'baths') && <td className="px-4 py-4 text-muted-foreground">{u.baths ?? '—'}</td>}
                           {!colHidden(u.tags, 'lot_size') && !isColumnEmpty(units, 'lot_size') && <td className="px-4 py-4 text-muted-foreground">{u.lot_size || '—'}</td>}
+                          {!colHidden(u.tags, 'parking') && !isColumnEmpty(units, 'parking') && <td className="px-4 py-4 text-muted-foreground">{u.parking_spaces ?? '—'}</td>}
+                          {!colHidden(u.tags, 'covered_parking') && !isColumnEmpty(units, 'covered_parking') && <td className="px-4 py-4 text-muted-foreground">{tagValue(u.tags, /^covered parking\s+/i) || '—'}</td>}
                           <td className="px-4 py-4 text-right font-semibold text-foreground">
                             {isSold(u) ? (
                               <span className="inline-flex items-center rounded-md bg-foreground/85 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background">

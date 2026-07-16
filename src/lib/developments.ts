@@ -28,6 +28,7 @@ export type UnitRow = {
   covered_verandas?: string | null;
   tags?: string[] | null;
   lot_size?: string | null;
+  parking_spaces?: number | null;
   latitude?: number | null;
   longitude?: number | null;
 };
