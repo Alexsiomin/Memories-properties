@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight } from 'lucide-react';
+import { BedDouble, Bath, LayoutGrid, Grid3x3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
@@ -8,16 +8,19 @@ import Thumbnail from '@/components/Thumbnail';
 import {
   buildDevelopments,
   bedRange,
-  formatEur,
-  soldStatsByProject,
+  bathRange,
   type Development,
   type UnitRow,
 } from '@/lib/developments';
 import residential from '@/assets/proj-residential.jpg';
 
+type Columns = 2 | 4;
+
 const SoldProjects = () => {
   const [rows, setRows] = useState<UnitRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [columns, setColumns] = useState<Columns>(4);
+  const [sort, setSort] = useState<'az' | 'za'>('az');
 
   useEffect(() => {
     let cancelled = false;
@@ -35,8 +38,16 @@ const SoldProjects = () => {
     return () => { cancelled = true; };
   }, []);
 
-  const developments = useMemo(() => buildDevelopments(rows, { sold: true }), [rows]);
-  const soldStats = useMemo(() => soldStatsByProject(rows), [rows]);
+  const developments = useMemo(() => {
+    const list = buildDevelopments(rows, { sold: true });
+    const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    return sort === 'az' ? sorted : sorted.reverse();
+  }, [rows, sort]);
+
+  const gridClass =
+    columns === 2
+      ? 'grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-12'
+      : 'grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10';
 
   return (
     <>
@@ -50,12 +61,51 @@ const SoldProjects = () => {
       />
 
       <section className="container mx-auto px-6 py-10">
+        {!loading && developments.length > 0 && (
+          <div className="flex items-center justify-between border-b border-border pb-4 mb-8">
+            <p className="text-sm text-muted-foreground">
+              {developments.length} of {developments.length} Results
+            </p>
+            <div className="flex items-center gap-4">
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as 'az' | 'za')}
+                className="text-sm border border-border rounded-none px-3 py-1.5 bg-background text-foreground"
+                aria-label="Sort projects"
+              >
+                <option value="az">Sort A to Z</option>
+                <option value="za">Sort Z to A</option>
+              </select>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setColumns(2)}
+                  aria-label="2 columns"
+                  aria-pressed={columns === 2}
+                  className={`p-1.5 border ${columns === 2 ? 'border-foreground text-foreground' : 'border-border text-muted-foreground'}`}
+                >
+                  <LayoutGrid size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setColumns(4)}
+                  aria-label="4 columns"
+                  aria-pressed={columns === 4}
+                  className={`p-1.5 border ${columns === 4 ? 'border-foreground text-foreground' : 'border-border text-muted-foreground'}`}
+                >
+                  <Grid3x3 size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-none overflow-hidden border border-border">
+          <div className={gridClass}>
+            {Array.from({ length: columns === 2 ? 4 : 8 }).map((_, i) => (
+              <div key={i} className="overflow-hidden">
                 <div className="aspect-[4/3] bg-muted animate-pulse" />
-                <div className="p-5 space-y-3">
+                <div className="pt-3 space-y-3">
                   <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
                   <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
                 </div>
@@ -67,41 +117,37 @@ const SoldProjects = () => {
             No sold projects to show yet.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className={gridClass}>
             {developments.map((d: Development, i) => (
-              <article key={`${d.name}-${d.slug}`} className="group reveal" data-reveal-delay={String((i % 3) * 100)}>
-                <Link
-                  to={`/developments/${d.slug}`}
-                  className="block rounded-none overflow-hidden bg-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-                >
-                  <div className="relative">
+              <article key={`${d.name}-${d.slug}`} className="group reveal" data-reveal-delay={String((i % 4) * 75)}>
+                <Link to={`/developments/${d.slug}`} className="block">
+                  <div className="relative overflow-hidden">
                     <Thumbnail
                       src={d.cover || residential}
-                      alt={d.location ? `Sold property in ${d.location}` : 'Sold property'}
+                      alt={d.location ? `${d.name} — ${d.location}` : d.name}
                       wrapperClassName="aspect-[4/3]"
-                      className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105 grayscale-[35%]"
+                      className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                     />
-                    <span className="absolute top-0 left-0 inline-flex px-2.5 py-1 rounded-none bg-foreground/85 backdrop-blur text-background text-[11px] font-semibold tracking-wide uppercase">
-                      Sold out
+                    <span className="absolute top-3 left-3 inline-flex px-2.5 py-1 bg-white text-[hsl(212_100%_10%)] text-xs font-semibold">
+                      {d.name}
                     </span>
                   </div>
-                  <div className="p-5">
-                    {d.minPrice != null && (
-                      <p className="text-xl font-semibold text-foreground">
-                        From {formatEur(d.minPrice)}
-                      </p>
-                    )}
-                    <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
-                      {[`${d.unitCount} unit${d.unitCount === 1 ? '' : 's'} sold`, bedRange(d), d.categories.join(', ')].filter(Boolean).join(' | ')}
+                  <div className={columns === 2 ? 'pt-4 flex items-center justify-between gap-4' : 'pt-3'}>
+                    <p className="font-montserrat font-extrabold uppercase text-sm text-foreground">
+                      {d.location || d.name}
                     </p>
-                    {d.location && <p className="text-foreground/60 text-base mt-2">{d.location}</p>}
-                    {(() => {
-                      const s = soldStats.get(d.name);
-                      if (!s || s.soldValue <= 0) return null;
-                      return (
-                        <p className="text-foreground/50 text-sm mt-2">Total sold: {formatEur(s.soldValue)}</p>
-                      );
-                    })()}
+                    <div className="flex items-center gap-3 text-muted-foreground text-sm shrink-0 mt-1">
+                      {bedRange(d) && (
+                        <span className="inline-flex items-center gap-1">
+                          <BedDouble size={16} /> {bedRange(d)}
+                        </span>
+                      )}
+                      {bathRange(d) && (
+                        <span className="inline-flex items-center gap-1">
+                          <Bath size={16} /> {bathRange(d)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
               </article>
