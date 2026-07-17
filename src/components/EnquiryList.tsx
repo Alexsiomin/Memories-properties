@@ -264,9 +264,9 @@ const EnquiryList = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="btn-cta btn-cta-solid btn-cta-block sm:w-auto order-1 sm:order-2"
+            className="group inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 border border-white bg-menu px-6 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-white transition-opacity order-1 sm:order-2 disabled:opacity-50 disabled:pointer-events-none"
           >
-            <span>{submitting ? 'Submitting…' : 'Submit'}</span>
+            <span className="story-link">{submitting ? 'Submitting…' : 'Submit'}</span>
             <ArrowRight className="h-4 w-4" />
           </button>
 
