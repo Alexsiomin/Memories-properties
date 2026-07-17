@@ -341,6 +341,10 @@ const Masthead = () => {
 
 
                 <div className="mt-auto pt-16 pb-8 space-y-6">
+                  <div className="block">
+                    <LanguageToggle tone="text-menu-foreground" className="text-[26px]" />
+                  </div>
+
                   {user ? (
                     <Link
                       to="/account"
@@ -358,10 +362,6 @@ const Masthead = () => {
                       <UserIcon size={16} /> Sign in
                     </Link>
                   )}
-
-                  <div className="block">
-                    <LanguageToggle tone="text-menu-foreground" />
-                  </div>
 
                   <div className="flex flex-col gap-4 text-base">
                     <a href="https://www.facebook.com/profile.php?id=61590658206461" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-menu-foreground/90 hover:text-accent transition-colors">

@@ -15,7 +15,7 @@ const LanguageToggle = ({ className = '', tone = '' }: Props) => {
 
   return (
     <div
-      className={`notranslate inline-flex items-center text-sm uppercase tracking-[0.22em] font-montserrat font-extrabold select-none ${tone} ${className}`}
+      className={`notranslate inline-flex items-center uppercase tracking-[0.22em] font-montserrat font-extrabold select-none ${tone} ${className || 'text-sm'}`}
       translate="no"
       aria-label="Language"
     >
