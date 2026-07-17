@@ -13,7 +13,7 @@ const ERAS = [
     body:
       'As the most desirable regions evolved, so too did the practice. We expanded into key inner and coastal precincts, refining our approach to bespoke marketing, strategic negotiation and premium private campaigns. During this period the practice became synonymous with prestige estates, establishing long-standing relationships with families, developers and investors across blue-chip markets.',
     image: eraCyprus,
-    alt: 'Luxury Cyprus villa with sea views',
+    alt: 'Historic Cyprus architecture',
     cta: { label: 'View properties', to: '/properties' },
   },
 ];
