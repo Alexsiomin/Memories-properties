@@ -1229,116 +1229,6 @@ const PropertyDetail = () => {
             </div>
           )}
 
-          {/* Related properties — internal linking for SEO */}
-          {related.length > 0 && (
-            <section className="mt-14 pt-10 border-t border-border" aria-labelledby="related-heading">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <h2 id="related-heading" className="font-montserrat font-extrabold text-foreground text-2xl uppercase">
-                    Related Listings
-                  </h2>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {property.region
-                      ? `Similar ${property.category.toLowerCase()} opportunities across ${property.region} and beyond.`
-                      : `Other ${property.category.toLowerCase()} opportunities curated by Memories.`}
-                  </p>
-                </div>
-                <div className="hidden sm:flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    aria-label="Previous"
-                    disabled={relatedActive === 0}
-                    onClick={() => {
-                      const el = relatedScrollRef.current;
-                      const card = el?.querySelector('a') as HTMLElement | null;
-                      const step = card ? card.getBoundingClientRect().width + 24 : (el?.clientWidth ?? 0) * 0.85;
-                      el?.scrollBy({ left: -step, behavior: 'smooth' });
-                    }}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-all hover:border-[#00101f] hover:bg-[#00101f] hover:text-white hover:shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-background disabled:hover:text-foreground disabled:hover:border-border disabled:hover:shadow-sm"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Next"
-                    disabled={relatedActive >= related.length - 1}
-                    onClick={() => {
-                      const el = relatedScrollRef.current;
-                      const card = el?.querySelector('a') as HTMLElement | null;
-                      const step = card ? card.getBoundingClientRect().width + 24 : (el?.clientWidth ?? 0) * 0.85;
-                      el?.scrollBy({ left: step, behavior: 'smooth' });
-                    }}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-all hover:border-[#00101f] hover:bg-[#00101f] hover:text-white hover:shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-background disabled:hover:text-foreground disabled:hover:border-border disabled:hover:shadow-sm"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-              <div ref={relatedScrollRef} className="mt-6 -mx-4 sm:mx-0 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-smooth no-scrollbar" style={{ touchAction: 'pan-x' }}>
-                <div className="flex gap-6 px-4 sm:px-0">
-                  {related.map((r) => {
-                    const relImg = r.cover_image || IMAGE_MAP[r.image_key] || hero;
-                    const href = `/properties/${r.slug ?? r.id}`;
-                    return (
-                      <Link
-                        key={r.id}
-                        to={href}
-                        className="group snap-start shrink-0 basis-[85%] xs:basis-[70%] sm:basis-[calc(50%-0.75rem)] lg:basis-[calc(50%-0.75rem)] overflow-hidden bg-card border border-border rounded-none hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-                      >
-                        <div className="relative">
-                          <Thumbnail
-                            src={relImg}
-                            alt={`${publicTitle(r.title)} — ${publicLocation(r)}`}
-                            wrapperClassName="aspect-[4/3]"
-                            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
-                          />
-                        </div>
-                        <div className="p-5">
-                          <p className="text-lg sm:text-xl font-semibold text-foreground break-words">{publicPrice(r.price, undefined, r.status)}</p>
-                          <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
-                            {(() => {
-                              const rInternal = parseAreaNum(r.internal_area);
-                              const rCovered = parseAreaNum(r.covered_verandas);
-                              const rTotal = (rInternal ?? 0) + (rCovered ?? 0);
-                              const rArea = rTotal > 0
-                                ? `${rTotal.toFixed(2).replace(/\.00$/, '')} m²`
-                                : r.size;
-                              return [
-                                r.beds && r.beds > 0 ? `${r.beds} bds` : null,
-                                r.baths && r.baths > 0 ? `${r.baths} ba` : null,
-                                rArea || null,
-                                `${r.category} · ${r.status ?? ''}`,
-                              ].filter(Boolean).join(' | ');
-                            })()}
-                          </p>
-                          <p className="text-foreground/60 mt-0.5 text-base">
-                            {publicLocation(r)}
-                          </p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-              {related.length > 1 && (
-                <div className="mt-4 flex justify-center gap-1.5">
-                  {related.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      aria-label={`Go to slide ${i + 1}`}
-                      onClick={() => {
-                        const el = relatedScrollRef.current;
-                        const child = el?.firstElementChild?.children[i] as HTMLElement | undefined;
-                        if (el && child) el.scrollTo({ left: child.offsetLeft - 16, behavior: 'smooth' });
-                      }}
-                      className={`h-1.5 rounded-full transition-all ${i === relatedActive ? 'w-6 bg-foreground' : 'w-1.5 bg-foreground/25'}`}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
         </div>
 
         {/* RIGHT — CTA card */}
@@ -1425,6 +1315,122 @@ const PropertyDetail = () => {
           </div>
         </aside>
       </section>
+
+      {/* Related properties — internal linking for SEO. Full-width, outside the
+          sticky CTA card's grid so that card finishes scrolling before this
+          section begins. Carousel on mobile/tablet, responsive grid on desktop
+          (3 columns, 4 on extra-large screens) since there's room to show more. */}
+      {related.length > 0 && (
+        <section className="container mx-auto px-4 md:px-8 mt-14 pt-10 border-t border-border" aria-labelledby="related-heading">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 id="related-heading" className="font-montserrat font-extrabold text-foreground text-2xl uppercase">
+                Related Listings
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {property.region
+                  ? `Similar ${property.category.toLowerCase()} opportunities across ${property.region} and beyond.`
+                  : `Other ${property.category.toLowerCase()} opportunities curated by Memories.`}
+              </p>
+            </div>
+            <div className="flex lg:hidden items-center gap-2 shrink-0">
+              <button
+                type="button"
+                aria-label="Previous"
+                disabled={relatedActive === 0}
+                onClick={() => {
+                  const el = relatedScrollRef.current;
+                  const card = el?.querySelector('a') as HTMLElement | null;
+                  const step = card ? card.getBoundingClientRect().width + 24 : (el?.clientWidth ?? 0) * 0.85;
+                  el?.scrollBy({ left: -step, behavior: 'smooth' });
+                }}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-all hover:border-[#00101f] hover:bg-[#00101f] hover:text-white hover:shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-background disabled:hover:text-foreground disabled:hover:border-border disabled:hover:shadow-sm"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next"
+                disabled={relatedActive >= related.length - 1}
+                onClick={() => {
+                  const el = relatedScrollRef.current;
+                  const card = el?.querySelector('a') as HTMLElement | null;
+                  const step = card ? card.getBoundingClientRect().width + 24 : (el?.clientWidth ?? 0) * 0.85;
+                  el?.scrollBy({ left: step, behavior: 'smooth' });
+                }}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-all hover:border-[#00101f] hover:bg-[#00101f] hover:text-white hover:shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-background disabled:hover:text-foreground disabled:hover:border-border disabled:hover:shadow-sm"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+          <div
+            ref={relatedScrollRef}
+            className="mt-6 -mx-4 sm:mx-0 flex gap-6 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-smooth no-scrollbar px-4 sm:px-0 lg:grid lg:grid-cols-3 xl:grid-cols-4 lg:overflow-visible lg:snap-none lg:px-0"
+            style={{ touchAction: 'pan-x' }}
+          >
+            {related.map((r) => {
+              const relImg = r.cover_image || IMAGE_MAP[r.image_key] || hero;
+              const href = `/properties/${r.slug ?? r.id}`;
+              return (
+                <Link
+                  key={r.id}
+                  to={href}
+                  className="group snap-start shrink-0 basis-[85%] xs:basis-[70%] sm:basis-[calc(50%-0.75rem)] lg:basis-auto lg:shrink overflow-hidden bg-card border border-border rounded-none hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  <div className="relative">
+                    <Thumbnail
+                      src={relImg}
+                      alt={`${publicTitle(r.title)} — ${publicLocation(r)}`}
+                      wrapperClassName="aspect-[4/3]"
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                    />
+                  </div>
+                  <div className="p-5">
+                    <p className="text-lg sm:text-xl font-semibold text-foreground break-words">{publicPrice(r.price, undefined, r.status)}</p>
+                    <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
+                      {(() => {
+                        const rInternal = parseAreaNum(r.internal_area);
+                        const rCovered = parseAreaNum(r.covered_verandas);
+                        const rTotal = (rInternal ?? 0) + (rCovered ?? 0);
+                        const rArea = rTotal > 0
+                          ? `${rTotal.toFixed(2).replace(/\.00$/, '')} m²`
+                          : r.size;
+                        return [
+                          r.beds && r.beds > 0 ? `${r.beds} bds` : null,
+                          r.baths && r.baths > 0 ? `${r.baths} ba` : null,
+                          rArea || null,
+                          `${r.category} · ${r.status ?? ''}`,
+                        ].filter(Boolean).join(' | ');
+                      })()}
+                    </p>
+                    <p className="text-foreground/60 mt-0.5 text-base">
+                      {publicLocation(r)}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+          {related.length > 1 && (
+            <div className="mt-4 flex lg:hidden justify-center gap-1.5">
+              {related.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Go to slide ${i + 1}`}
+                  onClick={() => {
+                    const el = relatedScrollRef.current;
+                    const child = el?.firstElementChild?.children[i] as HTMLElement | undefined;
+                    if (el && child) el.scrollTo({ left: child.offsetLeft - 16, behavior: 'smooth' });
+                  }}
+                  className={`h-1.5 rounded-full transition-all ${i === relatedActive ? 'w-6 bg-foreground' : 'w-1.5 bg-foreground/25'}`}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Lightbox — horizontal slide gallery */}
       {lightboxOpen && portalTarget && createPortal(
