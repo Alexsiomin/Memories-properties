@@ -136,6 +136,7 @@ interface RelatedProperty {
   title: string;
   location: string;
   price: string;
+  price_value: number | null;
   category: string;
   region: string | null;
   city: string | null;
@@ -426,32 +427,61 @@ const PropertyDetail = () => {
         navigate(`/properties/${row.slug}`, { replace: true });
       }
 
-      // Fetch related properties — prioritize same region + category, then fall back to category only
-      const selectCols = 'id, slug, title, location, price, category, region, city, district, image_key, cover_image, beds, baths, status, internal_area, covered_verandas, size';
-      let relList: RelatedProperty[] = [];
+      // Fetch related properties — smart tiered matching, available listings only:
+      // 1) same project (developer + title), 2) same area + similar budget, 3) same type.
+      const selectCols = 'id, slug, title, location, price, price_value, category, region, city, district, image_key, cover_image, beds, baths, status, internal_area, covered_verandas, size';
+      const RELATED_LIMIT = 6;
+      const excludeSold = <T,>(q: T): T =>
+        (q as any)
+          .not('status', 'ilike', '%sold%')
+          .not('status', 'ilike', '%reserved%')
+          .not('status', 'ilike', '%under offer%') as T;
 
-      if (row.region) {
-        const { data: regionRel } = await supabase
+      let relList: RelatedProperty[] = [];
+      const seen = new Set<string>([row.id]);
+
+      // Tier 1: other available units in the same project.
+      if (row.seller_type === 'developer' && row.developer_id) {
+        let q = supabase
+          .from('properties')
+          .select(selectCols)
+          .eq('developer_id', row.developer_id)
+          .eq('title', row.title)
+          .neq('id', row.id);
+        q = excludeSold(q);
+        const { data } = await q.order('price_value', { ascending: true }).limit(RELATED_LIMIT);
+        relList = (data ?? []) as RelatedProperty[];
+        relList.forEach((r) => seen.add(r.id));
+      }
+
+      // Tier 2: same area + same type, similar budget (±60%), available.
+      if (relList.length < RELATED_LIMIT && row.region) {
+        let q = supabase
           .from('properties')
           .select(selectCols)
           .eq('category', row.category)
           .eq('region', row.region)
-          .neq('id', row.id)
-          .order('sort_order', { ascending: true })
-          .limit(2);
-        relList = (regionRel ?? []) as RelatedProperty[];
+          .not('id', 'in', `(${[...seen].join(',')})`);
+        q = excludeSold(q);
+        if (row.price_value) {
+          q = q.gte('price_value', Math.round(row.price_value * 0.4)).lte('price_value', Math.round(row.price_value * 1.6));
+        }
+        const { data } = await q.order('sort_order', { ascending: true }).limit(RELATED_LIMIT - relList.length);
+        const extra = (data ?? []) as RelatedProperty[];
+        relList = [...relList, ...extra];
+        extra.forEach((r) => seen.add(r.id));
       }
 
-      if (relList.length < 2) {
-        const excludeIds = [row.id, ...relList.map((r) => r.id)];
-        const { data: catRel } = await supabase
+      // Tier 3: same type, any area, available — fills out the rest.
+      if (relList.length < RELATED_LIMIT) {
+        let q = supabase
           .from('properties')
           .select(selectCols)
           .eq('category', row.category)
-          .not('id', 'in', `(${excludeIds.join(',')})`)
-          .order('sort_order', { ascending: true })
-          .limit(2 - relList.length);
-        relList = [...relList, ...((catRel ?? []) as RelatedProperty[])];
+          .not('id', 'in', `(${[...seen].join(',')})`);
+        q = excludeSold(q);
+        const { data } = await q.order('sort_order', { ascending: true }).limit(RELATED_LIMIT - relList.length);
+        relList = [...relList, ...((data ?? []) as RelatedProperty[])];
       }
 
       if (!cancelled) setRelated(relList);
@@ -1220,8 +1250,9 @@ const PropertyDetail = () => {
                     disabled={relatedActive === 0}
                     onClick={() => {
                       const el = relatedScrollRef.current;
-                      const target = (el?.firstElementChild?.children[Math.max(0, relatedActive - 1)] as HTMLElement | undefined);
-                      if (el && target) el.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+                      const card = el?.querySelector('a') as HTMLElement | null;
+                      const step = card ? card.getBoundingClientRect().width + 24 : (el?.clientWidth ?? 0) * 0.85;
+                      el?.scrollBy({ left: -step, behavior: 'smooth' });
                     }}
                     className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-all hover:border-[#00101f] hover:bg-[#00101f] hover:text-white hover:shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-background disabled:hover:text-foreground disabled:hover:border-border disabled:hover:shadow-sm"
                   >
@@ -1233,8 +1264,9 @@ const PropertyDetail = () => {
                     disabled={relatedActive >= related.length - 1}
                     onClick={() => {
                       const el = relatedScrollRef.current;
-                      const target = (el?.firstElementChild?.children[Math.min(related.length - 1, relatedActive + 1)] as HTMLElement | undefined);
-                      if (el && target) el.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+                      const card = el?.querySelector('a') as HTMLElement | null;
+                      const step = card ? card.getBoundingClientRect().width + 24 : (el?.clientWidth ?? 0) * 0.85;
+                      el?.scrollBy({ left: step, behavior: 'smooth' });
                     }}
                     className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-all hover:border-[#00101f] hover:bg-[#00101f] hover:text-white hover:shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-background disabled:hover:text-foreground disabled:hover:border-border disabled:hover:shadow-sm"
                   >
