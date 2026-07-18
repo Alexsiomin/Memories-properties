@@ -85,7 +85,7 @@ const SEO = ({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={truncatedDesc} />
       <meta property="og:type" content={type} />
-      <meta property="og:url" content={url} />
+      <meta property="og:url" content={currentUrl} />
       <meta property="og:image" content={ogImage} />
 
       <meta name="twitter:card" content="summary_large_image" />
