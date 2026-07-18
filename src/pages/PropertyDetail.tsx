@@ -23,6 +23,7 @@ import {
   ArrowUpRight,
   ZoomIn,
   ZoomOut,
+  MessageCircle,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -959,6 +960,19 @@ const PropertyDetail = () => {
               <Star size={16} fill={fav ? 'currentColor' : 'none'} />
               {fav ? 'Saved' : 'Save'}
             </button>
+
+            <a
+              href={`https://wa.me/35797947862?text=${encodeURIComponent(
+                `Hi, I'm interested in ${displayTitle}${property.reference_code ? ` (Ref: ${property.reference_code})` : ''} — ${window.location.href}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Ask about this property on WhatsApp"
+              className="btn-cta btn-cta-sm flex-1"
+            >
+              <MessageCircle size={16} />
+              WhatsApp
+            </a>
           </div>
 
           {/* Available lots — sibling units within same developer project */}
