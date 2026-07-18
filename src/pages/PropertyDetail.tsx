@@ -24,6 +24,7 @@ import {
   ZoomIn,
   ZoomOut,
   MessageCircle,
+  Layers,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -111,6 +112,7 @@ interface PropertyRow {
   developer_id?: string | null;
   seller_type?: string | null;
   district?: string | null;
+  floor_plans?: { url: string; label: string }[] | null;
 }
 
 interface LotRow {
@@ -159,9 +161,11 @@ interface LightboxSliderProps {
   total: number;
   initialIndex: number;
   onClose: () => void;
+  labels?: (string | null)[];
+  ariaLabel?: string;
 }
 
-const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose }: LightboxSliderProps) => {
+const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose, labels, ariaLabel }: LightboxSliderProps) => {
   const [index, setIndex] = useState(initialIndex);
   const [zoomed, setZoomed] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -247,7 +251,7 @@ const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose }:
       className="fixed inset-0 z-[200] bg-[hsl(212_100%_10%)] animate-in fade-in-0 duration-200 flex flex-col"
       role="dialog"
       aria-modal="true"
-      aria-label="Property photos"
+      aria-label={ariaLabel ?? 'Property photos'}
       onKeyDown={onKeyDown}
       tabIndex={-1}
       ref={dialogRef}
@@ -263,7 +267,7 @@ const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose }:
           </span>
         </div>
         <span className="text-sm tracking-wide">
-          {index + 1} / {total} photo{total === 1 ? '' : 's'}
+          {labels?.[index] ? labels[index] : `${index + 1} / ${total} photo${total === 1 ? '' : 's'}`}
         </span>
         <div className="flex items-center justify-end gap-1">
           <button
@@ -304,7 +308,7 @@ const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose }:
             >
               <img
                 src={optimizeImage(src, 1600)}
-                alt={`${displayTitle} — photo ${i + 1} of ${total}`}
+                alt={labels?.[i] ? `${displayTitle} — ${labels[i]}` : `${displayTitle} — photo ${i + 1} of ${total}`}
                 loading={i < 2 ? 'eager' : 'lazy'}
                 decoding="async"
                 className={`object-contain bg-[#00101f] transition-transform duration-200 ${zoomed ? 'max-w-none max-h-none scale-[1.75] cursor-zoom-out' : 'max-w-full max-h-full'}`}
@@ -379,6 +383,7 @@ const PropertyDetail = () => {
   const [openTour, setOpenTour] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [floorPlanOpen, setFloorPlanOpen] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const { isFavorite, toggle } = useFavorites();
 
@@ -389,18 +394,20 @@ const PropertyDetail = () => {
     }
   }, []);
 
-  // Lock body scroll + close on Escape while lightbox is open
+  // Lock body scroll + close on Escape while lightbox or floor plan viewer is open
   useEffect(() => {
-    if (!lightboxOpen) return;
+    if (!lightboxOpen && !floorPlanOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setLightboxOpen(false); setFloorPlanOpen(false); }
+    };
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener('keydown', onKey);
     };
-  }, [lightboxOpen]);
+  }, [lightboxOpen, floorPlanOpen]);
 
   useEffect(() => {
     if (!idOrSlug) return;
@@ -975,6 +982,17 @@ const PropertyDetail = () => {
             </a>
           </div>
 
+          {Array.isArray(property.floor_plans) && property.floor_plans.length > 0 && (
+            <button
+              onClick={() => setFloorPlanOpen(true)}
+              type="button"
+              className="mt-3 w-full btn-cta btn-cta-sm justify-center"
+            >
+              <Layers size={16} />
+              View Floor Plan{property.floor_plans.length > 1 ? 's' : ''}
+            </button>
+          )}
+
           {/* Available lots — sibling units within same developer project */}
           {lots.length > 1 && (
             <section className="mt-10" aria-labelledby="available-lots-heading">
@@ -1456,6 +1474,20 @@ const PropertyDetail = () => {
           total={total}
           initialIndex={galleryIndex}
           onClose={() => setLightboxOpen(false)}
+        />,
+        portalTarget
+      )}
+
+      {/* Floor plan viewer — same slider, driven by floor_plans instead of photos */}
+      {floorPlanOpen && portalTarget && Array.isArray(property.floor_plans) && property.floor_plans.length > 0 && createPortal(
+        <LightboxSlider
+          gallery={property.floor_plans.map((f) => f.url)}
+          labels={property.floor_plans.map((f) => f.label || null)}
+          displayTitle={displayTitle}
+          total={property.floor_plans.length}
+          initialIndex={0}
+          onClose={() => setFloorPlanOpen(false)}
+          ariaLabel="Floor plans"
         />,
         portalTarget
       )}

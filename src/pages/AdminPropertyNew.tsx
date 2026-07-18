@@ -195,6 +195,8 @@ export default function AdminPropertyNew() {
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
   const [images, setImages] = useState<string[]>([]);
   const [coverIdx, setCoverIdx] = useState(0);
+  const [floorPlans, setFloorPlans] = useState<{ url: string; label: string }[]>([]);
+  const [floorPlanUploading, setFloorPlanUploading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState('');
   const [clientOptions, setClientOptions] = useState<{ id: string; full_name: string }[]>([]);
@@ -273,6 +275,8 @@ export default function AdminPropertyNew() {
       if (data.cover_image && imgs.includes(data.cover_image)) {
         setCoverIdx(imgs.indexOf(data.cover_image));
       }
+      const fps = Array.isArray((data as any).floor_plans) ? (data as any).floor_plans : [];
+      setFloorPlans(fps.filter((f: any) => f && typeof f.url === 'string'));
       setTags(Array.isArray(data.tags) ? data.tags : []);
       setLoadingRecord(false);
     })();
@@ -361,6 +365,46 @@ export default function AdminPropertyNew() {
     if (coverIdx >= images.length - 1) setCoverIdx(0);
   };
 
+  const handleFloorPlanUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const list = Array.from(files);
+    const oversized = list.filter((f) => f.size > 10 * 1024 * 1024);
+    oversized.forEach((f) => toast.error(`${f.name} exceeds 10MB`));
+    const valid = list.filter((f) => f.size <= 10 * 1024 * 1024);
+    if (valid.length === 0) return;
+
+    setFloorPlanUploading(true);
+    const newEntries: { url: string; label: string }[] = [];
+    for (const file of valid) {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${user.id}/floor-plans/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage
+        .from('property-images')
+        .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+      if (error) { toast.error(`Upload failed: ${error.message}`); continue; }
+      const url = supabase.storage.from('property-images').getPublicUrl(path).data.publicUrl;
+      // Guess a sensible default label from the filename (e.g. "ground-floor.jpg" -> "Ground floor")
+      const guess = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
+      newEntries.push({ url, label: guess ? guess.replace(/\b\w/g, (c) => c.toUpperCase()) : '' });
+    }
+    setFloorPlans((prev) => [...prev, ...newEntries]);
+    setFloorPlanUploading(false);
+    if (newEntries.length) toast.success(`${newEntries.length} floor plan(s) uploaded`);
+  };
+
+  const removeFloorPlan = (i: number) => setFloorPlans((prev) => prev.filter((_, idx) => idx !== i));
+  const setFloorPlanLabel = (i: number, label: string) =>
+    setFloorPlans((prev) => prev.map((f, idx) => (idx === i ? { ...f, label } : f)));
+  const moveFloorPlan = (i: number, dir: -1 | 1) => {
+    setFloorPlans((prev) => {
+      const next = [...prev];
+      const j = i + dir;
+      if (j < 0 || j >= next.length) return prev;
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
+
   const save = async () => {
     const parsed = propertySchema.safeParse(form);
     if (!parsed.success) {
@@ -413,6 +457,7 @@ export default function AdminPropertyNew() {
       sort_order: Number(v.sort_order ?? 0),
       image_key: v.image_key || 'hero',
       images,
+      floor_plans: floorPlans,
       cover_image: cover,
       address_line: v.address_line || null,
       city: v.city || null,
@@ -826,7 +871,66 @@ export default function AdminPropertyNew() {
             </div>
           </Section>
 
-          {/* Address */}
+          {/* Floor Plans */}
+          <Section icon={<Layers size={18} />} title="Floor plans" subtitle="Upload one image per floor. Label each so buyers can tell them apart (e.g. Ground Floor, First Floor, Basement).">
+            <label className="block">
+              <input
+                type="file" accept="image/*" multiple
+                onChange={(e) => handleFloorPlanUpload(e.target.files)}
+                className="sr-only"
+              />
+              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-accent/60 hover:bg-accent/5 transition-colors cursor-pointer">
+                {floorPlanUploading ? (
+                  <>
+                    <Loader2 className="mx-auto animate-spin text-muted-foreground" />
+                    <p className="mt-2 text-sm font-medium text-foreground">Uploading…</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mx-auto text-muted-foreground" size={22} />
+                    <p className="mt-2 text-sm font-medium text-foreground">Tap to upload floor plans</p>
+                    <p className="text-xs text-muted-foreground">One image per floor · JPG/PNG/WEBP · 10MB each</p>
+                  </>
+                )}
+              </div>
+            </label>
+
+            {floorPlans.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {floorPlans.map((fp, i) => (
+                  <div key={fp.url} className="flex items-center gap-3 border border-border rounded-lg p-2.5 bg-card">
+                    <div className="w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted">
+                      <img src={fp.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                    </div>
+                    <Input
+                      value={fp.label}
+                      onChange={(e) => setFloorPlanLabel(i, e.target.value)}
+                      placeholder="e.g. Ground Floor"
+                      className="flex-1"
+                    />
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button" onClick={() => moveFloorPlan(i, -1)} disabled={i === 0}
+                        aria-label="Move up"
+                        className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+                      >↑</button>
+                      <button
+                        type="button" onClick={() => moveFloorPlan(i, 1)} disabled={i === floorPlans.length - 1}
+                        aria-label="Move down"
+                        className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+                      >↓</button>
+                      <button
+                        type="button" onClick={() => removeFloorPlan(i)} aria-label="Remove floor plan"
+                        className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
           <Section icon={<MapPin size={18} />} title="Address" subtitle="Used for map pins and location filtering.">
             <Grid>
               <Field label="District">

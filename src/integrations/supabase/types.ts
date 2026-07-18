@@ -799,6 +799,7 @@ export type Database = {
           energy_rating: string | null
           external_ref: string | null
           floor: number | null
+          floor_plans: Json
           furnished: string | null
           heating: string | null
           hoa_fees: string | null
@@ -856,6 +857,7 @@ export type Database = {
           energy_rating?: string | null
           external_ref?: string | null
           floor?: number | null
+          floor_plans?: Json
           furnished?: string | null
           heating?: string | null
           hoa_fees?: string | null
@@ -913,6 +915,7 @@ export type Database = {
           energy_rating?: string | null
           external_ref?: string | null
           floor?: number | null
+          floor_plans?: Json
           furnished?: string | null
           heating?: string | null
           hoa_fees?: string | null
