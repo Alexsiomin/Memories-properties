@@ -259,79 +259,63 @@ const Hero = () => {
             </button>
           </div>
 
-          {/* DESKTOP: single horizontal bar */}
-          <div className="hidden sm:flex items-stretch bg-[hsl(0_0%_90%)] gap-0 pr-3">
-            {/* Mode selector (BUY / RENT) */}
-            <Popover open={openPopover === 'type'} onOpenChange={(o) => setOpenPopover(o ? 'type' : null)}>
-              <PopoverTrigger asChild>
+          {/* DESKTOP: two-row layout (Marshall White style) — segmented tab
+              bar above the search row, matching marshallwhite.com.au's
+              property search widget. */}
+          <div className="hidden sm:block">
+            {/* Tab row — Buy / Rent / Sold / Projects as equal-width flat
+                segments. Active tab fills solid navy; inactive tabs sit in a
+                muted slate-blue. No border-radius, no underline — the whole
+                background is the indicator, same as the reference. */}
+            <div className="flex">
+              {[...TABS, 'Projects' as Tab].map((t) => (
                 <button
+                  key={t}
                   type="button"
-                  className="group/ctrl inline-flex items-center justify-between gap-3 w-44 pl-6 pr-5 h-[48px] bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.2em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs"
+                  onClick={() => setTab(t)}
+                  className={`flex-1 h-9 flex items-center justify-center uppercase tracking-[0.1em] font-bold text-xs transition-colors ${
+                    tab === t
+                      ? 'bg-[hsl(212_100%_10%)] text-white'
+                      : 'bg-[rgb(176,185,207)] text-white hover:bg-[rgb(155,165,190)]'
+                  }`}
                 >
-                  <span>{tab}</span>
-                  <ChevronDown size={18} className="opacity-80 transition-transform duration-200 group-data-[state=open]/ctrl:rotate-180" />
+                  {t}
                 </button>
-
-              </PopoverTrigger>
-              <PopoverContent align="start" sideOffset={0} className="w-[var(--radix-popover-trigger-width)] p-0 rounded-none bg-white border border-[hsl(212_100%_10%)]/15 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.2)] z-[60]">
-                {TABS.map((t, i) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => { setTab(t); setOpenPopover(null); }}
-                    className={`w-full text-left px-5 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold transition-colors ${
-                      i > 0 ? 'border-t border-[hsl(212_100%_10%)]/10' : ''
-                    } ${
-                      tab === t ? 'bg-[hsl(212_100%_10%)] text-white' : 'text-[hsl(212_100%_10%)] hover:text-accent transition-colors'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-                  {(['Projects'] as Tab[]).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => { setTab(t); setOpenPopover(null); }}
-                      className={`w-full text-left px-5 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold transition-colors border-t border-[hsl(212_100%_10%)]/10 ${
-                        tab === t ? 'bg-[hsl(212_100%_10%)] text-white' : 'text-[hsl(212_100%_10%)] hover:text-accent transition-colors'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-              </PopoverContent>
-            </Popover>
-
-
-            {/* Search input with autocomplete (shared with Properties) */}
-            <MultiLocationSearch {...sharedSearchProps} />
-
-            {/* Filter button — small white rounded pill */}
-            <div className="flex items-center bg-[hsl(0_0%_90%)]">
-              <button
-                type="button"
-                onClick={() => setOpenPopover('filters')}
-                className="inline-flex items-center justify-center gap-1.5 px-4 h-9 bg-white text-foreground text-xs font-medium hover:bg-white/80 transition-colors whitespace-nowrap shrink-0"
-              >
-                <span>Filter</span>
-                <span className="text-base leading-none">+</span>
-                {(minBeds !== null || surroundingRegions || cats.length > 0 || priceRange[0] !== 0 || priceRange[1] !== 10) && (
-                  <span className="ml-1 inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-semibold">
-                    {(minBeds !== null ? 1 : 0) + (surroundingRegions ? 1 : 0) + (cats.length > 0 ? 1 : 0) + ((priceRange[0] !== 0 || priceRange[1] !== 10) ? 1 : 0)}
-                  </span>
-                )}
-              </button>
+              ))}
             </div>
 
-            {/* Search submit (icon only) — desktop */}
-            <button
-              type="submit"
-              aria-label="Search"
-              className="inline-flex items-center justify-center w-10 h-[48px] text-foreground hover:text-foreground/70 transition-colors shrink-0"
-            >
-              <Search size={18} strokeWidth={2} />
-            </button>
+            {/* Search row */}
+            <div className="flex items-stretch bg-[hsl(220_31%_95%)] gap-0 pr-3">
+              {/* Search input with autocomplete (shared with Properties) */}
+              <MultiLocationSearch {...sharedSearchProps} />
+
+              {/* Filter button — white pill with thin border, matching the
+                  reference's rounded "Filter" control. */}
+              <div className="flex items-center bg-[hsl(220_31%_95%)] py-1.5 pl-2">
+                <button
+                  type="button"
+                  onClick={() => setOpenPopover('filters')}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 h-8 bg-white text-foreground text-xs font-medium border border-[hsl(212_100%_10%)]/10 rounded whitespace-nowrap shrink-0 hover:border-accent/40 transition-colors"
+                >
+                  <span>Filter</span>
+                  <span className="text-base leading-none">+</span>
+                  {(minBeds !== null || surroundingRegions || cats.length > 0 || priceRange[0] !== 0 || priceRange[1] !== 10) && (
+                    <span className="ml-1 inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-semibold">
+                      {(minBeds !== null ? 1 : 0) + (surroundingRegions ? 1 : 0) + (cats.length > 0 ? 1 : 0) + ((priceRange[0] !== 0 || priceRange[1] !== 10) ? 1 : 0)}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Search submit (icon only) — desktop */}
+              <button
+                type="submit"
+                aria-label="Search"
+                className="inline-flex items-center justify-center w-10 h-[48px] text-foreground hover:text-foreground/70 transition-colors shrink-0"
+              >
+                <Search size={18} strokeWidth={2} />
+              </button>
+            </div>
           </div>
 
           {/* Filters dialog (shared) */}
