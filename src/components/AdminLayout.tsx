@@ -16,7 +16,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Building2, Plus, Upload, HelpCircle, BarChart3, Users, Shield, UserCircle, Mail, Contact, Bot, Type, Search, Lock, Newspaper, Pencil } from 'lucide-react';
+import { LayoutDashboard, Building2, Plus, Upload, HelpCircle, BarChart3, Users, Shield, UserCircle, Mail, Contact, Bot, Type, Search, Lock, Newspaper, Pencil, LineChart } from 'lucide-react';
 
 export const ADMIN_NAV = [
   { to: '/admin', title: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -34,6 +34,7 @@ export const ADMIN_NAV = [
   { to: '/admin/insights', title: 'Manage insights', icon: BarChart3 },
   { to: '/admin/developers', title: 'Manage developers', icon: Users },
   { to: '/admin/emails', title: 'Emails & tours', icon: Mail },
+  { to: '/admin/analytics', title: 'Analytics', icon: LineChart },
   { to: '/admin/assistant', title: 'AI Concierge', icon: Bot },
   { to: '/admin/seo', title: 'SEO manager', icon: Search },
   { to: '/admin/auth-modal', title: 'Sign-in popup', icon: Lock },

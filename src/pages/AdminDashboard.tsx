@@ -43,6 +43,7 @@ const CARD_DESCRIPTIONS: Record<string, string> = {
   '/admin/insights': 'Edit metrics and chart data shown on the public Insights page.',
   '/admin/developers': 'Add property developers and their XML feed URLs.',
   '/admin/emails': 'View tour requests and manage notification emails.',
+  '/admin/analytics': 'Visitor traffic, most-viewed properties, and conversion stats.',
   '/admin/users-list': 'Browse all registered users and track signups.',
   '/admin/users': 'Grant or revoke admin access for other users.',
 };

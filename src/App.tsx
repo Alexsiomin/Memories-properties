@@ -69,6 +69,7 @@ const AdminBrandWords = lazy(() => import("./pages/AdminBrandWords"));
 const AdminInsights = lazy(() => import("./pages/AdminInsights"));
 const AdminDevelopers = lazy(() => import("./pages/AdminDevelopers"));
 const AdminEmails = lazy(() => import("./pages/AdminEmails"));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
 const AdminEmailTemplates = lazy(() => import("./pages/AdminEmailTemplates"));
 const AdminAssistant = lazy(() => import("./pages/AdminAssistant"));
 const AdminSeo = lazy(() => import("./pages/AdminSeo"));
@@ -139,6 +140,7 @@ const LocalizedRoutes = () => (
         <Route path="admin/insights" element={<AdminInsights />} />
         <Route path="admin/developers" element={<AdminDevelopers />} />
         <Route path="admin/emails" element={<AdminEmails />} />
+        <Route path="admin/analytics" element={<AdminAnalytics />} />
         <Route path="admin/emails/templates" element={<AdminEmailTemplates />} />
         <Route path="admin/clients" element={<AdminClients />} />
         <Route path="admin/assistant" element={<AdminAssistant />} />
