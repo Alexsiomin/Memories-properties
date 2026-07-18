@@ -41,23 +41,24 @@ const StayUpdated = () => {
         Stay Updated
       </h2>
 
-      <div className="mt-14 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-12 px-4 sm:px-6">
+      <div className="mt-14 sm:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 px-4 sm:px-6">
         {columns.map((col) => {
           const content = (
             <>
-              <h3 className="font-montserrat uppercase text-xl leading-snug text-foreground">
+              <h3 className="font-montserrat uppercase text-xl leading-snug">
                 {col.title}
               </h3>
-              <p className="mt-6 flex-1 text-[15px] text-muted-foreground leading-relaxed">
+              <p className="mt-6 flex-1 text-[15px] leading-relaxed opacity-80 group-hover:opacity-90 transition-opacity duration-500">
                 {col.body}
               </p>
-              <span className="story-link mt-8 inline-block text-[15px] text-foreground">
+              <span className="story-link mt-8 inline-block text-[15px]">
                 {col.cta}
               </span>
             </>
           );
 
-          const colClass = 'reveal group flex h-full flex-col text-left';
+          const colClass =
+            'reveal group flex h-full flex-col text-left p-6 lg:transition-colors lg:duration-500 lg:hover:bg-primary lg:hover:text-primary-foreground text-foreground';
 
           if (col.title === 'Property Alerts') {
             return (
