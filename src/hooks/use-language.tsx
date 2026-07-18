@@ -2,14 +2,28 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
-/** True when a pathname is under the /ru language prefix. */
-export const isRuPath = (path: string) => path === '/ru' || path.startsWith('/ru/');
-/** Strip the /ru prefix to get the canonical English path. */
-export const stripLangPrefix = (path: string) => (isRuPath(path) ? path.replace(/^\/ru/, '') || '/' : path);
-/** Add the /ru prefix to an English path. */
-export const addRuPrefix = (path: string) => (path === '/' ? '/ru' : `/ru${path}`);
+type Lang = 'en' | 'ru' | 'el' | 'de';
 
-type Lang = 'en' | 'ru';
+/** Non-English language codes that get a URL prefix (e.g. /ru, /el, /de). */
+export const LANG_CODES: Exclude<Lang, 'en'>[] = ['ru', 'el', 'de'];
+export const LANG_LABELS: Record<Lang, string> = { en: 'EN', ru: 'RU', el: 'EL', de: 'DE' };
+
+/** True when a pathname is under a given language's URL prefix. */
+export const isLangPath = (path: string, code: string) => path === `/${code}` || path.startsWith(`/${code}/`);
+/** True when a pathname is under the /ru language prefix. Kept for backward compatibility. */
+export const isRuPath = (path: string) => isLangPath(path, 'ru');
+/** The language prefix a path is under, or null if it's an unprefixed (English) path. */
+export const langOfPath = (path: string): Exclude<Lang, 'en'> | null =>
+  LANG_CODES.find((c) => isLangPath(path, c)) ?? null;
+/** Strip any known language prefix to get the canonical English path. */
+export const stripLangPrefix = (path: string) => {
+  const code = langOfPath(path);
+  return code ? path.replace(new RegExp(`^/${code}`), '') || '/' : path;
+};
+/** Add a language's prefix to an English path. */
+export const addLangPrefix = (path: string, code: Exclude<Lang, 'en'>) => (path === '/' ? `/${code}` : `/${code}${path}`);
+/** Add the /ru prefix to an English path. Kept for backward compatibility. */
+export const addRuPrefix = (path: string) => addLangPrefix(path, 'ru');
 
 interface LangContextValue {
   lang: Lang;
@@ -26,14 +40,15 @@ const LangContext = createContext<LangContextValue>({
 });
 
 const STORAGE_KEY = 'site-lang';
-const CACHE_KEY = 'ru-translation-cache-v3';
+const cacheKeyFor = (l: Lang) => `translation-cache-v3-${l}`;
+
 
 // Skip these elements entirely (their text should never be translated / touched).
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE', 'TEXTAREA']);
 
-const loadCache = (): Record<string, string> => {
+const loadCache = (l: Lang): Record<string, string> => {
   try {
-    return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+    return JSON.parse(localStorage.getItem(cacheKeyFor(l)) || '{}');
   } catch {
     return {};
   }
@@ -43,17 +58,23 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   const location = useLocation();
   const navigate = useNavigate();
   // URL is the source of truth for indexable pages; localStorage remembers the
-  // user's preference so plain in-app links (without /ru) still stay Russian.
+  // user's preference so plain in-app links (without a language prefix) stay
+  // in that language too.
   const [pref, setPref] = useState<Lang>(() => {
     if (typeof window === 'undefined') return 'en';
     return (localStorage.getItem(STORAGE_KEY) as Lang) || 'en';
   });
-  const urlRu = isRuPath(location.pathname);
-  const lang: Lang = urlRu ? 'ru' : pref;
+  const urlLang = langOfPath(location.pathname);
+  const lang: Lang = urlLang ?? pref;
   const [translating, setTranslating] = useState(false);
 
 
-  const cacheRef = useRef<Record<string, string>>(loadCache());
+  const cacheRef = useRef<Record<string, string>>(loadCache(lang));
+  // Reload the cache whenever the active language changes — each language
+  // keeps its own cache bucket so switching back and forth stays instant.
+  useEffect(() => {
+    cacheRef.current = loadCache(lang);
+  }, [lang]);
   // Maps a text node -> its original English string, so we can restore on switch back.
   const originalsRef = useRef<Map<Text, string>>(new Map());
   // The exact value we last wrote to each node, to detect (and ignore) our own edits.
@@ -64,11 +85,11 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
 
   const saveCache = useCallback(() => {
     try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheRef.current));
+      localStorage.setItem(cacheKeyFor(lang), JSON.stringify(cacheRef.current));
     } catch {
       /* quota — ignore */
     }
-  }, []);
+  }, [lang]);
 
   const isTranslatable = (node: Text): boolean => {
     const value = node.nodeValue;
@@ -113,7 +134,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const flush = useCallback(async () => {
-    if (lang !== 'ru') return;
+    if (lang === 'en') return;
     const nodes = Array.from(pendingRef.current);
     pendingRef.current.clear();
     if (nodes.length === 0) return;
@@ -145,7 +166,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
         let data: any, error: any;
         try {
           const res = await supabase.functions.invoke('translate', {
-            body: { texts: chunk, target: 'ru' },
+            body: { texts: chunk, target: lang },
           });
           data = res.data; error = res.error;
         } catch {
@@ -158,8 +179,8 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
           if (typeof tr === 'string' && tr.length) {
             cache[text] = tr;
             for (const node of uncachedMap.get(text) || []) {
-              // Only apply if still in ru mode and node still shows original.
-              if (lang === 'ru') applyToNode(node, tr);
+              // Only apply if the language hasn't changed mid-flight.
+              if (lang !== 'en') applyToNode(node, tr);
             }
           }
         });
@@ -197,22 +218,30 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
     appliedRef.current.clear();
   }, []);
 
-  // A directly-opened /ru URL (e.g. a shared or crawled link) should persist the
-  // Russian preference so subsequent un-prefixed navigation stays Russian.
+  // A directly-opened localized URL (e.g. a shared or crawled /el/... link)
+  // should persist that language preference so subsequent un-prefixed
+  // navigation stays in the same language.
   useEffect(() => {
-    if (urlRu && pref !== 'ru') {
-      setPref('ru');
-      localStorage.setItem(STORAGE_KEY, 'ru');
+    if (urlLang && pref !== urlLang) {
+      setPref(urlLang);
+      localStorage.setItem(STORAGE_KEY, urlLang);
     }
-  }, [urlRu, pref]);
+  }, [urlLang, pref]);
 
-  // Main effect: react to language changes.
-
+  // Main effect: react to language changes. Always restore to the original
+  // English text first, then re-translate if needed — this correctly handles
+  // switching directly between two non-English languages (e.g. RU -> EL)
+  // without trying to re-translate already-translated text.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     document.documentElement.lang = lang;
 
-    if (lang === 'ru') {
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+    pendingRef.current.clear();
+    restoreOriginals();
+
+    if (lang !== 'en') {
       queueNodes(collectTextNodes(document.body));
 
       const observer = new MutationObserver((mutations) => {
@@ -250,12 +279,6 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
         observer.disconnect();
         observerRef.current = null;
       };
-    } else {
-      // Switch back to English.
-      observerRef.current?.disconnect();
-      observerRef.current = null;
-      pendingRef.current.clear();
-      restoreOriginals();
     }
   }, [lang, queueNodes, restoreOriginals]);
 
@@ -264,9 +287,9 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
       localStorage.setItem(STORAGE_KEY, l);
       setPref(l);
       // Reflect the choice in the URL so the page is a real, shareable, indexable
-      // localized URL (/ru/... for Russian, un-prefixed for English).
+      // localized URL (/ru/... /el/... /de/... for non-English, un-prefixed for English).
       const base = stripLangPrefix(location.pathname);
-      const target = l === 'ru' ? addRuPrefix(base) : base;
+      const target = l === 'en' ? base : addLangPrefix(base, l);
       const full = target + location.search + location.hash;
       if (full !== location.pathname + location.search + location.hash) {
         navigate(full);
@@ -276,8 +299,12 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   );
 
 
+  // Cycles through all languages in order — mainly kept for API compatibility;
+  // the UI uses setLang directly for explicit language selection.
+  const ALL_LANGS: Lang[] = ['en', ...LANG_CODES];
   const toggle = useCallback(() => {
-    setLang(lang === 'ru' ? 'en' : 'ru');
+    const next = ALL_LANGS[(ALL_LANGS.indexOf(lang) + 1) % ALL_LANGS.length];
+    setLang(next);
   }, [lang, setLang]);
 
   return (

@@ -343,14 +343,19 @@ async function fetchBlogEntries(): Promise<SitemapEntry[]> {
 
 
 
-// hreflang alternates shared by an EN/RU URL pair.
+// Non-English language codes that get a URL prefix — keep in sync with
+// LANG_CODES in src/hooks/use-language.tsx.
+const LANG_CODES = ["ru", "el", "de"] as const;
+
+// hreflang alternates shared by an EN + localized URL group.
 function altLinks(enPath: string): string[] {
-  const ruPath = enPath === "/" ? "/ru" : `/ru${enPath}`;
-  return [
-    `    <xhtml:link rel="alternate" hreflang="en" href="${BASE_URL}${enPath}" />`,
-    `    <xhtml:link rel="alternate" hreflang="ru" href="${BASE_URL}${ruPath}" />`,
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}${enPath}" />`,
-  ];
+  const links = [`    <xhtml:link rel="alternate" hreflang="en" href="${BASE_URL}${enPath}" />`];
+  for (const code of LANG_CODES) {
+    const localizedPath = enPath === "/" ? `/${code}` : `/${code}${enPath}`;
+    links.push(`    <xhtml:link rel="alternate" hreflang="${code}" href="${BASE_URL}${localizedPath}" />`);
+  }
+  links.push(`    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}${enPath}" />`);
+  return links;
 }
 
 /**
@@ -403,7 +408,9 @@ function generateUrlSet(entries: SitemapEntry[], mode: "pages" | "images"): stri
           .map((e) => buildUrl(e, e.path, "images"))
       : entries.flatMap((e) => [
           buildUrl(e, e.path, "pages"),
-          buildUrl(e, e.path === "/" ? "/ru" : `/ru${e.path}`, "pages"),
+          ...LANG_CODES.map((code) =>
+            buildUrl(e, e.path === "/" ? `/${code}` : `/${code}${e.path}`, "pages")
+          ),
         ]);
 
   return [

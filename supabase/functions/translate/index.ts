@@ -1,10 +1,21 @@
 // Batch translation edge function using Lovable AI.
-// Receives an array of English strings, returns the same array translated to Russian.
+// Receives an array of English strings, returns the same array translated to
+// the requested target language (ru, el, or de).
 
-// Hard-coded glossary overrides for specific UI terms.
-const RU_OVERRIDES: Record<string, string> = {
-  "Account": "Кабинет",
-  "ADVOCACY": "адвокатура",
+// Hard-coded glossary overrides for specific UI terms, per target language.
+const OVERRIDES: Record<string, Record<string, string>> = {
+  ru: {
+    "Account": "Кабинет",
+    "ADVOCACY": "адвокатура",
+  },
+  el: {},
+  de: {},
+};
+
+const LANG_NAMES: Record<string, string> = {
+  ru: "Russian",
+  el: "Greek",
+  de: "German",
 };
 
 const corsHeaders = {
@@ -33,7 +44,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const lang = target === "ru" ? "Russian" : String(target || "Russian");
+    const lang = LANG_NAMES[target] || String(target || "Russian");
+    const overrides = OVERRIDES[target] || {};
 
     // Number each segment so the model can return an aligned JSON array.
     const numbered = texts.map((t, i) => `${i}\u0001${t}`).join("\n\u0002\n");
@@ -89,7 +101,7 @@ Deno.serve(async (req) => {
     const result = texts.map((t, i) => {
       const raw =
         typeof translations[i] === "string" && translations[i].length > 0 ? translations[i] : t;
-      return RU_OVERRIDES[t] ?? raw;
+      return overrides[t] ?? raw;
     });
 
     return new Response(JSON.stringify({ translations: result }), {

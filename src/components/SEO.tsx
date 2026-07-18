@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { useSeoOverride } from '@/hooks/use-seo-override';
+import { LANG_CODES, stripLangPrefix, addLangPrefix } from '@/hooks/use-language';
 
 interface SEOProps {
   title: string;
@@ -45,13 +46,13 @@ const SEO = ({
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://memoriesproperties.com';
   // Language-aware URLs: canonical self-references the current locale, and
-  // hreflang links declare the EN <-> RU alternates so both are indexable.
-  const isRu = pathname === '/ru' || pathname.startsWith('/ru/');
-  const enPath = isRu ? pathname.replace(/^\/ru/, '') || '/' : pathname;
-  const ruPath = enPath === '/' ? '/ru' : `/ru${enPath}`;
+  // hreflang links declare alternates for every supported language so all
+  // are indexable and Google can offer the right one per searcher.
+  const enPath = stripLangPrefix(pathname);
   const enUrl = `${origin}${enPath}`;
-  const ruUrl = `${origin}${ruPath}`;
-  const url = isRu ? ruUrl : enUrl;
+  const langUrls: Record<string, string> = { en: enUrl };
+  for (const code of LANG_CODES) langUrls[code] = `${origin}${addLangPrefix(enPath, code)}`;
+  const currentUrl = `${origin}${pathname}`;
   const fullTitle = effTitle.includes(SITE_NAME) ? effTitle : `${effTitle} | ${SITE_NAME}`;
   const ogImage = effImage ? (effImage.startsWith('http') ? effImage : `${origin}${effImage}`) : `${origin}${DEFAULT_IMAGE}`;
   const truncatedDesc = effDescription.length > 160 ? effDescription.slice(0, 157) + '…' : effDescription;
@@ -61,9 +62,11 @@ const SEO = ({
       <title>{fullTitle}</title>
       <meta name="description" content={truncatedDesc} />
       <meta name="robots" content={effNoindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'} />
-      <link rel="canonical" href={url} />
+      <link rel="canonical" href={currentUrl} />
       {!effNoindex && <link rel="alternate" hrefLang="en" href={enUrl} />}
-      {!effNoindex && <link rel="alternate" hrefLang="ru" href={ruUrl} />}
+      {!effNoindex && LANG_CODES.map((code) => (
+        <link key={code} rel="alternate" hrefLang={code} href={langUrls[code]} />
+      ))}
       {!effNoindex && <link rel="alternate" hrefLang="x-default" href={enUrl} />}
 
       {preloadImage && (

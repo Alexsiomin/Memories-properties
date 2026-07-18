@@ -174,9 +174,12 @@ const App = () => (
                   this custom Vercel domain too. */}
               <Route path="/~oauth/callback" element={<AuthCallback />} />
               <Route path="/auth" element={<Auth />} />
-              {/* Russian (/ru) and default (English) share the same tree via
-                  descendant routes, so /ru/* URLs are real, indexable pages. */}
+              {/* Localized languages (/ru, /el, /de) and default (English) share
+                  the same tree via descendant routes, so each /xx/* URL is a
+                  real, indexable page. */}
               <Route path="/ru/*" element={<LocalizedRoutes />} />
+              <Route path="/el/*" element={<LocalizedRoutes />} />
+              <Route path="/de/*" element={<LocalizedRoutes />} />
               <Route path="/*" element={<LocalizedRoutes />} />
             </Routes>
           </Suspense>

@@ -1,4 +1,4 @@
-import { useLanguage } from '@/hooks/use-language';
+import { useLanguage, LANG_CODES, LANG_LABELS } from '@/hooks/use-language';
 
 interface Props {
   className?: string;
@@ -6,36 +6,36 @@ interface Props {
   tone?: string;
 }
 
+const ALL_CODES = ['en', ...LANG_CODES] as const;
+
 /**
- * EN | RU language toggle. English is the default; RU auto-translates the
- * whole page via Lovable AI.
+ * EN | RU | EL | DE language toggle. English is the default; the others
+ * auto-translate the whole page via an edge function.
  */
 const LanguageToggle = ({ className = '', tone = '' }: Props) => {
   const { lang, setLang, translating } = useLanguage();
 
   return (
     <div
-      className={`notranslate inline-flex items-center uppercase tracking-[0.22em] font-montserrat font-extrabold select-none ${tone} ${className || 'text-sm'}`}
+      className={`notranslate inline-flex items-center uppercase tracking-[0.18em] font-montserrat font-extrabold select-none ${tone} ${className || 'text-sm'}`}
       translate="no"
       aria-label="Language"
     >
-      <button
-        type="button"
-        onClick={() => setLang('en')}
-        className={`px-1 transition-opacity ${lang === 'en' ? 'opacity-100' : 'opacity-50 hover:opacity-80'}`}
-        aria-pressed={lang === 'en'}
-      >
-        EN
-      </button>
-      <span className="opacity-40">/</span>
-      <button
-        type="button"
-        onClick={() => setLang('ru')}
-        className={`px-1 transition-opacity ${lang === 'ru' ? 'opacity-100' : 'opacity-50 hover:opacity-80'} ${translating ? 'animate-pulse' : ''}`}
-        aria-pressed={lang === 'ru'}
-      >
-        RU
-      </button>
+      {ALL_CODES.map((code, i) => (
+        <span key={code} className="inline-flex items-center">
+          {i > 0 && <span className="opacity-40 px-0.5">/</span>}
+          <button
+            type="button"
+            onClick={() => setLang(code)}
+            className={`px-1 transition-opacity ${lang === code ? 'opacity-100' : 'opacity-50 hover:opacity-80'} ${
+              translating && lang === code ? 'animate-pulse' : ''
+            }`}
+            aria-pressed={lang === code}
+          >
+            {LANG_LABELS[code]}
+          </button>
+        </span>
+      ))}
     </div>
   );
 };
