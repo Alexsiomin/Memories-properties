@@ -18,6 +18,7 @@ interface KanbanClient {
   pipeline_stage: string;
   source?: string;
   looking_for?: string;
+  score?: 'hot' | 'warm' | 'cold';
 }
 
 export default function ClientsKanban({
@@ -78,7 +79,15 @@ export default function ClientsKanban({
                     !editable(c) ? 'opacity-80' : ''
                   }`}
                 >
-                  <div className="text-sm font-medium truncate">{c.full_name}</div>
+                  <div className="text-sm font-medium truncate flex items-center gap-1.5">
+                    <span
+                      title={c.score === 'hot' ? 'Hot lead' : c.score === 'warm' ? 'Warm lead' : 'Cold lead'}
+                      className={`inline-block w-2 h-2 rounded-full shrink-0 ${
+                        c.score === 'hot' ? 'bg-red-500' : c.score === 'warm' ? 'bg-amber-500' : 'bg-muted-foreground/30'
+                      }`}
+                    />
+                    <span className="truncate">{c.full_name}</span>
+                  </div>
                   {c.email && <div className="text-xs text-muted-foreground truncate">{c.email}</div>}
                   <div className="mt-1 flex items-center gap-1 flex-wrap">
                     {c.source === 'website' && <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent">Saved search</span>}

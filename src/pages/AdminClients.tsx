@@ -48,6 +48,7 @@ interface Client {
   last_activity_at?: string | null;
   open_tasks?: number;
   due_today?: number;
+  score?: 'hot' | 'warm' | 'cold';
 }
 
 interface Property {
@@ -71,6 +72,25 @@ interface Property {
 
 const CATEGORIES = ['Apartment', 'Villa', 'Townhouse', 'Penthouse', 'Bungalow', 'Commercial', 'Mixed-use', 'Land / Plot', 'Coastal', 'Vineyard'];
 const REGIONS = ['Limassol', 'Paphos'];
+
+/**
+ * Derives a lead-priority score purely from data already loaded — no extra
+ * queries. High-intent signals (tour requests, multiple touchpoints, open
+ * tasks due today) outrank passive ones (a single saved search).
+ */
+function computeScore(c: Client): 'hot' | 'warm' | 'cold' {
+  const daysSince = (Date.now() - new Date(c.last_activity_at || c.created_at).getTime()) / 86_400_000;
+  const sources = c.sources || (c.source ? [c.source] : []);
+  const highIntent = sources.includes('tour') || sources.includes('enquiry');
+
+  if ((c.due_today ?? 0) > 0) return 'hot';
+  if (sources.length >= 3) return 'hot';
+  if (highIntent && daysSince <= 7) return 'hot';
+  if (highIntent) return 'warm';
+  if ((c.open_tasks ?? 0) > 0) return 'warm';
+  if (daysSince <= 14) return 'warm';
+  return 'cold';
+}
 
 const clientSchema = z.object({
   full_name: z.string().trim().min(1, 'Name is required').max(120),
@@ -114,6 +134,7 @@ export default function AdminClients() {
   const [stageFilter, setStageFilter] = useState<string | 'all'>('all');
   const [staleFilter, setStaleFilter] = useState(false);
   const [dueFilter, setDueFilter] = useState(false);
+  const [hotFilter, setHotFilter] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -281,6 +302,7 @@ export default function AdminClients() {
     const merged = [...manualList, ...Array.from(seen.values())].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
+    merged.forEach((c) => { c.score = computeScore(c); });
     setClients(merged);
     setLoading(false);
   };
@@ -349,14 +371,15 @@ export default function AdminClients() {
   const STALE_DAYS = 14;
   const counters = useMemo(() => {
     const now = Date.now();
-    let dueToday = 0, stale = 0;
+    let dueToday = 0, stale = 0, hot = 0;
     clients.forEach((c) => {
+      if (c.score === 'hot') hot++;
       if (c.source !== 'manual') return;
       dueToday += c.due_today || 0;
       const last = c.last_activity_at ? new Date(c.last_activity_at).getTime() : new Date(c.created_at).getTime();
       if (!['won', 'lost'].includes(c.pipeline_stage) && (now - last) / 86400000 >= STALE_DAYS) stale++;
     });
-    return { dueToday, stale };
+    return { dueToday, stale, hot };
   }, [clients]);
 
   const filtered = useMemo(() => {
@@ -366,6 +389,7 @@ export default function AdminClients() {
       if (q && ![c.full_name, c.email, c.phone, c.company].filter(Boolean).join(' ').toLowerCase().includes(q)) return false;
       if (stageFilter !== 'all' && (c.pipeline_stage || 'lead') !== stageFilter) return false;
       if (dueFilter && !(c.due_today && c.due_today > 0)) return false;
+      if (hotFilter && c.score !== 'hot') return false;
       if (staleFilter) {
         if (c.source !== 'manual' || ['won', 'lost'].includes(c.pipeline_stage)) return false;
         const last = c.last_activity_at ? new Date(c.last_activity_at).getTime() : new Date(c.created_at).getTime();
@@ -373,7 +397,7 @@ export default function AdminClients() {
       }
       return true;
     });
-  }, [clients, search, stageFilter, dueFilter, staleFilter]);
+  }, [clients, search, stageFilter, dueFilter, staleFilter, hotFilter]);
 
   const selected = clients.find((c) => c.id === selectedId) || null;
 
@@ -482,18 +506,21 @@ export default function AdminClients() {
       {/* Counters & filters */}
       <div className="flex items-center gap-2 flex-wrap mb-4">
         <button
-          onClick={() => { setStageFilter('all'); setDueFilter(false); setStaleFilter(false); }}
-          className={`px-3 h-8 rounded-full text-xs font-medium border ${stageFilter === 'all' && !dueFilter && !staleFilter ? 'bg-accent text-accent-foreground border-accent' : 'bg-background border-border hover:border-accent/60'}`}
+          onClick={() => { setStageFilter('all'); setDueFilter(false); setStaleFilter(false); setHotFilter(false); }}
+          className={`px-3 h-8 rounded-full text-xs font-medium border ${stageFilter === 'all' && !dueFilter && !staleFilter && !hotFilter ? 'bg-accent text-accent-foreground border-accent' : 'bg-background border-border hover:border-accent/60'}`}
         >All ({clients.length})</button>
         {STAGES.map((s) => {
           const count = clients.filter((c) => (c.pipeline_stage || 'lead') === s.key).length;
           return (
-            <button key={s.key} onClick={() => { setStageFilter(s.key); setDueFilter(false); setStaleFilter(false); }}
+            <button key={s.key} onClick={() => { setStageFilter(s.key); setDueFilter(false); setStaleFilter(false); setHotFilter(false); }}
               className={`px-3 h-8 rounded-full text-xs font-medium border ${stageFilter === s.key ? 'bg-accent text-accent-foreground border-accent' : 'bg-background border-border hover:border-accent/60'}`}
             >{s.label} ({count})</button>
           );
         })}
         <div className="w-px h-5 bg-border mx-1" />
+        <button onClick={() => setHotFilter((h) => !h)}
+          className={`px-3 h-8 rounded-full text-xs font-medium border inline-flex items-center gap-1 ${hotFilter ? 'bg-red-500 text-white border-red-500' : 'bg-background border-border hover:border-accent/60'}`}
+        ><span className="inline-block w-2 h-2 rounded-full bg-current" />Hot leads ({counters.hot})</button>
         <button onClick={() => setDueFilter((d) => !d)}
           className={`px-3 h-8 rounded-full text-xs font-medium border inline-flex items-center gap-1 ${dueFilter ? 'bg-accent text-accent-foreground border-accent' : 'bg-background border-border hover:border-accent/60'}`}
         ><Calendar className="h-3 w-3" />Due today ({counters.dueToday})</button>
@@ -789,7 +816,15 @@ export default function AdminClients() {
                         className={`border-t border-border cursor-pointer hover:bg-muted/30 ${selectedId === c.id ? 'bg-accent/5' : ''}`}
                       >
                         <td className="p-3">
-                          <div className="font-medium">{c.full_name}</div>
+                          <div className="font-medium flex items-center gap-1.5">
+                            <span
+                              title={c.score === 'hot' ? 'Hot lead' : c.score === 'warm' ? 'Warm lead' : 'Cold lead'}
+                              className={`inline-block w-2 h-2 rounded-full shrink-0 ${
+                                c.score === 'hot' ? 'bg-red-500' : c.score === 'warm' ? 'bg-amber-500' : 'bg-muted-foreground/30'
+                              }`}
+                            />
+                            {c.full_name}
+                          </div>
                           <div className="text-xs text-muted-foreground">{c.email || c.phone || (c.notes && isVirtual ? c.notes : '—')}</div>
                         </td>
                         <td className="p-3">
