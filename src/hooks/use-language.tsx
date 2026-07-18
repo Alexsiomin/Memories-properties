@@ -2,11 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
-type Lang = 'en' | 'ru' | 'el' | 'de';
+type Lang = 'en' | 'ru' | 'pl' | 'de';
 
-/** Non-English language codes that get a URL prefix (e.g. /ru, /el, /de). */
-export const LANG_CODES: Exclude<Lang, 'en'>[] = ['ru', 'el', 'de'];
-export const LANG_LABELS: Record<Lang, string> = { en: 'EN', ru: 'RU', el: 'EL', de: 'DE' };
+/** Non-English language codes that get a URL prefix (e.g. /ru, /pl, /de). */
+export const LANG_CODES: Exclude<Lang, 'en'>[] = ['ru', 'pl', 'de'];
+export const LANG_LABELS: Record<Lang, string> = { en: 'EN', ru: 'RU', pl: 'PL', de: 'DE' };
 
 /** True when a pathname is under a given language's URL prefix. */
 export const isLangPath = (path: string, code: string) => path === `/${code}` || path.startsWith(`/${code}/`);
@@ -287,7 +287,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
       localStorage.setItem(STORAGE_KEY, l);
       setPref(l);
       // Reflect the choice in the URL so the page is a real, shareable, indexable
-      // localized URL (/ru/... /el/... /de/... for non-English, un-prefixed for English).
+      // localized URL (/ru/... /pl/... /de/... for non-English, un-prefixed for English).
       const base = stripLangPrefix(location.pathname);
       const target = l === 'en' ? base : addLangPrefix(base, l);
       const full = target + location.search + location.hash;

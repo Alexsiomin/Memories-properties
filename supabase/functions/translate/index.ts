@@ -8,13 +8,13 @@ const OVERRIDES: Record<string, Record<string, string>> = {
     "Account": "Кабинет",
     "ADVOCACY": "адвокатура",
   },
-  el: {},
+  pl: {},
   de: {},
 };
 
 const LANG_NAMES: Record<string, string> = {
   ru: "Russian",
-  el: "Greek",
+  pl: "Polish",
   de: "German",
 };
 

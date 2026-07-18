@@ -345,7 +345,7 @@ async function fetchBlogEntries(): Promise<SitemapEntry[]> {
 
 // Non-English language codes that get a URL prefix — keep in sync with
 // LANG_CODES in src/hooks/use-language.tsx.
-const LANG_CODES = ["ru", "el", "de"] as const;
+const LANG_CODES = ["ru", "pl", "de"] as const;
 
 // hreflang alternates shared by an EN + localized URL group.
 function altLinks(enPath: string): string[] {
@@ -396,9 +396,16 @@ function buildUrl(
 }
 
 /**
- * Build a <urlset> document. In "pages" mode each entry emits its EN + RU URL
- * with hreflang alternates; in "images" mode only entries that carry images are
- * emitted (EN URL only) as an image sitemap.
+ * Build a <urlset> document. Only English URLs are listed as actual sitemap
+ * entries — each still carries hreflang annotations pointing at its /ru,
+ * /pl, /de alternates (so Google knows they exist and how they relate), but
+ * those localized URLs aren't listed as entries themselves. They're
+ * live-translated in the browser rather than pre-rendered, so Google's
+ * crawler mostly sees them as duplicate/empty content and skips indexing —
+ * no point asking it to crawl 600+ pages we know it won't index. Revisit
+ * this once translations are pre-rendered at build time (see generate-sitemap.ts
+ * discussion from the July 2026 Search Console review).
+ * In "images" mode only entries that carry images are emitted, as an image sitemap.
  */
 function generateUrlSet(entries: SitemapEntry[], mode: "pages" | "images"): string {
   const urls =
@@ -406,12 +413,7 @@ function generateUrlSet(entries: SitemapEntry[], mode: "pages" | "images"): stri
       ? entries
           .filter((e) => (e.images?.length ?? 0) > 0)
           .map((e) => buildUrl(e, e.path, "images"))
-      : entries.flatMap((e) => [
-          buildUrl(e, e.path, "pages"),
-          ...LANG_CODES.map((code) =>
-            buildUrl(e, e.path === "/" ? `/${code}` : `/${code}${e.path}`, "pages")
-          ),
-        ]);
+      : entries.map((e) => buildUrl(e, e.path, "pages"));
 
   return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
