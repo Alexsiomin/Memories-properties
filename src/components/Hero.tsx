@@ -260,13 +260,13 @@ const Hero = () => {
           </div>
 
           {/* DESKTOP: single horizontal bar */}
-          <div className="hidden sm:flex items-stretch bg-[hsl(0_0%_90%)] gap-0 pr-3 rounded-md overflow-hidden">
+          <div className="hidden sm:flex items-stretch bg-[hsl(0_0%_90%)] gap-0 pr-3">
             {/* Mode selector (BUY / RENT) */}
             <Popover open={openPopover === 'type'} onOpenChange={(o) => setOpenPopover(o ? 'type' : null)}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="group/ctrl inline-flex items-center justify-between gap-3 w-44 pl-6 pr-5 h-[48px] bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.2em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs"
+                  className="group/ctrl inline-flex items-center justify-between gap-3 w-44 pl-6 pr-5 h-[48px] bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.08em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs"
                 >
                   <span>{tab}</span>
                   <ChevronDown size={18} className="opacity-80 transition-transform duration-200 group-data-[state=open]/ctrl:rotate-180" />
@@ -313,7 +313,7 @@ const Hero = () => {
               <button
                 type="button"
                 onClick={() => setOpenPopover('filters')}
-                className="inline-flex items-center justify-center gap-1.5 px-4 h-8 bg-white text-foreground text-xs font-medium border border-[hsl(212_100%_10%)]/10 rounded-md hover:border-accent/40 transition-colors whitespace-nowrap shrink-0"
+                className="inline-flex items-center justify-center gap-1.5 px-4 h-8 bg-white text-foreground text-xs font-medium border border-[hsl(212_100%_10%)]/10 hover:border-accent/40 transition-colors whitespace-nowrap shrink-0"
               >
                 <span>Filter</span>
                 <span className="text-base leading-none">+</span>

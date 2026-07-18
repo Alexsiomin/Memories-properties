@@ -849,13 +849,13 @@ const Properties = () => {
             <span aria-hidden="true">{headingText}</span>
           </h1>
           <form onSubmit={onSearch} className="w-full max-w-[974px] mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-stretch gap-3 sm:gap-0 sm:bg-[hsl(0_0%_94%)] sm:h-[54px] sm:rounded-md sm:overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-stretch gap-3 sm:gap-0 sm:bg-[hsl(0_0%_94%)] sm:h-[54px]">
               {/* Mode selector (BUY / RENT) */}
               <Popover>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="group/ctrl relative inline-flex items-center justify-between gap-3 px-4 sm:pl-6 sm:pr-10 h-11 sm:h-full bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.2em] sm:tracking-[0.28em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs sm:text-base shrink-0 w-full sm:w-[166px]"
+                    className="group/ctrl relative inline-flex items-center justify-between gap-3 px-4 sm:pl-6 sm:pr-10 h-11 sm:h-full bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.2em] sm:tracking-[0.08em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs sm:text-base shrink-0 w-full sm:w-[166px]"
                   >
                     <span>{mode === 'Invest' ? 'RENT' : mode === 'Sold' ? 'SOLD' : mode === 'Projects' ? 'PROJECTS' : 'BUY'}</span>
                     <ChevronDown size={14} className="absolute right-3 opacity-80 transition-transform duration-200 group-data-[state=open]/ctrl:rotate-180" />
@@ -925,7 +925,7 @@ const Properties = () => {
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(true)}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 h-8 bg-white text-foreground text-xs font-medium border border-[hsl(212_100%_10%)]/10 rounded-md hover:border-accent/40 transition-colors whitespace-nowrap shrink-0"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 h-8 bg-white text-foreground text-xs font-medium border border-[hsl(212_100%_10%)]/10 hover:border-accent/40 transition-colors whitespace-nowrap shrink-0"
                 >
                   <span>Filter</span>
                   <span className="text-base leading-none">+</span>
