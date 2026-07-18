@@ -609,8 +609,12 @@ const Properties = () => {
         const matchesText = locations.some((q) => {
           const qq = q.toLowerCase();
           const parts = qq.split(',').map((s) => s.trim()).filter(Boolean);
+          // Only match on the primary (most specific) part of a "Place, District"
+          // suggestion — e.g. "Chloraka, Paphos" must match "Chloraka" specifically,
+          // not just any property that happens to be in the Paphos district.
+          const primary = parts[0] ?? qq;
           const matches = (hay: string) =>
-            hay.includes(qq) || parts.some((part) => hay.includes(part) || part.includes(hay));
+            hay.includes(qq) || hay.includes(primary) || primary.includes(hay);
           return matches(loc);
         });
         const matchesRadius =
