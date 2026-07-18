@@ -9,8 +9,9 @@ interface Props {
 const ALL_CODES = ['en', ...LANG_CODES] as const;
 
 /**
- * EN | RU | EL | DE language toggle. English is the default; the others
- * auto-translate the whole page via an edge function.
+ * EN | RU | PL | DE language toggle. English is the default; the others
+ * auto-translate the whole page via an edge function. The active language
+ * stays underlined (same animated underline used across the header nav).
  */
 const LanguageToggle = ({ className = '', tone = '' }: Props) => {
   const { lang, setLang, translating } = useLanguage();
@@ -27,7 +28,7 @@ const LanguageToggle = ({ className = '', tone = '' }: Props) => {
           <button
             type="button"
             onClick={() => setLang(code)}
-            className={`px-1 transition-opacity ${lang === code ? 'opacity-100' : 'opacity-50 hover:opacity-80'} ${
+            className={`story-link px-1 pb-0.5 transition-opacity ${lang === code ? 'opacity-100 is-active' : 'opacity-50 hover:opacity-80'} ${
               translating && lang === code ? 'animate-pulse' : ''
             }`}
             aria-pressed={lang === code}

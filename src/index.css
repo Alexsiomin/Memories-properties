@@ -249,6 +249,11 @@
   .story-link:hover::after {
     @apply origin-left scale-x-100;
   }
+  /* Persistent underline (e.g. the currently-selected language), animated in
+     the same way as the hover state rather than appearing instantly. */
+  .story-link.is-active::after {
+    @apply origin-left scale-x-100;
+  }
 
   .story-link-group {
     @apply relative inline-block;
