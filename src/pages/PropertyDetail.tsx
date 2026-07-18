@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { trackPropertyView } from '@/lib/visitor-journey';
 import {
   ChevronRight,
   ChevronLeft,
@@ -421,6 +422,7 @@ const PropertyDetail = () => {
       const row = data as PropertyRow;
       setProperty(row);
       setLoading(false);
+      trackPropertyView(row.id, row.title, row.slug ?? null);
 
       // Redirect old UUID URLs to slug URL for SEO
       if (isUuid && row.slug && row.slug !== idOrSlug) {

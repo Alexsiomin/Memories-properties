@@ -484,6 +484,7 @@ export type Database = {
           first_name: string
           id: string
           message: string | null
+          metadata: Json
           phone: string
           property_type: string | null
           region: string | null
@@ -495,6 +496,7 @@ export type Database = {
           first_name: string
           id?: string
           message?: string | null
+          metadata?: Json
           phone: string
           property_type?: string | null
           region?: string | null
@@ -506,6 +508,7 @@ export type Database = {
           first_name?: string
           id?: string
           message?: string | null
+          metadata?: Json
           phone?: string
           property_type?: string | null
           region?: string | null
@@ -1194,6 +1197,7 @@ export type Database = {
           full_name: string
           id: string
           message: string | null
+          metadata: Json
           phone: string | null
           preferred_date: string
           preferred_time: string
@@ -1209,6 +1213,7 @@ export type Database = {
           full_name: string
           id?: string
           message?: string | null
+          metadata?: Json
           phone?: string | null
           preferred_date: string
           preferred_time: string
@@ -1224,6 +1229,7 @@ export type Database = {
           full_name?: string
           id?: string
           message?: string | null
+          metadata?: Json
           phone?: string | null
           preferred_date?: string
           preferred_time?: string

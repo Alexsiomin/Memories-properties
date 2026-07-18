@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { getVisitorJourneySnapshot } from '@/lib/visitor-journey';
 import {
   Dialog,
   DialogContent,
@@ -98,7 +99,11 @@ const EnquiryDialog = ({ property, open, onOpenChange }: Props) => {
       phone: form.phone || null,
       message: form.message || null,
       property_title: property?.title ? publicTitle(property.title) : null,
-      metadata: { source: 'Property enquiry', source_path: typeof window !== 'undefined' ? window.location.pathname : null },
+      metadata: {
+        source: 'Property enquiry',
+        source_path: typeof window !== 'undefined' ? window.location.pathname : null,
+        journey: getVisitorJourneySnapshot(),
+      },
     });
     setSubmitting(false);
     if (error) {

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import portrait from '@/assets/concierge-agent.jpg';
+import { getVisitorJourneySnapshot } from '@/lib/visitor-journey';
 
 type DropdownProps = {
   value: string;
@@ -149,6 +150,7 @@ const EnquiryList = () => {
       property_type: result.data.propertyType,
       region: result.data.region,
       message: form.message.trim() || null,
+      metadata: { journey: getVisitorJourneySnapshot() },
     });
     setSubmitting(false);
     if (error) {

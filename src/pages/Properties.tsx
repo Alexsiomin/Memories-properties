@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 import { toast } from 'sonner';
 import { BookmarkPlus, ArrowUpRight, Lock, Clock, Navigation, MapPin } from 'lucide-react';
+import { trackSearch } from '@/lib/visitor-journey';
 import { useRecentSearches } from '@/hooks/use-recent-searches';
 import {
   Search,
@@ -697,6 +698,17 @@ const Properties = () => {
   );
 
   useEffect(() => { setPage(1); }, [mode, locations, nearMe, keywords, region, activeTags, effectiveActiveCats, minPrice, maxPrice, minBeds, maxBeds, minBaths, energyRatings, sort]);
+
+  useEffect(() => {
+    if (!region && !effectiveActiveCats.length && !minPrice && !maxPrice && !minBeds) return;
+    trackSearch({
+      region: region || null,
+      category: effectiveActiveCats[0] || null,
+      minPrice: minPrice ? Number(minPrice) : null,
+      maxPrice: maxPrice ? Number(maxPrice) : null,
+      beds: minBeds ? Number(minBeds) : null,
+    });
+  }, [region, effectiveActiveCats, minPrice, maxPrice, minBeds]);
 
   // ItemList structured data so search engines understand the property grid.
   const listJsonLd = useMemo(() => {

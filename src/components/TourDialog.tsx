@@ -160,6 +160,7 @@ const TourDialog = ({ open, onOpenChange, property }: TourDialogProps) => {
       preferred_time: primary.time,
       tour_type: 'in_person',
       message: composedMessage,
+      metadata: { journey: getVisitorJourneySnapshot() },
     });
     setSubmitting(false);
     if (error) {

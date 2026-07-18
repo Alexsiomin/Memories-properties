@@ -5,6 +5,49 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
+type JourneySnapshot = {
+  recentlyViewed?: { id: string; title: string; slug: string | null }[];
+  lastSearch?: { region?: string | null; category?: string | null; minPrice?: number | null; maxPrice?: number | null; beds?: number | null } | null;
+  referral?: { referrer?: string | null; source?: string | null; medium?: string | null; campaign?: string | null } | null;
+  visitCount?: number;
+} | null | undefined;
+
+/** Compact, human-readable summary of a lead's on-site journey before they enquired. */
+const JourneyContext = ({ journey }: { journey: JourneySnapshot }) => {
+  if (!journey) return <span className="text-foreground/30">—</span>;
+  const parts: string[] = [];
+  if (journey.visitCount) parts.push(`Visit #${journey.visitCount}`);
+  if (journey.referral?.source) parts.push(`via ${journey.referral.source}`);
+  else if (journey.referral?.referrer) {
+    try { parts.push(`from ${new URL(journey.referral.referrer).hostname}`); } catch { /* ignore */ }
+  }
+  if (journey.lastSearch) {
+    const s = journey.lastSearch;
+    const bits = [s.region, s.category, s.minPrice || s.maxPrice ? `€${s.minPrice ?? '0'}-${s.maxPrice ?? '∞'}` : null, s.beds ? `${s.beds}+ bds` : null].filter(Boolean);
+    if (bits.length) parts.push(`searched ${bits.join(' ')}`);
+  }
+  return (
+    <div className="text-xs space-y-1 max-w-xs">
+      {parts.length > 0 && <p className="text-foreground/70">{parts.join(' · ')}</p>}
+      {journey.recentlyViewed && journey.recentlyViewed.length > 0 && (
+        <p className="text-foreground/50">
+          Viewed:{' '}
+          {journey.recentlyViewed.slice(0, 3).map((v, i) => (
+            <span key={v.id}>
+              {i > 0 && ', '}
+              <Link to={`/properties/${v.slug ?? v.id}`} target="_blank" className="underline hover:text-foreground">
+                {v.title}
+              </Link>
+            </span>
+          ))}
+          {journey.recentlyViewed.length > 3 ? ` +${journey.recentlyViewed.length - 3} more` : ''}
+        </p>
+      )}
+      {!parts.length && !journey.recentlyViewed?.length && <span className="text-foreground/30">—</span>}
+    </div>
+  );
+};
+
 type TourRequest = {
   id: string;
   property_id: string;
@@ -17,6 +60,7 @@ type TourRequest = {
   message: string | null;
   status: string;
   created_at: string;
+  metadata?: { journey?: JourneySnapshot } | null;
 };
 
 type Enquiry = {
@@ -29,6 +73,7 @@ type Enquiry = {
   region: string | null;
   message: string | null;
   created_at: string;
+  metadata?: { journey?: JourneySnapshot } | null;
 };
 
 type ContactSubmission = {
@@ -39,7 +84,7 @@ type ContactSubmission = {
   subject: string | null;
   message: string | null;
   status: string;
-  metadata: { source?: string; source_path?: string } | null;
+  metadata: { source?: string; source_path?: string; journey?: JourneySnapshot } | null;
   created_at: string;
 };
 
@@ -160,6 +205,7 @@ export default function AdminEmails() {
                 <TableHead>Property</TableHead>
                 <TableHead>Preferred</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Context</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -190,6 +236,9 @@ export default function AdminEmails() {
                     {r.preferred_date} · {r.preferred_time}
                   </TableCell>
                   <TableCell className="text-xs uppercase">{r.tour_type}</TableCell>
+                  <TableCell>
+                    <JourneyContext journey={r.metadata?.journey} />
+                  </TableCell>
                   <TableCell>
                     <span
                       className={`text-xs px-2 py-1 rounded-full ${
@@ -248,6 +297,7 @@ export default function AdminEmails() {
                 <TableHead>Property Type</TableHead>
                 <TableHead>Region</TableHead>
                 <TableHead>Message</TableHead>
+                <TableHead>Context</TableHead>
                 <TableHead>User ID</TableHead>
               </TableRow>
             </TableHeader>
@@ -261,6 +311,9 @@ export default function AdminEmails() {
                   <TableCell className="text-xs">{e.property_type ?? '-'}</TableCell>
                   <TableCell className="text-xs">{e.region ?? '-'}</TableCell>
                   <TableCell className="text-xs max-w-md whitespace-pre-wrap">{e.message ?? '-'}</TableCell>
+                  <TableCell>
+                    <JourneyContext journey={e.metadata?.journey} />
+                  </TableCell>
                   <TableCell className="text-xs text-foreground/50">{e.user_id ? e.user_id.slice(0, 8) + '…' : 'Guest'}</TableCell>
                 </TableRow>
               ))}
@@ -285,6 +338,7 @@ export default function AdminEmails() {
                 <TableHead>Source</TableHead>
                 <TableHead>Subject</TableHead>
                 <TableHead>Message</TableHead>
+                <TableHead>Context</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -304,6 +358,9 @@ export default function AdminEmails() {
                   </TableCell>
                   <TableCell className="text-xs">{c.subject ?? '-'}</TableCell>
                   <TableCell className="text-xs max-w-md whitespace-pre-wrap">{c.message ?? '-'}</TableCell>
+                  <TableCell>
+                    <JourneyContext journey={c.metadata?.journey} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

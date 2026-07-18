@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import SiteFooter from '@/components/SiteFooter';
 import { useScrollReveal } from '@/hooks/use-scroll-reveal';
 import { usePageView } from '@/hooks/use-page-view';
+import { trackReferralOnce } from '@/lib/visitor-journey';
 
 const Layout = () => {
   const ref = useScrollReveal<HTMLDivElement>();
@@ -18,6 +19,7 @@ const Layout = () => {
   const { user, loading } = useAuth();
   const [showConcierge, setShowConcierge] = useState(false);
   usePageView();
+  useEffect(() => { trackReferralOnce(); }, []);
 
   // Defer the chat widget (pulls react-markdown) until the browser is idle or
   // the user first interacts, so its chunk never competes with first paint.

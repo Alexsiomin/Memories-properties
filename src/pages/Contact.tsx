@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { getVisitorJourneySnapshot } from '@/lib/visitor-journey';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -106,7 +107,11 @@ const Contact = () => {
       message: d.message || null,
       preferred_date: d.appointmentDate ? format(d.appointmentDate, 'yyyy-MM-dd') : null,
       preferred_time: d.appointmentTime || null,
-      metadata: { source: 'Contact page', source_path: typeof window !== 'undefined' ? window.location.pathname : '/contact' },
+      metadata: {
+        source: 'Contact page',
+        source_path: typeof window !== 'undefined' ? window.location.pathname : '/contact',
+        journey: getVisitorJourneySnapshot(),
+      },
     });
     if (error) {
       toast.error('Something went wrong. Please try again.');
