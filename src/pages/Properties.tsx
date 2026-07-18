@@ -849,29 +849,8 @@ const Properties = () => {
             <span aria-hidden="true">{headingText}</span>
           </h1>
           <form onSubmit={onSearch} className="w-full max-w-[974px] mx-auto">
-            {/* Desktop tab row (Marshall White style) — replaces the BUY
-                dropdown on larger screens with equal-width flat segments. */}
-            <div className="hidden sm:flex">
-              {(['Buy', 'Invest', 'Sold', 'Projects'] as Mode[]).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMode(m)}
-                  className={`flex-1 h-9 flex items-center justify-center uppercase tracking-[0.1em] font-bold text-xs transition-colors ${
-                    mode === m
-                      ? 'bg-[hsl(212_100%_10%)] text-white'
-                      : 'bg-[rgb(176,185,207)] text-white hover:bg-[rgb(155,165,190)]'
-                  }`}
-                >
-                  {m === 'Invest' ? 'Rent' : m}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-stretch gap-3 sm:gap-0 sm:bg-[hsl(0_0%_94%)] sm:h-[54px]">
-              {/* Mode selector (BUY / RENT) — mobile only; desktop uses the
-                  segmented tab row above instead. */}
-              <div className="sm:hidden">
+            <div className="flex flex-col sm:flex-row sm:items-stretch gap-3 sm:gap-0 sm:bg-[hsl(0_0%_94%)] sm:h-[54px] sm:rounded-md sm:overflow-hidden">
+              {/* Mode selector (BUY / RENT) */}
               <Popover>
                 <PopoverTrigger asChild>
                   <button
@@ -917,7 +896,6 @@ const Properties = () => {
                   </button>
                 </PopoverContent>
               </Popover>
-              </div>
 
               <div className="relative w-full sm:flex-1 flex items-center bg-white border border-[hsl(212_100%_10%)]/15 sm:bg-transparent sm:border-0 h-[40px] sm:h-auto">
                 <MultiLocationSearch
@@ -947,7 +925,7 @@ const Properties = () => {
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(true)}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 h-8 bg-white text-foreground text-xs font-medium border border-[hsl(212_100%_10%)]/10 rounded hover:border-accent/40 transition-colors whitespace-nowrap shrink-0"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 h-8 bg-white text-foreground text-xs font-medium border border-[hsl(212_100%_10%)]/10 rounded-md hover:border-accent/40 transition-colors whitespace-nowrap shrink-0"
                 >
                   <span>Filter</span>
                   <span className="text-base leading-none">+</span>
