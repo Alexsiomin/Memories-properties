@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BedDouble, Bath, LayoutGrid, Grid3x3 } from 'lucide-react';
+import { BedDouble, Bath, Building2, LayoutGrid, Grid3x3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
-import PageHeader from '@/components/PageHeader';
 import Thumbnail from '@/components/Thumbnail';
 import {
   buildDevelopments,
@@ -55,10 +54,14 @@ const SoldProjects = () => {
         title="Sold Projects | Memories"
         description="Explore our portfolio of sold-out developments and completed projects — a track record of successful new-build communities."
       />
-      <PageHeader
-        title="Sold-out developments"
-        intro="A showcase of completed and fully sold projects — proof of demand for the developments we represent."
-      />
+      <div className="container mx-auto px-4 sm:px-6 pt-10 pb-8 sm:pt-14 sm:pb-2">
+        <h1 className="text-center font-semibold tracking-tight text-[hsl(212_100%_10%)] uppercase text-2xl sm:text-4xl mb-4">
+          Sold Out Developments
+        </h1>
+        <p className="max-w-[60ch] mx-auto text-center text-muted-foreground text-base sm:text-lg leading-snug mb-8 sm:mb-10">
+          A showcase of completed and fully sold projects — proof of demand for the developments we represent.
+        </p>
+      </div>
 
       <section className="container mx-auto px-6 py-10">
         {!loading && developments.length > 0 && (
@@ -145,6 +148,12 @@ const SoldProjects = () => {
                       {bathRange(d) && (
                         <span className="inline-flex items-center gap-1">
                           <Bath size={16} /> {bathRange(d)}
+                        </span>
+                      )}
+                      {d.unitCount > 0 && (
+                        <span className="inline-flex items-center gap-1">
+                          <Building2 size={16} />
+                          {d.unitCount} {d.categories[0] ? `${d.categories[0]}${d.unitCount === 1 ? '' : 's'}` : 'Units'}
                         </span>
                       )}
                     </div>
