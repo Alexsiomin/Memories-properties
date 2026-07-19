@@ -470,6 +470,15 @@ function buildHtml(template: string, route: RouteMeta): string {
     `<meta name="description" content="${esc(desc)}" />`,
   );
 
+  // robots — every prerendered route here is a public, indexable page (the
+  // few noindex pages like /account aren't part of this route list), so bake
+  // the same directive the client-side <SEO> component renders by default.
+  // Keeps the existing noai/noimageai (AI-training opt-out) directive too.
+  html = html.replace(
+    /<meta name="robots" content="[\s\S]*?" \/>/,
+    `<meta name="robots" content="noai, noimageai, index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />`,
+  );
+
   // canonical
   html = html.replace(
     /<link rel="canonical" href="[\s\S]*?" \/>/,
