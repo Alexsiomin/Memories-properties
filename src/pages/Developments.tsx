@@ -34,7 +34,7 @@ const Developments = () => {
   const navigate = useNavigate();
   const [rows, setRows] = useState<UnitRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<string>('default');
+  const [sortBy, setSortBy] = useState<string>('newest');
   const [tab, setTab] = useState<Tab>('Projects');
   const [query, setQuery] = useState('');
 
@@ -98,26 +98,23 @@ const Developments = () => {
   const sortedDevelopments = useMemo(() => {
     const list = [...filteredDevelopments];
     switch (sortBy) {
-      case 'price-asc':
-        return list.sort((a, b) => {
-          if (a.minPrice == null) return 1;
-          if (b.minPrice == null) return -1;
-          return a.minPrice - b.minPrice;
-        });
       case 'price-desc':
         return list.sort((a, b) => {
           if (a.minPrice == null) return 1;
           if (b.minPrice == null) return -1;
           return b.minPrice - a.minPrice;
         });
-      case 'name-asc':
-        return list.sort((a, b) => a.name.localeCompare(b.name));
-      case 'availability-asc':
-        return list.sort((a, b) => a.unitCount - b.unitCount || a.name.localeCompare(b.name));
       case 'availability-desc':
         return list.sort((a, b) => b.unitCount - a.unitCount || a.name.localeCompare(b.name));
+      case 'availability-asc':
+        return list.sort((a, b) => a.unitCount - b.unitCount || a.name.localeCompare(b.name));
+      case 'newest':
       default:
-        return list;
+        return list.sort((a, b) => {
+          if (a.createdAt == null) return 1;
+          if (b.createdAt == null) return -1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
     }
   }, [filteredDevelopments, sortBy]);
 
@@ -182,7 +179,17 @@ const Developments = () => {
                   <button
                     key={t}
                     type="button"
-                    onClick={() => { setTab(t); setOpenPopover(null); }}
+                    onClick={() => {
+                      setOpenPopover(null);
+                      if (t === 'Projects') { setTab(t); return; }
+                      // Buy/Rent/Sold aren't shown on this page — take the
+                      // user straight to the Properties listing filtered
+                      // that way, same as everywhere else this dropdown appears.
+                      const params = new URLSearchParams();
+                      params.set('mode', MODE_BY_TAB[t]);
+                      if (query.trim()) params.set('locs', query.trim());
+                      navigate(`/properties?${params.toString()}`);
+                    }}
                     className={`w-full text-left px-5 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold transition-colors ${
                       i > 0 ? 'border-t border-[hsl(212_100%_10%)]/10' : ''
                     } ${
@@ -267,12 +274,10 @@ const Developments = () => {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-full h-10 appearance-none truncate rounded-none bg-foreground text-background text-xs sm:text-sm pl-4 pr-8 focus:outline-none focus:ring-0 border-none uppercase tracking-[0.12em] sm:tracking-[0.2em] font-montserrat font-extrabold cursor-pointer"
                 >
-                  <option value="default" className="bg-white text-foreground normal-case font-normal">Default</option>
-                  <option value="price-asc" className="bg-white text-foreground normal-case font-normal">Price: low to high</option>
-                  <option value="price-desc" className="bg-white text-foreground normal-case font-normal">Price: high to low</option>
-                  <option value="name-asc" className="bg-white text-foreground normal-case font-normal">Name: A–Z</option>
-                  <option value="availability-asc" className="bg-white text-foreground normal-case font-normal">Availability: least first</option>
-                  <option value="availability-desc" className="bg-white text-foreground normal-case font-normal">Availability: most first</option>
+                  <option value="newest" className="bg-white text-foreground normal-case font-normal">Newest</option>
+                  <option value="price-desc" className="bg-white text-foreground normal-case font-normal">High to Low</option>
+                  <option value="availability-desc" className="bg-white text-foreground normal-case font-normal">Most Availability</option>
+                  <option value="availability-asc" className="bg-white text-foreground normal-case font-normal">Least Availability</option>
                 </select>
                 <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-background/80" />
               </div>
