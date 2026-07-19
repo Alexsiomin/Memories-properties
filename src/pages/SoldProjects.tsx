@@ -26,7 +26,7 @@ const SoldProjects = () => {
     (async () => {
       const { data } = await supabase
         .from('properties')
-        .select('id, slug, title, location, category, price, price_value, beds, baths, status, listing_type, cover_image, images')
+        .select('id, slug, title, location, category, price, price_value, beds, baths, status, listing_type, cover_image, images, project_name')
         .not('developer_id', 'is', null)
         .limit(2000);
       if (!cancelled) {

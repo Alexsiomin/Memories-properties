@@ -33,6 +33,7 @@ export type UnitRow = {
   longitude?: number | null;
   floor_plans?: { url: string; label: string }[] | null;
   created_at?: string | null;
+  project_name?: string | null;
 };
 
 export type Development = {
@@ -58,6 +59,18 @@ export function projectName(title?: string | null): string {
   if (!title) return '';
   const idx = title.indexOf(' - ');
   return (idx === -1 ? title : title.slice(0, idx)).trim();
+}
+
+/**
+ * Stable grouping key for a unit's project. Prefers the real `project_name`
+ * database column (set for projects created since that column was added) over
+ * parsing it out of the title string, which is fragile — e.g. a unit titled
+ * "Velaro - Velaro" or a project whose name itself contains " - " can parse
+ * incorrectly. Falls back to title-parsing for older rows saved before
+ * project_name existed.
+ */
+export function projectGroupKey(row: { project_name?: string | null; title?: string | null }): string {
+  return row.project_name?.trim() || projectName(row.title);
 }
 
 /** Extract the lot/unit label from a unit title (part after " - "). */
@@ -133,7 +146,7 @@ export function buildDevelopments(rows: UnitRow[], opts?: { sold?: boolean; all?
       // project only leaves once every unit is genuinely sold.
       : ((row.listing_type ?? 'sale') === 'sale' && !isSold(row));
     if (!keep) continue;
-    const name = projectName(row.title);
+    const name = projectGroupKey(row);
     if (!name) continue;
     const list = map.get(name) ?? [];
     list.push(row);
@@ -220,7 +233,7 @@ export type SoldStats = {
 export function soldStatsByProject(rows: UnitRow[]): Map<string, SoldStats> {
   const map = new Map<string, UnitRow[]>();
   for (const row of rows) {
-    const name = projectName(row.title);
+    const name = projectGroupKey(row);
     if (!name) continue;
     const list = map.get(name) ?? [];
     list.push(row);

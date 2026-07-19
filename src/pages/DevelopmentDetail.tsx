@@ -98,7 +98,7 @@ const DevelopmentDetail = () => {
     (async () => {
       const { data } = await supabase
         .from('properties')
-        .select('id, slug, title, location, category, price, price_value, beds, baths, status, listing_type, cover_image, images, internal_area, size, covered_verandas, tags, lot_size, parking_spaces, latitude, longitude, floor_plans')
+        .select('id, slug, title, location, category, price, price_value, beds, baths, status, listing_type, cover_image, images, internal_area, size, covered_verandas, tags, lot_size, parking_spaces, latitude, longitude, floor_plans, project_name')
         .not('developer_id', 'is', null)
         .limit(2000);
       if (!cancelled) {
