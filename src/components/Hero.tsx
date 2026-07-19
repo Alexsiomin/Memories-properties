@@ -116,6 +116,12 @@ const Hero = () => {
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (tab === 'Projects') {
+      // "Projects" is its own page (grouped developments), not a filter on
+      // the flat Properties listing.
+      navigate('/developments');
+      return;
+    }
     const params = new URLSearchParams();
     params.set('mode', MODE_BY_TAB[tab] ?? 'Buy');
     if (cats.length) params.set('cats', cats.join(','));
@@ -218,7 +224,7 @@ const Hero = () => {
                   <button
                     key={t}
                     type="button"
-                    onClick={() => { setTab(t); setMobileTabOpen(false); }}
+                    onClick={() => { setMobileTabOpen(false); navigate('/developments'); }}
                     className={`w-full text-left px-5 h-12 flex items-center justify-between text-sm uppercase tracking-[0.12em] font-bold border-b border-white/10 last:border-b-0 transition-colors duration-200 ${
                       tab === t
                         ? 'bg-white/10 text-white'
@@ -292,7 +298,7 @@ const Hero = () => {
                     <button
                       key={t}
                       type="button"
-                      onClick={() => { setTab(t); setOpenPopover(null); }}
+                      onClick={() => { setOpenPopover(null); navigate('/developments'); }}
                       className={`w-full text-left px-5 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold transition-colors border-t border-[hsl(212_100%_10%)]/10 ${
                         tab === t ? 'bg-[hsl(212_100%_10%)] text-white' : 'text-[hsl(212_100%_10%)] hover:text-accent transition-colors'
                       }`}

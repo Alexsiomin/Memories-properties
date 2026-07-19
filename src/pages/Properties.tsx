@@ -882,10 +882,8 @@ const Properties = () => {
                   ))}
                   <button
                     type="button"
-                    onClick={() => setMode('Projects')}
-                    className={`w-full text-left px-5 py-3.5 text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-widest font-semibold transition-colors border-t border-[hsl(212_100%_10%)]/10 ${
-                      mode === 'Projects' ? 'bg-[hsl(212_100%_10%)] text-white' : 'text-[hsl(212_100%_10%)] hover:text-accent transition-colors text-xs'
-                    }`}
+                    onClick={() => navigate('/developments')}
+                    className="w-full text-left px-5 py-3.5 text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-widest font-semibold transition-colors border-t border-[hsl(212_100%_10%)]/10 text-[hsl(212_100%_10%)] hover:text-accent transition-colors text-xs"
                   >
                     Projects
                   </button>

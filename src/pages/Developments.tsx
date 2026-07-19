@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowUpDown, ArrowUpRight, MapPin } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowUpRight, ChevronDown, MapPin, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import PageHeader from '@/components/PageHeader';
@@ -13,13 +13,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   buildDevelopments,
   bedRange,
@@ -32,10 +26,20 @@ import {
 } from '@/lib/developments';
 import residential from '@/assets/proj-residential.jpg';
 
+const TABS = ['Buy', 'Rent', 'Sold', 'Projects'] as const;
+type Tab = (typeof TABS)[number];
+const MODE_BY_TAB: Record<Tab, string> = { Buy: 'Buy', Rent: 'Invest', Sold: 'Sold', Projects: 'Projects' };
+
 const Developments = () => {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<UnitRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<string>('default');
+  const [tab, setTab] = useState<Tab>('Projects');
+  const [query, setQuery] = useState('');
+  const [activeCats, setActiveCats] = useState<string[]>([]);
+  const [openPopover, setOpenPopover] = useState<'type' | 'filters' | null>(null);
+  const [gridCols, setGridCols] = useState<2 | 3>(3);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,8 +60,34 @@ const Developments = () => {
   const developments = useMemo(() => buildDevelopments(rows), [rows]);
   const soldStats = useMemo(() => soldStatsByProject(rows), [rows]);
 
+  const allCategories = useMemo(
+    () => Array.from(new Set(developments.flatMap((d) => d.categories))).sort(),
+    [developments],
+  );
+
+  const filteredDevelopments = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return developments.filter((d) => {
+      const matchesQuery = !q || d.name.toLowerCase().includes(q) || (d.location ?? '').toLowerCase().includes(q);
+      const matchesCats = activeCats.length === 0 || d.categories.some((c) => activeCats.includes(c));
+      return matchesQuery && matchesCats;
+    });
+  }, [developments, query, activeCats]);
+
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (tab === 'Projects') return; // already on the projects view
+    const params = new URLSearchParams();
+    params.set('mode', MODE_BY_TAB[tab]);
+    if (query.trim()) params.set('locs', query.trim());
+    navigate(`/properties?${params.toString()}`);
+  };
+
+  const toggleCat = (c: string) =>
+    setActiveCats((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+
   const sortedDevelopments = useMemo(() => {
-    const list = [...developments];
+    const list = [...filteredDevelopments];
     switch (sortBy) {
       case 'price-asc':
         return list.sort((a, b) => {
@@ -80,7 +110,7 @@ const Developments = () => {
       default:
         return list;
     }
-  }, [developments, sortBy]);
+  }, [filteredDevelopments, sortBy]);
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -124,24 +154,137 @@ const Developments = () => {
       </div>
       <PageHeader title="PROJECTS FOR SALE" />
 
+      {/* Search bar — same bar/BUY pill used across the site */}
+      <div className="container mx-auto px-6">
+        <form onSubmit={onSearch} className="w-full max-w-[974px] mx-auto">
+          <div className="flex items-stretch bg-[hsl(0_0%_90%)] gap-0 pr-3">
+            <Popover open={openPopover === 'type'} onOpenChange={(o) => setOpenPopover(o ? 'type' : null)}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="group/ctrl inline-flex items-center justify-between gap-3 w-44 pl-6 pr-5 h-[48px] bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.08em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs"
+                >
+                  <span>{tab}</span>
+                  <ChevronDown size={18} className="opacity-80 transition-transform duration-200 group-data-[state=open]/ctrl:rotate-180" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" sideOffset={0} className="w-[var(--radix-popover-trigger-width)] p-0 rounded-none bg-white border border-[hsl(212_100%_10%)]/15 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.2)] z-[60]">
+                {TABS.map((t, i) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => { setTab(t); setOpenPopover(null); }}
+                    className={`w-full text-left px-5 py-3.5 text-xs uppercase tracking-[0.2em] font-semibold transition-colors ${
+                      i > 0 ? 'border-t border-[hsl(212_100%_10%)]/10' : ''
+                    } ${
+                      tab === t ? 'bg-[hsl(212_100%_10%)] text-white' : 'text-[hsl(212_100%_10%)] hover:text-accent transition-colors'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
+
+            <div className="relative flex-1 flex items-center">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by project name or location"
+                className="w-full h-[48px] bg-transparent px-4 text-sm placeholder:text-muted-foreground focus:outline-none"
+              />
+              {query && (
+                <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="pr-3 text-muted-foreground hover:text-foreground">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            <Popover open={openPopover === 'filters'} onOpenChange={(o) => setOpenPopover(o ? 'filters' : null)}>
+              <PopoverTrigger asChild>
+                <div className="flex items-center bg-[hsl(0_0%_90%)]">
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center gap-1.5 px-4 h-9 bg-white text-foreground text-xs font-medium hover:bg-white/80 transition-colors whitespace-nowrap shrink-0"
+                  >
+                    <span>Filter</span>
+                    <span className="text-base leading-none">+</span>
+                    {activeCats.length > 0 && (
+                      <span className="ml-1 inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-semibold">
+                        {activeCats.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent align="end" sideOffset={4} className="w-64 p-4 rounded-none bg-white border border-[hsl(212_100%_10%)]/15 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.2)] z-[60]">
+                <p className="text-xs uppercase tracking-[0.15em] font-semibold text-[hsl(212_100%_10%)]/60 mb-3">Category</p>
+                <div className="space-y-2">
+                  {allCategories.map((c) => (
+                    <label key={c} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="checkbox" checked={activeCats.includes(c)} onChange={() => toggleCat(c)} className="accent-accent" />
+                      {c}
+                    </label>
+                  ))}
+                  {allCategories.length === 0 && <p className="text-sm text-muted-foreground">No categories yet.</p>}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <button
+              type="submit"
+              aria-label="Search"
+              className="inline-flex items-center justify-center w-10 h-[48px] text-foreground hover:text-foreground/70 transition-colors shrink-0"
+            >
+              <Search size={18} strokeWidth={2} />
+            </button>
+          </div>
+        </form>
+      </div>
+
       <section className="container mx-auto px-6 py-10">
         {!loading && developments.length > 0 && (
-          <div className="flex items-center justify-end mb-6">
-            <div className="flex items-center gap-2">
-              <ArrowUpDown size={16} className="text-muted-foreground" />
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full max-w-[220px] sm:w-[220px] h-9 text-sm rounded-none border-border bg-card">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent className="rounded-none">
-                  <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="price-asc">Price: low to high</SelectItem>
-                  <SelectItem value="price-desc">Price: high to low</SelectItem>
-                  <SelectItem value="name-asc">Name: A–Z</SelectItem>
-                  <SelectItem value="availability-asc">Availability: least first</SelectItem>
-                  <SelectItem value="availability-desc">Availability: most first</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="flex items-center justify-between gap-4 border-b border-[hsl(212_100%_10%)]/10 pb-4 mb-6">
+            <p className="text-sm text-[hsl(212_100%_10%)]/60">
+              {sortedDevelopments.length} {sortedDevelopments.length === 1 ? 'Result' : 'Results'}
+            </p>
+            <div className="flex items-center gap-4 sm:gap-6">
+              <label className="sr-only" htmlFor="development-sort">Sort by</label>
+              <div className="relative w-full max-w-[10.5rem] sm:w-44 sm:max-w-none shrink-0">
+                <select
+                  id="development-sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full h-10 appearance-none truncate rounded-none bg-foreground text-background text-xs sm:text-sm pl-4 pr-8 focus:outline-none focus:ring-0 border-none uppercase tracking-[0.12em] sm:tracking-[0.2em] font-montserrat font-extrabold cursor-pointer"
+                >
+                  <option value="default" className="bg-white text-foreground normal-case font-normal">Default</option>
+                  <option value="price-asc" className="bg-white text-foreground normal-case font-normal">Price: low to high</option>
+                  <option value="price-desc" className="bg-white text-foreground normal-case font-normal">Price: high to low</option>
+                  <option value="name-asc" className="bg-white text-foreground normal-case font-normal">Name: A–Z</option>
+                  <option value="availability-asc" className="bg-white text-foreground normal-case font-normal">Availability: least first</option>
+                  <option value="availability-desc" className="bg-white text-foreground normal-case font-normal">Availability: most first</option>
+                </select>
+                <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-background/80" />
+              </div>
+              {/* Grid size toggle */}
+              <div className="hidden lg:flex items-center gap-1">
+                {([2, 3] as const).map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-label={`${n} columns`}
+                    onClick={() => setGridCols(n)}
+                    className={`h-10 px-2 inline-flex items-center gap-[3px] transition-colors ${
+                      gridCols === n ? 'text-[hsl(212_100%_10%)]' : 'text-[hsl(212_100%_10%)]/30 hover:text-accent transition-colors text-xs'
+                    }`}
+                  >
+                    {Array.from({ length: n }).map((_, j) => (
+                      <span key={j} className="w-[3px] h-4 bg-current" />
+                    ))}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -157,12 +300,14 @@ const Developments = () => {
               </div>
             ))}
           </div>
-        ) : developments.length === 0 ? (
+        ) : sortedDevelopments.length === 0 ? (
           <div className="text-center text-muted-foreground py-16">
-            No developments are available for sale right now.
+            {developments.length === 0
+              ? 'No developments are available for sale right now.'
+              : 'No developments match your search — try a different name, location, or category.'}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-8 ${gridCols === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3'}`}>
             {sortedDevelopments.map((d: Development, i) => (
               <article key={`${d.slug}-${i}`} className="group reveal" data-reveal-delay={String((i % 3) * 100)}>
                 <Link
