@@ -819,6 +819,7 @@ export type Database = {
           price: string
           price_value: number
           reference_code: string | null
+          project_name: string | null
           region: string | null
           seller_type: string
           share_description: string | null
@@ -877,6 +878,7 @@ export type Database = {
           price: string
           price_value: number
           reference_code?: string | null
+          project_name?: string | null
           region?: string | null
           seller_type?: string
           share_description?: string | null
@@ -935,6 +937,7 @@ export type Database = {
           price?: string
           price_value?: number
           reference_code?: string | null
+          project_name?: string | null
           region?: string | null
           seller_type?: string
           share_description?: string | null

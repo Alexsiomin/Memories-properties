@@ -1001,7 +1001,7 @@ export default function AdminProjectNew() {
   /** Turn a raw Postgres error into something an admin can actually act on. */
   const friendlySaveError = (error: { message: string }): string => {
     if (/reference_code/i.test(error.message) && /duplicate|unique/i.test(error.message)) {
-      return 'That Door Number is already used by another listing (in this project or elsewhere). Change it to something unique and save again.';
+      return 'That Door Number is already used by another unit in this same project. Change it to something unique within this project and save again.';
     }
     return error.message;
   };
@@ -1031,6 +1031,7 @@ export default function AdminProjectNew() {
       price_value: Number(l.price_value),
       description: project.description || null,
       reference_code: l.reference_code.trim() || null,
+      project_name: project.title.trim(),
       beds: l.beds ? Number(l.beds) : null,
       baths: l.baths ? Number(l.baths) : null,
       internal_area: l.internal_area ? `${l.internal_area} m²` : null,
