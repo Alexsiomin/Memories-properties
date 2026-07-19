@@ -762,7 +762,7 @@ const Properties = () => {
       new Set(
         locations.map((loc) => {
           const parts = loc.split(',').map((s) => s.trim()).filter(Boolean);
-          return parts[parts.length - 1] || loc;
+          return parts[0] || loc;
         }),
       ),
     );

@@ -32,6 +32,7 @@ export type UnitRow = {
   latitude?: number | null;
   longitude?: number | null;
   floor_plans?: { url: string; label: string }[] | null;
+  created_at?: string | null;
 };
 
 export type Development = {
@@ -48,6 +49,8 @@ export type Development = {
   categories: string[];
   location: string | null;
   cover: string | null;
+  /** Earliest created_at among the project's units — when it was first listed. */
+  createdAt: string | null;
 };
 
 /** Extract the project name from a unit title. */
@@ -151,6 +154,10 @@ export function buildDevelopments(rows: UnitRow[], opts?: { sold?: boolean; all?
       ?? null;
     const unitCount = units.length;
     const minPrice = prices.length ? Math.min(...prices) : null;
+    const createdTimes = units
+      .map((u) => (u.created_at ? new Date(u.created_at).getTime() : null))
+      .filter((v): v is number => v != null && !Number.isNaN(v));
+    const createdAt = createdTimes.length ? new Date(Math.min(...createdTimes)).toISOString() : null;
     const location = (() => {
       const raw = units.find((u) => u.location)?.location ?? null;
       if (!raw) return null;
@@ -171,6 +178,7 @@ export function buildDevelopments(rows: UnitRow[], opts?: { sold?: boolean; all?
       categories,
       location,
       cover,
+      createdAt,
     });
   }
 

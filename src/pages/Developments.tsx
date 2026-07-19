@@ -37,6 +37,15 @@ const Developments = () => {
   const [sortBy, setSortBy] = useState<string>('default');
   const [tab, setTab] = useState<Tab>('Projects');
   const [query, setQuery] = useState('');
+
+  // Heading reflects the searched location, same pattern as the Buy page;
+  // defaults to Paphos when nothing has been searched yet.
+  const headingLocation = useMemo(() => {
+    const q = query.trim();
+    if (!q) return 'Paphos';
+    const parts = q.split(',').map((s) => s.trim()).filter(Boolean);
+    return parts[0] || q;
+  }, [query]);
   const [activeCats, setActiveCats] = useState<string[]>([]);
   const [openPopover, setOpenPopover] = useState<'type' | 'filters' | null>(null);
   const [gridCols, setGridCols] = useState<2 | 3>(3);
@@ -152,7 +161,7 @@ const Developments = () => {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <PageHeader title="PROJECTS FOR SALE" />
+      <PageHeader title={`Projects for Sale in ${headingLocation}`} />
 
       {/* Search bar — same bar/BUY pill used across the site */}
       <div className="container mx-auto px-6">
