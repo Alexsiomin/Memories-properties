@@ -725,6 +725,10 @@ const PropertyDetail = () => {
     const t = property.tags?.find((x) => x.toLowerCase().startsWith('plot '));
     return t ? t.replace(/^plot\s+/i, '') : property.lot_size;
   })();
+  // Category data has inconsistent singular/plural values ("Villa" vs
+  // "Villas"), so match case-insensitively on the root word rather than an
+  // exact string.
+  const isVilla = /^villas?$/i.test((property.category ?? '').trim());
 
   // RealEstateListing ties the offer to the listing page for property rich results.
   const realEstateListingJsonLd: Record<string, unknown> = {
@@ -855,7 +859,7 @@ const PropertyDetail = () => {
           </div>
 
           {/* Key facts row */}
-          <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className={`mt-10 grid grid-cols-2 gap-3 ${isVilla ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
             {property.category === 'Land / Plot' ? (
               <FactCard icon={<Building size={18} />} label="Building density" value={property.beds != null ? String(property.beds) : '—'} />
             ) : (
@@ -868,6 +872,9 @@ const PropertyDetail = () => {
             )}
             <FactCard icon={<Ruler size={18} />} label="Total Covered Area" value={totalCoveredArea ?? '—'} />
             <FactCard icon={<HomeIcon size={18} />} label="Type" value={property.category} />
+            {isVilla && (
+              <FactCard icon={<LandPlot size={18} />} label="Plot Size" value={plot ?? '—'} />
+            )}
           </div>
 
           {/* Property details list */}
