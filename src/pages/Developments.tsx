@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, ChevronDown, MapPin, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
-import PageHeader from '@/components/PageHeader';
 import Thumbnail from '@/components/Thumbnail';
 import {
   Breadcrumb,
@@ -48,7 +47,7 @@ const Developments = () => {
   }, [query]);
   const [activeCats, setActiveCats] = useState<string[]>([]);
   const [openPopover, setOpenPopover] = useState<'type' | 'filters' | null>(null);
-  const [gridCols, setGridCols] = useState<2 | 3>(3);
+  const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
 
   useEffect(() => {
     let cancelled = false;
@@ -158,7 +157,12 @@ const Developments = () => {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <PageHeader title={`Projects for Sale in ${headingLocation}`} />
+
+      <div className="container mx-auto px-4 sm:px-6 pt-10 pb-8 sm:pt-14 sm:pb-2">
+        <h1 className="text-center font-semibold tracking-tight text-[hsl(212_100%_10%)] uppercase text-2xl sm:text-4xl mb-8 sm:mb-10">
+          Projects for Sale in {headingLocation}
+        </h1>
+      </div>
 
       {/* Search bar — same bar/BUY pill used across the site */}
       <div className="container mx-auto px-6">
@@ -283,7 +287,7 @@ const Developments = () => {
               </div>
               {/* Grid size toggle */}
               <div className="hidden lg:flex items-center gap-1">
-                {([2, 3] as const).map((n) => (
+                {([2, 3, 4] as const).map((n) => (
                   <button
                     key={n}
                     type="button"
@@ -321,7 +325,7 @@ const Developments = () => {
               : 'No developments match your search — try a different name, location, or category.'}
           </div>
         ) : (
-          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-8 ${gridCols === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3'}`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-8 ${gridCols === 2 ? 'lg:grid-cols-2' : gridCols === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
             {sortedDevelopments.map((d: Development, i) => (
               <article key={`${d.slug}-${i}`} className="group reveal" data-reveal-delay={String((i % 3) * 100)}>
                 <Link
