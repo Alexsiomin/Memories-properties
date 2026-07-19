@@ -31,6 +31,7 @@ export type UnitRow = {
   parking_spaces?: number | null;
   latitude?: number | null;
   longitude?: number | null;
+  floor_plans?: { url: string; label: string }[] | null;
 };
 
 export type Development = {

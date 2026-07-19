@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/command';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, Upload, X, Star, Loader2, Plus, Trash2, Copy, ChevronsUpDown, Check, Tag as TagIcon,
+  ArrowLeft, Upload, X, Star, Loader2, Plus, Trash2, Copy, ChevronsUpDown, Check, Tag as TagIcon, Layers,
 } from 'lucide-react';
 import { PROPERTY_FEATURES } from '@/lib/property-features';
 import { projectName, unitLabel } from '@/lib/developments';
@@ -234,6 +234,9 @@ export default function AdminProjectNew() {
   const [developerOptions, setDeveloperOptions] = useState<{ id: string; name: string }[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [coverIdx, setCoverIdx] = useState(0);
+  const [featuredIdx, setFeaturedIdx] = useState<number[]>([]);
+  const [floorPlans, setFloorPlans] = useState<{ url: string; label: string }[]>([]);
+  const [floorPlanUploading, setFloorPlanUploading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
 
@@ -630,6 +633,8 @@ export default function AdminProjectNew() {
         const ci = (first.images as string[]).indexOf(cover);
         if (ci >= 0) setCoverIdx(ci);
       }
+      const fps = Array.isArray((first as any).floor_plans) ? (first as any).floor_plans : [];
+      setFloorPlans(fps.filter((f: any) => f && typeof f.url === 'string'));
 
       const stripM2 = (v: unknown) => (typeof v === 'string' ? v.replace(/\s*m²/, '').trim() : '');
       const tagVal = (tags: string[], prefix: string) => {
@@ -683,6 +688,8 @@ export default function AdminProjectNew() {
         if (Array.isArray(d.lots) && d.lots.length) setLots(d.lots);
         if (Array.isArray(d.images)) setImages(d.images);
         if (typeof d.coverIdx === 'number') setCoverIdx(d.coverIdx);
+        if (Array.isArray(d.featuredIdx)) setFeaturedIdx(d.featuredIdx);
+        if (Array.isArray(d.floorPlans)) setFloorPlans(d.floorPlans);
         if (d.visibleCols) setVisibleCols(d.visibleCols);
         if (d.pin) setPin(d.pin);
         if (Array.isArray(d.features)) setFeatures(d.features);
@@ -699,10 +706,10 @@ export default function AdminProjectNew() {
     try {
       localStorage.setItem(
         'admin-project-draft',
-        JSON.stringify({ project, lots, images, coverIdx, visibleCols, pin, features }),
+        JSON.stringify({ project, lots, images, coverIdx, featuredIdx, floorPlans, visibleCols, pin, features }),
       );
     } catch { /* ignore quota errors */ }
-  }, [draftLoaded, project, lots, images, coverIdx, visibleCols, pin, features]);
+  }, [draftLoaded, project, lots, images, coverIdx, featuredIdx, floorPlans, visibleCols, pin, features]);
 
   if (authLoading || adminLoading) {
     return (
@@ -923,7 +930,51 @@ export default function AdminProjectNew() {
   const removeImage = (i: number) => {
     setImages((prev) => prev.filter((_, idx) => idx !== i));
     if (coverIdx >= images.length - 1) setCoverIdx(0);
+    setFeaturedIdx((prev) =>
+      prev.filter((idx) => idx !== i).map((idx) => (idx > i ? idx - 1 : idx))
+    );
   };
+
+  const toggleFeatured = (i: number) => {
+    setFeaturedIdx((prev) => {
+      if (prev.includes(i)) return prev.filter((idx) => idx !== i);
+      if (prev.length >= 5) {
+        toast.error('Only 5 featured images allowed — remove one first.');
+        return prev;
+      }
+      return [...prev, i];
+    });
+  };
+
+  const handleFloorPlanUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const list = Array.from(files);
+    const oversized = list.filter((f) => f.size > 10 * 1024 * 1024);
+    oversized.forEach((f) => toast.error(`${f.name} exceeds 10MB`));
+    const valid = list.filter((f) => f.size <= 10 * 1024 * 1024);
+    if (valid.length === 0) return;
+
+    setFloorPlanUploading(true);
+    const newEntries: { url: string; label: string }[] = [];
+    for (const file of valid) {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${user.id}/floor-plans/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage
+        .from('property-images')
+        .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+      if (error) { toast.error(`Upload failed: ${error.message}`); continue; }
+      const url = supabase.storage.from('property-images').getPublicUrl(path).data.publicUrl;
+      const guess = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
+      newEntries.push({ url, label: guess ? guess.replace(/\b\w/g, (c) => c.toUpperCase()) : '' });
+    }
+    setFloorPlans((prev) => [...prev, ...newEntries]);
+    setFloorPlanUploading(false);
+    if (newEntries.length) toast.success(`${newEntries.length} floor plan(s) uploaded`);
+  };
+
+  const removeFloorPlan = (i: number) => setFloorPlans((prev) => prev.filter((_, idx) => idx !== i));
+  const setFloorPlanLabel = (i: number, label: string) =>
+    setFloorPlans((prev) => prev.map((f, idx) => (idx === i ? { ...f, label } : f)));
 
   const validate = (): string | null => {
     if (!project.title.trim()) return 'Project name is required';
@@ -937,6 +988,11 @@ export default function AdminProjectNew() {
     setSaving(true);
 
     const cover = images[coverIdx] ?? null;
+    // If featured images are picked, cycle each unit through them so listing
+    // cards show visual variety instead of every unit displaying the same
+    // photo. Falls back to the single cover image when none are picked.
+    const coverFor = (idx: number) =>
+      featuredIdx.length > 0 ? images[featuredIdx[idx % featuredIdx.length]] ?? cover : cover;
     const locationLabel = [project.city, project.region, project.country].filter(Boolean).join(' · ') || project.region;
 
     const payloads = lots.map((l, idx) => ({
@@ -974,7 +1030,8 @@ export default function AdminProjectNew() {
       region: project.region || null,
       country: project.country || null,
       images,
-      cover_image: cover,
+      cover_image: coverFor(idx),
+      floor_plans: floorPlans,
       image_key: project.image_key || 'hero',
       sort_order: idx,
     }));
@@ -1198,7 +1255,10 @@ export default function AdminProjectNew() {
         {/* Shared media */}
         <section className="rounded-2xl border border-border bg-card p-6">
           <h2 className="text-xl font-semibold mb-1">Project photos</h2>
-          <p className="text-sm text-muted-foreground mb-5">Same photos applied to every unit.</p>
+          <p className="text-sm text-muted-foreground mb-5">
+            Same gallery applied to every unit. Pick up to 5 as <strong>Featured</strong> — units cycle through
+            them as their cover photo, so listing cards don't all look identical.
+          </p>
 
           <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-8 cursor-pointer hover:bg-muted/50 transition-colors">
             <Upload size={20} className="text-muted-foreground" />
@@ -1222,17 +1282,34 @@ export default function AdminProjectNew() {
               {images.map((url, i) => (
                 <div key={url} className="relative group rounded-xl overflow-hidden border border-border bg-muted">
                   <img src={url} alt={`Project ${i + 1}`} className="w-full h-32 object-cover" />
+                  {featuredIdx.includes(i) && (
+                    <span className="absolute top-2 left-2 rounded-md bg-accent text-accent-foreground text-[10px] font-semibold px-1.5 py-0.5">
+                      Featured {featuredIdx.indexOf(i) + 1}
+                    </span>
+                  )}
                   <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/40 transition-colors flex items-start justify-between p-2">
-                    <button
-                      type="button"
-                      onClick={() => setCoverIdx(i)}
-                      className={`rounded-md p-1.5 transition-opacity ${
-                        coverIdx === i ? 'bg-accent text-accent-foreground opacity-100' : 'bg-background/90 text-foreground opacity-0 group-hover:opacity-100'
-                      }`}
-                      title={coverIdx === i ? 'Cover image' : 'Set as cover'}
-                    >
-                      <Star size={14} fill={coverIdx === i ? 'currentColor' : 'none'} />
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setCoverIdx(i)}
+                        className={`rounded-md p-1.5 transition-opacity ${
+                          coverIdx === i ? 'bg-accent text-accent-foreground opacity-100' : 'bg-background/90 text-foreground opacity-0 group-hover:opacity-100'
+                        }`}
+                        title={coverIdx === i ? 'Cover image' : 'Set as cover'}
+                      >
+                        <Star size={14} fill={coverIdx === i ? 'currentColor' : 'none'} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleFeatured(i)}
+                        className={`rounded-md p-1.5 transition-opacity ${
+                          featuredIdx.includes(i) ? 'bg-accent text-accent-foreground opacity-100' : 'bg-background/90 text-foreground opacity-0 group-hover:opacity-100'
+                        }`}
+                        title={featuredIdx.includes(i) ? 'Remove from featured' : 'Mark as featured (max 5)'}
+                      >
+                        <Check size={14} />
+                      </button>
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeImage(i)}
@@ -1242,6 +1319,62 @@ export default function AdminProjectNew() {
                       <X size={14} />
                     </button>
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Floor plans */}
+        <section className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="text-xl font-semibold mb-1">Floor plans</h2>
+          <p className="text-sm text-muted-foreground mb-5">
+            Applied to every unit. Upload one image per floor and label it (e.g. Ground Floor, First Floor).
+          </p>
+
+          <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-8 cursor-pointer hover:bg-muted/50 transition-colors">
+            {floorPlanUploading ? (
+              <>
+                <Loader2 size={20} className="text-muted-foreground animate-spin" />
+                <span className="text-sm text-muted-foreground">Uploading…</span>
+              </>
+            ) : (
+              <>
+                <Upload size={20} className="text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Tap to upload floor plans</span>
+              </>
+            )}
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFloorPlanUpload(e.target.files)}
+              disabled={floorPlanUploading}
+            />
+          </label>
+
+          {floorPlans.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {floorPlans.map((fp, i) => (
+                <div key={fp.url} className="flex items-center gap-3 border border-border rounded-lg p-2.5 bg-background">
+                  <div className="w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted">
+                    <img src={fp.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                  </div>
+                  <Input
+                    value={fp.label}
+                    onChange={(e) => setFloorPlanLabel(i, e.target.value)}
+                    placeholder="e.g. Ground Floor"
+                    className="flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeFloorPlan(i)}
+                    aria-label="Remove floor plan"
+                    className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-destructive/10 hover:text-destructive shrink-0"
+                  >
+                    <X size={15} />
+                  </button>
                 </div>
               ))}
             </div>

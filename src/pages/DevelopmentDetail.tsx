@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import PropertyMap from '@/components/PropertyMap';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, Building2, Calendar, Tag, MapPin, BedDouble, Bath, ChevronLeft, ChevronRight, Home as HomeIcon, Ruler } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Building2, Calendar, Tag, MapPin, BedDouble, Bath, ChevronLeft, ChevronRight, Home as HomeIcon, Ruler, Layers, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import Thumbnail from '@/components/Thumbnail';
@@ -87,6 +88,8 @@ const DevelopmentDetail = () => {
   const [openTour, setOpenTour] = useState(false);
   const [openEnquiry, setOpenEnquiry] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [floorPlanOpen, setFloorPlanOpen] = useState(false);
+  const [floorPlanIndex, setFloorPlanIndex] = useState(0);
   const [rows, setRows] = useState<UnitRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -95,7 +98,7 @@ const DevelopmentDetail = () => {
     (async () => {
       const { data } = await supabase
         .from('properties')
-        .select('id, slug, title, location, category, price, price_value, beds, baths, status, listing_type, cover_image, images, internal_area, size, covered_verandas, tags, lot_size, parking_spaces, latitude, longitude')
+        .select('id, slug, title, location, category, price, price_value, beds, baths, status, listing_type, cover_image, images, internal_area, size, covered_verandas, tags, lot_size, parking_spaces, latitude, longitude, floor_plans')
         .not('developer_id', 'is', null)
         .limit(2000);
       if (!cancelled) {
@@ -128,6 +131,25 @@ const DevelopmentDetail = () => {
     () => (dev ? [...dev.units].sort((a, b) => (a.price_value ?? 0) - (b.price_value ?? 0)) : []),
     [dev],
   );
+
+  // Floor plans are shared across every unit in a project (same as photos),
+  // so any unit's row carries the same set.
+  const floorPlans = useMemo(
+    () => units.find((u) => Array.isArray(u.floor_plans) && u.floor_plans.length > 0)?.floor_plans ?? [],
+    [units],
+  );
+
+  useEffect(() => {
+    if (!floorPlanOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFloorPlanOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [floorPlanOpen]);
 
   const allSold = useMemo(
     () => units.length > 0 && units.every((u) => isSold(u)),
@@ -379,6 +401,17 @@ const DevelopmentDetail = () => {
                   </button>
                 ))}
               </div>
+            )}
+
+            {floorPlans.length > 0 && (
+              <button
+                type="button"
+                onClick={() => { setFloorPlanIndex(0); setFloorPlanOpen(true); }}
+                className="mt-3 w-full btn-cta btn-cta-sm justify-center"
+              >
+                <Layers size={16} />
+                View Floor Plan{floorPlans.length > 1 ? 's' : ''}
+              </button>
             )}
           </div>
 
@@ -655,6 +688,57 @@ const DevelopmentDetail = () => {
             } as EnquiryProperty}
           />
         </>
+      )}
+
+      {/* Floor plan viewer — simple full-screen slider, shared across every
+          unit in the project. */}
+      {floorPlanOpen && floorPlans.length > 0 && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Floor plans"
+          className="fixed inset-0 z-[100] bg-[#00101f] flex flex-col"
+        >
+          <div className="flex items-center justify-between px-4 sm:px-6 h-14 shrink-0 text-white">
+            <span className="font-montserrat font-extrabold uppercase tracking-[0.15em] text-sm">Memories</span>
+            <span className="text-sm tracking-wide">
+              {floorPlans[floorPlanIndex]?.label || `${floorPlanIndex + 1} / ${floorPlans.length}`}
+            </span>
+            <button type="button" onClick={() => setFloorPlanOpen(false)} aria-label="Close" className="text-white/90 hover:text-white transition-colors">
+              <X size={22} />
+            </button>
+          </div>
+
+          <div className="relative flex-1 flex items-center justify-center overflow-hidden px-4 pb-4">
+            <img
+              src={floorPlans[floorPlanIndex]?.url}
+              alt={floorPlans[floorPlanIndex]?.label || `Floor plan ${floorPlanIndex + 1}`}
+              className="max-w-full max-h-full object-contain"
+            />
+
+            {floorPlans.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Previous floor plan"
+                  onClick={() => setFloorPlanIndex((i) => (i - 1 + floorPlans.length) % floorPlans.length)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-white/90 hover:text-white transition-colors"
+                >
+                  <ChevronLeft size={32} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next floor plan"
+                  onClick={() => setFloorPlanIndex((i) => (i + 1) % floorPlans.length)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-white/90 hover:text-white transition-colors"
+                >
+                  <ChevronRight size={32} />
+                </button>
+              </>
+            )}
+          </div>
+        </div>,
+        document.body
       )}
     </>
   );
