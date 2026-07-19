@@ -979,7 +979,31 @@ export default function AdminProjectNew() {
   const validate = (): string | null => {
     if (!project.title.trim()) return 'Project name is required';
     if (lots.length === 0) return 'Add at least one unit';
+
+    // Door Number (reference_code) must be unique per property in the
+    // database — catch duplicates within this batch before submitting,
+    // instead of letting Postgres reject the whole save with a cryptic
+    // "duplicate key value" error.
+    const seen = new Map<string, number>();
+    for (let i = 0; i < lots.length; i++) {
+      const code = lots[i].reference_code.trim();
+      if (!code) continue;
+      const key = code.toLowerCase();
+      if (seen.has(key)) {
+        return `Row ${seen.get(key)! + 1} and Row ${i + 1} both have Door Number "${code}" — each unit needs a unique Door Number.`;
+      }
+      seen.set(key, i);
+    }
+
     return null;
+  };
+
+  /** Turn a raw Postgres error into something an admin can actually act on. */
+  const friendlySaveError = (error: { message: string }): string => {
+    if (/reference_code/i.test(error.message) && /duplicate|unique/i.test(error.message)) {
+      return 'That Door Number is already used by another listing (in this project or elsewhere). Change it to something unique and save again.';
+    }
+    return error.message;
   };
 
   const save = async () => {
@@ -1042,10 +1066,10 @@ export default function AdminProjectNew() {
       for (const { p, id } of updates) {
         if (id) {
           const { error } = await supabase.from('properties').update(p).eq('id', id);
-          if (error) { setSaving(false); toast.error(error.message); return; }
+          if (error) { setSaving(false); toast.error(friendlySaveError(error)); return; }
         } else {
           const { error } = await supabase.from('properties').insert([p]);
-          if (error) { setSaving(false); toast.error(error.message); return; }
+          if (error) { setSaving(false); toast.error(friendlySaveError(error)); return; }
         }
       }
       if (removedIds.length) {
@@ -1060,7 +1084,7 @@ export default function AdminProjectNew() {
 
     const { error } = await supabase.from('properties').insert(payloads);
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlySaveError(error)); return; }
     try { localStorage.removeItem('admin-project-draft'); } catch { /* noop */ }
     toast.success(`${payloads.length} unit${payloads.length === 1 ? '' : 's'} created`);
     navigate('/admin/properties');
