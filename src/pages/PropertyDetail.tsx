@@ -666,6 +666,13 @@ const PropertyDetail = () => {
   const metaTitle = (property.share_title && property.share_title.trim()) || autoShareTitle;
   const metaDescription = (property.share_description && property.share_description.trim()) || autoShareDescription;
 
+  // The single source of truth for "visible features" — used by both the
+  // on-page Features list and the amenityFeature SEO structured data below,
+  // so what's indexed always matches what's actually shown.
+  const visibleFeatureTags = (property.tags ?? []).filter(
+    (t) => !t.toLowerCase().startsWith('energy ') && !t.startsWith('hidden:')
+  );
+
   const realEstateJsonLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': property.category?.toLowerCase().includes('land') ? 'Place' : 'Residence',
@@ -707,6 +714,15 @@ const PropertyDetail = () => {
     ...(property.beds != null ? { numberOfRooms: property.beds } : {}),
     ...(property.baths != null ? { numberOfBathroomsTotal: property.baths } : {}),
     ...(property.year_built ? { yearBuilt: property.year_built } : {}),
+    ...(visibleFeatureTags.length > 0
+      ? {
+          amenityFeature: visibleFeatureTags.map((t) => ({
+            '@type': 'LocationFeatureSpecification',
+            name: t,
+            value: true,
+          })),
+        }
+      : {}),
   };
 
   const breadcrumbJsonLd: Record<string, unknown> = {
@@ -972,22 +988,6 @@ const PropertyDetail = () => {
               <DetailRow label="Reference" value={displayReference(property.reference_code, property.id)} mono />
             </dl>
             </>
-            )}
-            {property.tags?.length > 0 && (
-              <div className="mt-5 pt-5 border-t border-border">
-                <p className="text-sm font-medium text-muted-foreground mb-3">Tags</p>
-                <div className="flex flex-wrap gap-2">
-                  {property.tags.filter((t) => !t.startsWith('hidden:')).map((t) => (
-                    <span
-                      key={t}
-                      className="inline-flex items-center gap-1.5 text-base px-2.5 py-1 rounded-none bg-foreground/85 backdrop-blur text-background text-[11px] font-semibold tracking-wide"
-                    >
-                      <span className="size-1.5 rounded-full bg-accent" />
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
             )}
           </div>
 
@@ -1284,12 +1284,11 @@ const PropertyDetail = () => {
           })()}
 
           {/* Features */}
-          {property.tags?.length > 0 && (
+          {visibleFeatureTags.length > 0 && (
             <div className="mt-10">
               <h3 className="text-2xl font-montserrat font-extrabold text-foreground uppercase">Features</h3>
               <ul className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {property.tags
-                  .filter((t) => !t.toLowerCase().startsWith('energy ') && !t.startsWith('hidden:'))
+                {visibleFeatureTags
                   .map((t) => (
                     <li key={t} className="flex items-center gap-2 text-base text-foreground">
                       <CheckCircle2 size={18} className="text-accent shrink-0" /> {t}
