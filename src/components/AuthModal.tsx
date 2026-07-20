@@ -9,6 +9,21 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { setRememberSession } from '@/lib/session-bootstrap';
 
+// Compact logo mark, mirrored from Masthead's monogram — drawn inline so it
+// inherits color via currentColor without depending on an external asset.
+const MonogramIcon = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 726.010389 470.801074" className={className} fill="currentColor" aria-hidden="true">
+    <g transform="translate(-263.994806,887.794883) scale(0.1,-0.1)">
+      <path d="M4919 8873 c-4 -36 -5 -113 -7 -495 l-2 -437 -437 4 c-241 2 -448 2
+-460 -2 l-23 -5 0 -259 0 -259 -255 0 -255 0 0 259 0 258 -62 5 c-35 2 -223 4
+-418 3 l-355 0 -3 -1888 -2 -1887 1595 0 1595 0 2 733 3 732 452 3 453 2 2
+-732 3 -733 1578 -3 1577 -2 -2 1886 -3 1885 -395 0 -395 -1 -3 -260 -2 -260
+-255 0 -255 0 -2 260 -3 261 -395 0 c-217 0 -423 3 -457 6 l-63 5 -2 462 -3
+461 -1372 3 c-755 1 -1373 -1 -1374 -5z" />
+    </g>
+  </svg>
+);
+
 type Mode = 'signin' | 'signup' | 'forgot';
 
 const AuthModal = () => {
@@ -108,17 +123,20 @@ const AuthModal = () => {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="max-w-md bg-[hsl(212_100%_10%)] text-white border-0 p-0 gap-0 max-h-[92vh] overflow-y-auto [&>button]:text-white/70 [&>button:hover]:text-white">
+      <DialogContent className="max-w-md bg-[#00101f] text-white border-0 p-0 gap-0 max-h-[92vh] overflow-y-auto [&>button]:text-white/70 [&>button:hover]:text-white [&>button]:top-4 [&>button]:right-4">
         <DialogTitle className="sr-only">{title}</DialogTitle>
 
-        <span className="font-light uppercase tracking-[0.32em] text-white text-3xl text-center block pt-8 pb-4">
-          MEMORIES
-        </span>
+        <div className="flex flex-col items-center gap-3 pt-10 pb-6">
+          <MonogramIcon className="h-9 w-auto text-white" />
+          <span className="font-light uppercase tracking-[0.32em] text-white text-2xl">
+            Memories
+          </span>
+        </div>
 
         <div className="w-full max-w-[400px] mx-auto flex flex-col gap-4 px-6 pb-8">
           <div className="text-center">
             <h2 className="text-xl font-bold text-white leading-snug tracking-tight">{title}</h2>
-            <p className="text-sm text-white/70 mt-1.5 leading-relaxed">{subtitle}</p>
+            <p className="text-sm text-white/60 mt-1.5 leading-relaxed">{subtitle}</p>
           </div>
 
           <button
@@ -132,7 +150,7 @@ const AuthModal = () => {
                 setGoogleBusy(false);
               }
             }}
-            className="btn-cta btn-cta-block bg-white"
+            className="btn-cta btn-cta-solid btn-cta-block bg-white text-[#00101f]"
           >
             {googleBusy ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -148,9 +166,9 @@ const AuthModal = () => {
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/20" />
-            <span className="text-xs text-white/50">or</span>
-            <div className="flex-1 h-px bg-white/20" />
+            <div className="flex-1 h-px bg-white/15" />
+            <span className="text-xs uppercase tracking-[0.15em] text-white/40">or</span>
+            <div className="flex-1 h-px bg-white/15" />
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -161,7 +179,7 @@ const AuthModal = () => {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Full name"
                 autoComplete="name"
-                className="w-full h-12 px-4 bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:border-white/50"
+                className="w-full h-12 px-4 bg-white/[0.06] border border-white/15 text-white placeholder:text-white/40 focus:outline-none focus:border-accent transition-colors"
               />
             )}
             <input
@@ -172,7 +190,7 @@ const AuthModal = () => {
               placeholder="Email address"
               autoComplete="email"
               required
-              className="w-full h-12 px-4 bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:border-white/50"
+              className="w-full h-12 px-4 bg-white/[0.06] border border-white/15 text-white placeholder:text-white/40 focus:outline-none focus:border-accent transition-colors"
             />
             {mode !== 'forgot' && (
               <div className="relative">
@@ -184,13 +202,13 @@ const AuthModal = () => {
                   placeholder="Password"
                   autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   required
-                  className="w-full h-12 pl-4 pr-12 bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:border-white/50"
+                  className="w-full h-12 pl-4 pr-12 bg-white/[0.06] border border-white/15 text-white placeholder:text-white/40 focus:outline-none focus:border-accent transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute inset-y-0 right-0 flex items-center px-4 text-white/60 hover:text-white"
+                  className="absolute inset-y-0 right-0 flex items-center px-4 text-white/50 hover:text-white transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -200,19 +218,19 @@ const AuthModal = () => {
 
             {mode === 'signin' && (
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-xs text-white/70 hover:text-white cursor-pointer select-none">
+                <label className="flex items-center gap-2 text-xs text-white/60 hover:text-white cursor-pointer select-none transition-colors">
                   <input
                     type="checkbox"
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
-                    className="h-4 w-4 accent-white cursor-pointer"
+                    className="h-4 w-4 accent-accent cursor-pointer"
                   />
                   Remember me
                 </label>
                 <button
                   type="button"
                   onClick={() => setMode('forgot')}
-                  className="text-xs text-white/70 hover:text-white"
+                  className="text-xs text-white/60 hover:text-white transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -223,18 +241,18 @@ const AuthModal = () => {
             <button
               type="submit"
               disabled={busy}
-              className="btn-cta btn-cta-solid btn-cta-block relative z-10 bg-white text-[hsl(212_100%_10%)]"
+              className="btn-cta btn-cta-solid btn-cta-block relative z-10 bg-white text-[#00101f]"
             >
               {busy && <Loader2 className="w-4 h-4 animate-spin" />}
               {mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Send reset link' : 'Sign in'}
             </button>
           </form>
 
-          <div className="text-center text-sm text-white/70">
+          <div className="text-center text-sm text-white/60">
             {mode === 'signin' && (
               <>
                 Don't have an account?{' '}
-                <button type="button" onClick={() => setMode('signup')} className="text-white font-medium underline underline-offset-2">
+                <button type="button" onClick={() => setMode('signup')} className="text-white font-medium underline underline-offset-2 hover:text-accent transition-colors">
                   Sign up
                 </button>
               </>
@@ -242,19 +260,19 @@ const AuthModal = () => {
             {mode === 'signup' && (
               <>
                 Already have an account?{' '}
-                <button type="button" onClick={() => setMode('signin')} className="text-white font-medium underline underline-offset-2">
+                <button type="button" onClick={() => setMode('signin')} className="text-white font-medium underline underline-offset-2 hover:text-accent transition-colors">
                   Sign in
                 </button>
               </>
             )}
             {mode === 'forgot' && (
-              <button type="button" onClick={() => setMode('signin')} className="text-white font-medium underline underline-offset-2">
+              <button type="button" onClick={() => setMode('signin')} className="text-white font-medium underline underline-offset-2 hover:text-accent transition-colors">
                 Back to sign in
               </button>
             )}
           </div>
 
-          <p className="text-[11px] text-white/60 text-center leading-relaxed">
+          <p className="text-[11px] text-white/50 text-center leading-relaxed">
             By continuing, you agree to our Terms and Privacy Policy.
           </p>
         </div>
