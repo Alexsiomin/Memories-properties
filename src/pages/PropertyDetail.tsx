@@ -1046,7 +1046,7 @@ const PropertyDetail = () => {
                 <select
                   value={lotSort}
                   onChange={(e) => setLotSort(e.target.value as typeof lotSort)}
-                  className="w-full sm:w-auto max-w-[60%] sm:max-w-none truncate text-xs sm:text-sm bg-transparent border border-border rounded-none px-2 sm:px-3 py-1.5 text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="w-full sm:w-auto max-w-[60%] sm:max-w-none truncate h-10 text-xs sm:text-sm bg-transparent border border-border rounded-none px-2 sm:px-3 text-foreground hover:bg-muted/50 transition-colors cursor-pointer"
                 >
                   <option value="price-asc">By price — ascending</option>
                   <option value="price-desc">By price — descending</option>
