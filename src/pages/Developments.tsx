@@ -168,12 +168,11 @@ const Developments = () => {
       <div className="container mx-auto px-6">
         <form onSubmit={onSearch} className="w-full max-w-[974px] mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-stretch gap-3 sm:gap-0 sm:bg-[hsl(0_0%_90%)]">
-            <div className="flex items-stretch bg-[hsl(0_0%_90%)] sm:bg-transparent sm:contents">
             <Popover open={openPopover === 'type'} onOpenChange={(o) => setOpenPopover(o ? 'type' : null)}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="group/ctrl inline-flex items-center justify-between gap-3 w-32 sm:w-44 pl-4 sm:pl-6 pr-3 sm:pr-5 h-[48px] bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.08em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs shrink-0"
+                  className="group/ctrl inline-flex items-center justify-between gap-3 w-full sm:w-44 px-4 sm:pl-6 sm:pr-5 h-11 sm:h-[48px] bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.08em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs shrink-0"
                 >
                   <span>{tab}</span>
                   <ChevronDown size={18} className="opacity-80 transition-transform duration-200 group-data-[state=open]/ctrl:rotate-180" />
@@ -207,28 +206,26 @@ const Developments = () => {
               </PopoverContent>
             </Popover>
 
-            <div className="relative flex-1 flex items-center">
+            <div className="relative w-full sm:flex-1 flex items-center bg-white border border-[hsl(212_100%_10%)]/15 sm:bg-transparent sm:border-0 h-11 sm:h-auto">
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by project name or location"
-                className="w-full h-[48px] bg-transparent px-4 text-sm placeholder:text-muted-foreground focus:outline-none"
+                className="w-full h-full bg-transparent px-4 text-sm placeholder:text-muted-foreground focus:outline-none"
               />
               {query && (
                 <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="pr-3 text-muted-foreground hover:text-foreground">
                   <X size={16} />
                 </button>
               )}
-            </div>
-
-            <button
-              type="submit"
-              aria-label="Search"
-              className="sm:hidden inline-flex items-center justify-center w-10 h-full text-foreground shrink-0"
-            >
-              <Search size={18} strokeWidth={2} />
-            </button>
+              <button
+                type="submit"
+                aria-label="Search"
+                className="sm:hidden inline-flex items-center justify-center w-10 h-full text-foreground shrink-0"
+              >
+                <Search size={18} strokeWidth={2} />
+              </button>
             </div>
 
             {/* Filter pill (desktop) */}
