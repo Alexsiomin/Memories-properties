@@ -123,7 +123,7 @@ const AuthModal = () => {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="max-w-md bg-[#00101f] text-white border-0 p-0 gap-0 max-h-[92vh] overflow-y-auto [&>button]:text-white/70 [&>button:hover]:text-white [&>button]:top-4 [&>button]:right-4">
+      <DialogContent className="!z-[100] !fixed !inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-full !h-full !max-w-full !rounded-none sm:!inset-auto sm:!left-[50%] sm:!top-[50%] sm:!translate-x-[-50%] sm:!translate-y-[-50%] sm:!w-full sm:!h-auto sm:!max-w-md sm:!rounded-lg bg-[#00101f] text-white border-0 p-0 gap-0 max-h-full sm:max-h-[92vh] overflow-y-auto [&>button]:text-white/70 [&>button:hover]:text-white [&>button]:top-4 [&>button]:right-4 [&>button]:z-10">
         <DialogTitle className="sr-only">{title}</DialogTitle>
 
         <div className="flex flex-col items-center gap-3 pt-10 pb-6">
