@@ -4,12 +4,9 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 
-// Deter casual image downloading: block right-click and drag on <img> elements.
-// (Determined users can still get images via DevTools / network tab.)
+// Deter casual image downloading via drag; right-click is left alone so the
+// site owner can inspect any element, including images.
 if (typeof window !== "undefined") {
-  document.addEventListener("contextmenu", (e) => {
-    if ((e.target as HTMLElement)?.tagName === "IMG") e.preventDefault();
-  });
   document.addEventListener("dragstart", (e) => {
     if ((e.target as HTMLElement)?.tagName === "IMG") e.preventDefault();
   });
