@@ -308,7 +308,7 @@ const Developments = () => {
         </form>
       </div>
 
-      <section className="container mx-auto px-6 py-10">
+      <section className="container mx-auto px-4 sm:px-6 pt-10">
         {!loading && developments.length > 0 && (
           <div className="flex items-center justify-between gap-4 border-b border-[hsl(212_100%_10%)]/10 pb-4 mb-6">
             <p className="text-sm text-[hsl(212_100%_10%)]/60">
@@ -351,6 +351,10 @@ const Developments = () => {
             </div>
           </div>
         )}
+      </section>
+
+      {/* Listings — edge-to-edge on mobile, padded from sm: up, matching Buy page */}
+      <section className="container mx-auto px-0 sm:px-6 pb-10">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array.from({ length: 6 }).map((_, i) => (
