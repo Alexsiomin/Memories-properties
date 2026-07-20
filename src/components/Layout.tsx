@@ -61,16 +61,19 @@ const Layout = () => {
   // Listing pages never have a hero, so they always need the spacer.
   const isDevDetail = /^\/(developments|sold-projects)\/.+/.test(pathname);
   const isDevListing = isDevPage && !isDevDetail;
+  const isPropertyDetail = /^\/properties\/[^/]+$/.test(pathname);
 
   return (
     <div ref={ref} className="min-h-screen flex flex-col bg-background text-foreground">
       <Masthead />
       {/* Spacer for fixed header on non-hero routes */}
-      {!isHeroRoute && !isDevPage && <div aria-hidden className="h-16 md:h-20" />}
+      {!isHeroRoute && !isDevPage && !isPropertyDetail && <div aria-hidden className="h-16 md:h-20" />}
       {/* Dev listing pages have no hero at any size */}
       {isDevListing && <div aria-hidden className="h-16 md:h-20" />}
       {/* Dev detail pages bleed the hero behind the header on mobile only */}
       {isDevDetail && <div aria-hidden className="hidden md:block h-20" />}
+      {/* Property detail pages bleed the hero behind the header on mobile only */}
+      {isPropertyDetail && <div aria-hidden className="hidden md:block h-20" />}
       <main key={pathname} className="animate-page-in flex-grow">
         <Suspense fallback={null}>
           <Outlet />

@@ -82,6 +82,8 @@ const Masthead = () => {
   const isDevListing = pathname === '/developments' || pathname === '/sold-projects' || pathname === '/insights' || pathname === '/insights/limassol';
   // Only development/sold DETAIL pages have a full-bleed hero (mobile). Listing pages don't.
   const isDevDetail = /^\/(developments|sold-projects)\/.+/.test(pathname);
+  // Property detail pages also bleed their hero photo behind the header on mobile only.
+  const isPropertyDetail = /^\/properties\/[^/]+$/.test(pathname);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -107,7 +109,7 @@ const Masthead = () => {
     };
   }, [open]);
 
-  const isDevPage = isDevDetail;
+  const isDevPage = isDevDetail || isPropertyDetail;
   const isProjectExpertisePage = pathname === '/project-expertise';
   const transparent = (isHeroRoute || isDevPage) && !scrolled;
   // Dev pages have a full-bleed hero image only on mobile, so use white text on

@@ -768,8 +768,8 @@ const PropertyDetail = () => {
         preloadImage={img}
         jsonLd={[realEstateListingJsonLd, realEstateJsonLd, breadcrumbJsonLd]}
       />
-      {/* Breadcrumb */}
-      <div className="container mx-auto px-4 md:px-8 pt-3 pb-2">
+      {/* Breadcrumb — desktop only; mobile shows it below the full-bleed hero photo instead */}
+      <div className="hidden md:block container mx-auto px-4 md:px-8 pt-3 pb-2">
         <nav className="flex items-center gap-2 text-muted-foreground text-base">
           <Link to="/" className="hover:text-accent transition-colors">Home</Link>
           <ChevronRight size={14} />
@@ -787,7 +787,7 @@ const PropertyDetail = () => {
       <section className="container mx-auto px-4 md:px-8 grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8 items-start">
         {/* LEFT — Gallery */}
         <div className="lg:col-span-1 min-w-0">
-          <div className="relative overflow-hidden bg-muted group">
+          <div className="relative overflow-hidden bg-muted group -mx-4 md:mx-0">
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
@@ -803,7 +803,7 @@ const PropertyDetail = () => {
                 decoding="async"
                 // @ts-expect-error - fetchpriority is valid HTML, missing in React types
                 fetchpriority="high"
-                className="w-full aspect-[4/3] md:aspect-[3/2] object-cover"
+                className="w-full h-[75vh] md:h-auto md:aspect-[3/2] object-cover"
               />
             </button>
 
