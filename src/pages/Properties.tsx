@@ -18,7 +18,6 @@ import { useRecentSearches } from '@/hooks/use-recent-searches';
 import {
   Search,
   ChevronDown,
-  ChevronLeft,
   SlidersHorizontal,
   Circle,
   ChevronRight,
@@ -85,6 +84,7 @@ interface Property {
   listing_type?: string;
   internalArea?: string;
   coveredVerandas?: string;
+  lotSize?: string;
 }
 
 const parseAreaNum = (s: string | null | undefined): number | null => {
@@ -303,6 +303,8 @@ const Properties = () => {
   const [minBeds, setMinBeds] = useState<number>(Number(params.get('beds') ?? 0));
   const [maxBeds, setMaxBeds] = useState<number>(Number(params.get('maxbeds') ?? 0));
   const [minBaths, setMinBaths] = useState<number>(Number(params.get('baths') ?? 0));
+  const [minLand, setMinLand] = useState<string>(params.get('minland') ?? '');
+  const [maxLand, setMaxLand] = useState<string>(params.get('maxland') ?? '');
   const [activeCats, setActiveCats] = useState<string[]>(
     params.get('cats')?.split(',').map(normalizePropertyCategory).filter(Boolean) ?? []
   );
@@ -429,6 +431,7 @@ const Properties = () => {
         listing_type: row.listing_type ?? undefined,
         internalArea: row.internal_area ?? undefined,
         coveredVerandas: row.covered_verandas ?? undefined,
+        lotSize: row.lot_size ?? undefined,
         isProject: typeof row.title === 'string' && row.title.includes(' - '),
       }));
       setProperties(mapped);
@@ -527,7 +530,6 @@ const Properties = () => {
     properties.forEach((p) => {
       (p.tags ?? []).forEach((t) => set.add(t));
       if (p.cat) set.add(p.cat);
-      if (p.location) p.location.split(',').forEach((part) => { const v = part.trim(); if (v) set.add(v); });
     });
     return Array.from(set);
   }, [properties]);
@@ -553,6 +555,8 @@ const Properties = () => {
     if (minBeds > 0) next.set('beds', String(minBeds));
     if (maxBeds > 0) next.set('maxbeds', String(maxBeds));
     if (minBaths > 0) next.set('baths', String(minBaths));
+    if (minLand) next.set('minland', minLand);
+    if (maxLand) next.set('maxland', maxLand);
     if (energyRatings.length) next.set('energy', energyRatings.join(','));
     return next;
   };
@@ -632,19 +636,15 @@ const Properties = () => {
         keywords.every((kw) => {
           const k = kw.toLowerCase();
           // If the keyword names a category, match by category only
-          // so e.g. "apartment" doesn't surface a plot whose description
+          // so e.g. "apartment" doesn't surface a plot whose feature list
           // merely mentions the word "apartments".
           const categoryMatch = findCategoryFromTerm(kw, allCategories);
           if (categoryMatch) {
             return p.cat === categoryMatch;
           }
-          return (
-            p.title.toLowerCase().includes(k) ||
-            p.cat.toLowerCase().includes(k) ||
-            p.location.toLowerCase().includes(k) ||
-            (p.description ?? '').toLowerCase().includes(k) ||
-            (p.tags ?? []).some((t) => t.toLowerCase().includes(k))
-          );
+          // Keyword search matches only against the property's feature
+          // tags — not title, location, or description.
+          return (p.tags ?? []).some((t) => t.toLowerCase().includes(k));
         })
       );
     }
@@ -672,6 +672,15 @@ const Properties = () => {
     if (maxBeds > 0) list = list.filter((p) => (p.beds ?? 0) <= maxBeds);
     if (minBaths > 0) list = list.filter((p) => (p.baths ?? 0) >= minBaths);
 
+    const minLandNum = minLand ? Number(minLand) : null;
+    const maxLandNum = maxLand ? Number(maxLand) : null;
+    if (minLandNum !== null && !Number.isNaN(minLandNum)) {
+      list = list.filter((p) => { const n = parseAreaNum(p.lotSize); return n !== null && n >= minLandNum; });
+    }
+    if (maxLandNum !== null && !Number.isNaN(maxLandNum)) {
+      list = list.filter((p) => { const n = parseAreaNum(p.lotSize); return n !== null && n <= maxLandNum; });
+    }
+
     if (energyRatings.length) {
       list = list.filter((p) => p.energyRating && energyRatings.includes(p.energyRating));
     }
@@ -691,7 +700,7 @@ const Properties = () => {
     }
 
     return list;
-  }, [mode, locations, nearMe, keywords, region, activeTags, effectiveActiveCats, minPrice, maxPrice, minBeds, maxBeds, minBaths, energyRatings, sort, properties, allCategories]);
+  }, [mode, locations, nearMe, keywords, region, activeTags, effectiveActiveCats, minPrice, maxPrice, minBeds, maxBeds, minBaths, minLand, maxLand, energyRatings, sort, properties, allCategories]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -701,7 +710,7 @@ const Properties = () => {
     [filtered, visibleCount]
   );
 
-  useEffect(() => { setPage(1); }, [mode, locations, nearMe, keywords, region, activeTags, effectiveActiveCats, minPrice, maxPrice, minBeds, maxBeds, minBaths, energyRatings, sort]);
+  useEffect(() => { setPage(1); }, [mode, locations, nearMe, keywords, region, activeTags, effectiveActiveCats, minPrice, maxPrice, minBeds, maxBeds, minBaths, minLand, maxLand, energyRatings, sort]);
 
   useEffect(() => {
     if (!region && !effectiveActiveCats.length && !minPrice && !maxPrice && !minBeds) return;
@@ -753,6 +762,8 @@ const Properties = () => {
     (minBeds > 0 ? 1 : 0) +
     (maxBeds > 0 ? 1 : 0) +
     (minBaths > 0 ? 1 : 0) +
+    (minLand ? 1 : 0) +
+    (maxLand ? 1 : 0) +
     energyRatings.length;
 
   // Heading location reflects the searched location(s); defaults to Paphos.
@@ -806,6 +817,8 @@ const Properties = () => {
     setMinBeds(0);
     setMaxBeds(0);
     setMinBaths(0);
+    setMinLand('');
+    setMaxLand('');
     setEnergyRatings([]);
     setKeywords([]);
     setKeywordInput('');
@@ -985,14 +998,6 @@ const Properties = () => {
                     >
                       {/* Sticky header — centered title with close */}
                       <div className="sticky top-0 z-10 flex items-center justify-center px-4 sm:px-6 h-14 sm:h-auto sm:pt-8 sm:pb-2 bg-white">
-                        <button
-                          type="button"
-                          onClick={() => setFiltersOpen(false)}
-                          aria-label="Close filters"
-                          className="sm:hidden absolute left-2 w-10 h-10 inline-flex items-center justify-center rounded-full text-foreground hover:bg-foreground/10"
-                        >
-                          <ChevronLeft size={22} />
-                        </button>
                         <h3 className="text-base sm:text-xl font-bold uppercase tracking-[0.22em] text-foreground">Filters</h3>
                         <button
                           type="button"
@@ -1034,54 +1039,38 @@ const Properties = () => {
                           />
                         </div>
 
-                        {/* Property type */}
+                        {/* Property type — single-select (matches "Any", "House", etc.
+                            reference: pick one type at a time, not several). */}
                         <section>
                           <h3 className="font-bold uppercase tracking-tight mb-5 text-lg text-[hsl(222_47%_20%)]">Property type</h3>
-                          <div className="grid grid-cols-2 gap-2.5">
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                             {(() => {
                               const isAny = activeCats.length === 0;
                               return (
-                                <label
-                                  className={`flex items-center gap-3 cursor-pointer border px-3.5 py-3 text-sm leading-snug transition-colors ${
-                                    isAny
-                                      ? 'border-foreground bg-foreground/[0.06] text-foreground font-medium'
-                                      : 'border-foreground/15 text-foreground/80 hover:border-foreground/40 hover:bg-foreground/[0.03]'
-                                  }`}
-                                >
+                                <label className="flex items-center gap-2.5 cursor-pointer text-sm">
                                   <input
-                                    type="checkbox"
+                                    type="radio"
+                                    name="property-type"
                                     checked={isAny}
                                     onChange={() => setActiveCats([])}
                                     className="w-4 h-4 shrink-0 accent-foreground"
                                   />
-                                  Any
+                                  <span className={isAny ? 'text-foreground font-medium' : 'text-foreground/80'}>Any</span>
                                 </label>
                               );
                             })()}
                             {allCategories.map((c) => {
-                              const checked = effectiveActiveCats.includes(c);
+                              const checked = effectiveActiveCats.length === 1 && effectiveActiveCats[0] === c;
                               return (
-                                <label
-                                  key={c}
-                                  className={`flex items-center gap-3 cursor-pointer border px-3.5 py-3 text-sm leading-snug transition-colors ${
-                                    checked
-                                      ? 'border-foreground bg-foreground/[0.06] text-foreground font-medium'
-                                      : 'border-foreground/15 text-foreground/80 hover:border-foreground/40 hover:bg-foreground/[0.03]'
-                                  }`}
-                                >
+                                <label key={c} className="flex items-center gap-2.5 cursor-pointer text-sm">
                                   <input
-                                    type="checkbox"
+                                    type="radio"
+                                    name="property-type"
                                     checked={checked}
-                                    onChange={() =>
-                                      setActiveCats((prev) =>
-                                        prev.includes(c)
-                                          ? prev.filter((x) => x !== c)
-                                          : [...prev, c]
-                                      )
-                                    }
+                                    onChange={() => setActiveCats([c])}
                                     className="w-4 h-4 shrink-0 accent-foreground"
                                   />
-                                  {c}
+                                  <span className={checked ? 'text-foreground font-medium' : 'text-foreground/80'}>{c}</span>
                                 </label>
                               );
                             })}
@@ -1118,7 +1107,7 @@ const Properties = () => {
 
                         {/* Bedrooms */}
                         <section>
-                          <h3 className="font-bold uppercase tracking-tight mb-5 text-base text-[hsl(222_47%_20%)]">Bedrooms</h3>
+                          <h3 className="font-bold uppercase tracking-tight mb-5 text-lg text-[hsl(222_47%_20%)]">Bedrooms</h3>
                           <div className="grid grid-cols-2 gap-3">
                             <PriceSelect
                               value={minBeds ? String(minBeds) : ''}
@@ -1155,6 +1144,33 @@ const Properties = () => {
                               label: `${b}+`,
                             }))}
                           />
+                        </section>
+
+                        {/* Land size */}
+                        <section>
+                          <h3 className="font-bold uppercase tracking-tight mb-5 text-lg text-[hsl(222_47%_20%)]">Land size</h3>
+                          <div className="grid grid-cols-2 gap-3">
+                            <PriceSelect
+                              value={minLand}
+                              onChange={setMinLand}
+                              placeholder="Min"
+                              options={[100, 250, 500, 750, 1000, 2000, 5000].map((v) => ({
+                                value: String(v),
+                                label: `${v} m²`,
+                                disabled: !!maxLand && v >= Number(maxLand),
+                              }))}
+                            />
+                            <PriceSelect
+                              value={maxLand}
+                              onChange={setMaxLand}
+                              placeholder="Max"
+                              options={[100, 250, 500, 750, 1000, 2000, 5000].map((v) => ({
+                                value: String(v),
+                                label: `${v} m²`,
+                                disabled: !!minLand && v <= Number(minLand),
+                              }))}
+                            />
+                          </div>
                         </section>
 
                         {/* Keyword search */}
