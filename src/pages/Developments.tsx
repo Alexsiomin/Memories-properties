@@ -46,7 +46,7 @@ const Developments = () => {
     return parts[0] || q;
   }, [query]);
   const [activeCats, setActiveCats] = useState<string[]>([]);
-  const [openPopover, setOpenPopover] = useState<'type' | 'filters' | null>(null);
+  const [openPopover, setOpenPopover] = useState<'type' | 'filters' | 'filters-mobile' | null>(null);
   const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
 
   useEffect(() => {
@@ -273,22 +273,38 @@ const Developments = () => {
             </button>
           </div>
 
-          {/* Mobile filter row — full width, with + on the right */}
-          <button
-            type="button"
-            onClick={() => setOpenPopover('filters')}
-            className="sm:hidden mt-2 inline-flex items-center justify-between px-5 h-10 max-h-10 bg-white border border-[hsl(212_100%_10%)]/15 text-[hsl(212_100%_10%)] text-sm font-medium w-full"
-          >
-            <span>Filter</span>
-            <span className="inline-flex items-center gap-2">
-              {activeCats.length > 0 && (
-                <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-semibold">
-                  {activeCats.length}
+          {/* Mobile filter row — full width, with + on the right, own Popover
+              so it anchors correctly (the desktop trigger is hidden here). */}
+          <Popover open={openPopover === 'filters-mobile'} onOpenChange={(o) => setOpenPopover(o ? 'filters-mobile' : null)}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="sm:hidden mt-2 inline-flex items-center justify-between px-5 h-10 max-h-10 bg-white border border-[hsl(212_100%_10%)]/15 text-[hsl(212_100%_10%)] text-sm font-medium w-full"
+              >
+                <span>Filter</span>
+                <span className="inline-flex items-center gap-2">
+                  {activeCats.length > 0 && (
+                    <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-semibold">
+                      {activeCats.length}
+                    </span>
+                  )}
+                  <span className="text-lg leading-none">+</span>
                 </span>
-              )}
-              <span className="text-lg leading-none">+</span>
-            </span>
-          </button>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="center" sideOffset={4} className="w-[calc(100vw-3rem)] max-w-sm p-4 rounded-none bg-white border border-[hsl(212_100%_10%)]/15 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.2)] z-[60]">
+              <p className="text-xs uppercase tracking-[0.15em] font-semibold text-[hsl(212_100%_10%)]/60 mb-3">Category</p>
+              <div className="space-y-2">
+                {allCategories.map((c) => (
+                  <label key={c} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" checked={activeCats.includes(c)} onChange={() => toggleCat(c)} className="accent-accent" />
+                    {c}
+                  </label>
+                ))}
+                {allCategories.length === 0 && <p className="text-sm text-muted-foreground">No categories yet.</p>}
+              </div>
+            </PopoverContent>
+          </Popover>
         </form>
       </div>
 
