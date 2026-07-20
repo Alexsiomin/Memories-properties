@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BedDouble, Bath, Building2, LayoutGrid, Grid3x3 } from 'lucide-react';
+import { ArrowUpRight, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import Thumbnail from '@/components/Thumbnail';
@@ -8,17 +8,17 @@ import {
   buildDevelopments,
   bedRange,
   bathRange,
+  formatEur,
+  priceRange,
+  soldStatsByProject,
   type Development,
   type UnitRow,
 } from '@/lib/developments';
 import residential from '@/assets/proj-residential.jpg';
 
-type Columns = 2 | 4;
-
 const SoldProjects = () => {
   const [rows, setRows] = useState<UnitRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [columns, setColumns] = useState<Columns>(4);
   const [sort, setSort] = useState<'az' | 'za'>('az');
 
   useEffect(() => {
@@ -43,10 +43,10 @@ const SoldProjects = () => {
     return sort === 'az' ? sorted : sorted.reverse();
   }, [rows, sort]);
 
-  const gridClass =
-    columns === 2
-      ? 'grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-12'
-      : 'grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10';
+  // Sold-progress stats need the full unfiltered row set — every project
+  // shown here is already 100% sold by definition (that's what qualifies it
+  // for this page), so this naturally renders "X of X sold — 100%".
+  const soldStats = useMemo(() => soldStatsByProject(rows), [rows]);
 
   return (
     <>
@@ -63,52 +63,34 @@ const SoldProjects = () => {
         </p>
       </div>
 
-      <section className="container mx-auto px-6 py-10">
+      <section className="container mx-auto px-4 sm:px-6 pt-10">
         {!loading && developments.length > 0 && (
           <div className="flex items-center justify-between border-b border-border pb-4 mb-8">
             <p className="text-sm text-muted-foreground">
               {developments.length} of {developments.length} Results
             </p>
-            <div className="flex items-center gap-4">
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as 'az' | 'za')}
-                className="text-sm border border-border rounded-none px-3 py-1.5 bg-background text-foreground"
-                aria-label="Sort projects"
-              >
-                <option value="az">Sort A to Z</option>
-                <option value="za">Sort Z to A</option>
-              </select>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setColumns(2)}
-                  aria-label="2 columns"
-                  aria-pressed={columns === 2}
-                  className={`p-1.5 border ${columns === 2 ? 'border-foreground text-foreground' : 'border-border text-muted-foreground'}`}
-                >
-                  <LayoutGrid size={18} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setColumns(4)}
-                  aria-label="4 columns"
-                  aria-pressed={columns === 4}
-                  className={`p-1.5 border ${columns === 4 ? 'border-foreground text-foreground' : 'border-border text-muted-foreground'}`}
-                >
-                  <Grid3x3 size={18} />
-                </button>
-              </div>
-            </div>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as 'az' | 'za')}
+              className="text-sm border border-border rounded-none px-3 py-1.5 bg-background text-foreground"
+              aria-label="Sort projects"
+            >
+              <option value="az">Sort A to Z</option>
+              <option value="za">Sort Z to A</option>
+            </select>
           </div>
         )}
+      </section>
 
+      {/* Listings — fixed 1 column on mobile, 2 on desktop; edge-to-edge on
+          mobile, padded from sm: up, matching the Projects page. */}
+      <section className="container mx-auto px-0 sm:px-6 pb-10">
         {loading ? (
-          <div className={gridClass}>
-            {Array.from({ length: columns === 2 ? 4 : 8 }).map((_, i) => (
-              <div key={i} className="overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-none overflow-hidden border border-border">
                 <div className="aspect-[4/3] bg-muted animate-pulse" />
-                <div className="pt-3 space-y-3">
+                <div className="p-5 space-y-3">
                   <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
                   <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
                 </div>
@@ -120,43 +102,57 @@ const SoldProjects = () => {
             No sold projects to show yet.
           </div>
         ) : (
-          <div className={gridClass}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {developments.map((d: Development, i) => (
-              <article key={`${d.name}-${d.slug}`} className="group reveal" data-reveal-delay={String((i % 4) * 75)}>
-                <Link to={`/developments/${d.slug}`} className="block">
-                  <div className="relative overflow-hidden">
+              <article key={`${d.slug}-${i}`} className="group reveal" data-reveal-delay={String((i % 2) * 100)}>
+                <Link
+                  to={`/developments/${d.slug}`}
+                  className="block rounded-none overflow-hidden bg-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  <div className="relative">
                     <Thumbnail
                       src={d.cover || residential}
-                      alt={d.location ? `${d.name} — ${d.location}` : d.name}
+                      alt={d.location ? `Sold-out development in ${d.location}` : 'Sold-out development'}
                       wrapperClassName="aspect-[4/3]"
                       className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                     />
-                    <span className="absolute top-3 left-3 inline-flex px-2.5 py-1 bg-white text-[hsl(212_100%_10%)] text-xs font-semibold">
-                      {d.name}
-                    </span>
+                    {d.location && (
+                      <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white/90 backdrop-blur text-foreground text-xs font-medium">
+                        <MapPin size={12} />
+                        {d.location}
+                      </span>
+                    )}
                   </div>
-                  <div className={columns === 2 ? 'pt-4 flex items-center justify-between gap-4' : 'pt-3'}>
-                    <p className="font-montserrat font-extrabold uppercase text-sm text-foreground">
-                      {d.location || d.name}
+                  <div className="p-5">
+                    {d.minPrice != null && (
+                      <p className="text-lg font-semibold text-foreground flex items-start gap-1.5">
+                        {d.minPrice === d.maxPrice
+                          ? formatEur(d.minPrice)
+                          : `From ${priceRange(d)}`}
+                        <ArrowUpRight
+                          size={18}
+                          className="shrink-0 mt-0.5 text-accent opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300"
+                        />
+                      </p>
+                    )}
+                    <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
+                      {[bedRange(d), bathRange(d), d.categories[0]].filter(Boolean).join(' | ')}
                     </p>
-                    <div className="flex items-center gap-3 text-muted-foreground text-sm shrink-0 mt-1">
-                      {bedRange(d) && (
-                        <span className="inline-flex items-center gap-1">
-                          <BedDouble size={16} /> {bedRange(d)}
-                        </span>
-                      )}
-                      {bathRange(d) && (
-                        <span className="inline-flex items-center gap-1">
-                          <Bath size={16} /> {bathRange(d)}
-                        </span>
-                      )}
-                      {d.unitCount > 0 && (
-                        <span className="inline-flex items-center gap-1">
-                          <Building2 size={16} />
-                          {d.unitCount} {d.categories[0] ? `${d.categories[0]}${d.unitCount === 1 ? '' : 's'}` : 'Units'}
-                        </span>
-                      )}
-                    </div>
+                    {(() => {
+                      const s = soldStats.get(d.name);
+                      if (!s || s.total === 0) return null;
+                      return (
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-sm text-muted-foreground mb-1">
+                            <span>{s.sold} of {s.total} sold</span>
+                            <span>{s.pct}%</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full bg-accent rounded-full" style={{ width: `${s.pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </Link>
               </article>
