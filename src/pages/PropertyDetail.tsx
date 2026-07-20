@@ -165,6 +165,21 @@ interface LightboxSliderProps {
   ariaLabel?: string;
 }
 
+// Compact logo mark, mirrored from Masthead's monogram — drawn inline so it
+// inherits color via currentColor without depending on an external asset.
+const MonogramIcon = ({ className = '' }: { className?: string }) => (
+  <svg viewBox="0 0 726.010389 470.801074" className={className} fill="currentColor" aria-hidden="true">
+    <g transform="translate(-263.994806,887.794883) scale(0.1,-0.1)">
+      <path d="M4919 8873 c-4 -36 -5 -113 -7 -495 l-2 -437 -437 4 c-241 2 -448 2
+-460 -2 l-23 -5 0 -259 0 -259 -255 0 -255 0 0 259 0 258 -62 5 c-35 2 -223 4
+-418 3 l-355 0 -3 -1888 -2 -1887 1595 0 1595 0 2 733 3 732 452 3 453 2 2
+-732 3 -733 1578 -3 1577 -2 -2 1886 -3 1885 -395 0 -395 -1 -3 -260 -2 -260
+-255 0 -255 0 -2 260 -3 261 -395 0 c-217 0 -423 3 -457 6 l-63 5 -2 462 -3
+461 -1372 3 c-755 1 -1373 -1 -1374 -5z" />
+    </g>
+  </svg>
+);
+
 const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose, labels, ariaLabel }: LightboxSliderProps) => {
   const [index, setIndex] = useState(initialIndex);
   const [zoomed, setZoomed] = useState(false);
@@ -248,7 +263,7 @@ const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose, l
 
   return (
     <div
-      className="fixed inset-0 z-[200] bg-[hsl(212_100%_10%)] animate-in fade-in-0 duration-200 flex flex-col"
+      className="fixed inset-0 z-[200] bg-[#00101f] animate-in fade-in-0 duration-200 flex flex-col"
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel ?? 'Property photos'}
@@ -257,19 +272,9 @@ const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose, l
       ref={dialogRef}
     >
       {/* Sticky header */}
-      <div className="shrink-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 h-14 bg-[hsl(212_100%_10%)]/80 backdrop-blur text-white">
-        <div className="flex items-center gap-3">
-          <span
-            translate="no"
-            className="notranslate font-light text-xl uppercase tracking-[0.28em] text-white leading-none"
-          >
-            Memories
-          </span>
-        </div>
-        <span className="text-sm tracking-wide">
-          {labels?.[index] ? labels[index] : `${index + 1} / ${total} photo${total === 1 ? '' : 's'}`}
-        </span>
-        <div className="flex items-center justify-end gap-1">
+      <div className="shrink-0 z-10 flex items-center justify-between px-4 sm:px-6 h-14 bg-[#00101f]/80 backdrop-blur text-white">
+        <MonogramIcon className="h-6 w-auto text-white" />
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={toggleZoom}
@@ -326,7 +331,7 @@ const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose, l
               aria-label="Previous photo"
               onClick={goPrev}
               disabled={index === 0}
-              className="absolute z-10 left-2 sm:left-4 top-1/2 -translate-y-1/2 size-10 sm:size-12 rounded-full bg-white/90 text-foreground border border-border shadow-sm flex items-center justify-center hover:bg-white hover:text-accent transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-xs"
+              className="absolute z-10 left-4 sm:left-8 bottom-6 sm:bottom-8 size-10 sm:size-12 rounded-full bg-transparent text-white border border-white/70 flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-xs"
             >
               <ChevronLeft size={22} className="sm:hidden" />
               <ChevronLeft size={26} className="hidden sm:block" />
@@ -336,11 +341,14 @@ const LightboxSlider = ({ gallery, displayTitle, total, initialIndex, onClose, l
               aria-label="Next photo"
               onClick={goNext}
               disabled={index === total - 1}
-              className="absolute z-10 right-2 sm:right-4 top-1/2 -translate-y-1/2 size-10 sm:size-12 rounded-full bg-white/90 text-foreground border border-border shadow-sm flex items-center justify-center hover:bg-white hover:text-accent transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-xs"
+              className="absolute z-10 right-4 sm:right-8 bottom-6 sm:bottom-8 size-10 sm:size-12 rounded-full bg-transparent text-white border border-white/70 flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-xs"
             >
               <ChevronRight size={22} className="sm:hidden" />
               <ChevronRight size={26} className="hidden sm:block" />
             </button>
+            <span className="absolute z-10 left-1/2 -translate-x-1/2 bottom-9 sm:bottom-11 text-white text-sm tracking-wide">
+              {labels?.[index] ? labels[index] : `${index + 1} / ${total} photo${total === 1 ? '' : 's'}`}
+            </span>
           </>
         )}
       </div>
