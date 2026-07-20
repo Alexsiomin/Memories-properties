@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { User as UserIcon, Facebook, Home, Handshake, BarChart3, Search, Star } from 'lucide-react';
+import { User as UserIcon, Facebook, Home, Handshake, BarChart3, Search, Star, ChevronDown } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { useIsAdmin } from '@/hooks/use-is-admin';
@@ -62,6 +62,24 @@ const NAV: NavItem[] = [
   { label: 'ADVOCACY', to: '/advisory' },
   { label: 'MARKET INSIGHTS', to: '/insights' },
   
+];
+
+// Mobile menu only — adds an ABOUT section (with the same links as the
+// footer's About column) without affecting the desktop nav bar, which
+// still uses NAV as-is.
+const MOBILE_NAV: NavItem[] = [
+  ...NAV,
+  {
+    label: 'ABOUT',
+    to: '/about',
+    children: [
+      { label: 'About Us', to: '/about' },
+      { label: 'Our Expertise', to: '/our-expertise' },
+      { label: 'Common Questions', to: '/common-questions' },
+      { label: 'Legal Notice', to: '/legal-notice' },
+      { label: 'AML Obligations', to: '/legal-notice#aml' },
+    ],
+  },
 ];
 
 const Masthead = () => {
@@ -288,12 +306,12 @@ const Masthead = () => {
                 onClick={() => setOpen(false)}
                 className="absolute top-3.5 left-4 md:left-6 flex items-center"
               >
-                <MonogramM className="h-8 w-auto text-menu-foreground" />
+                <MonogramM className="h-7 w-auto text-menu-foreground" />
               </Link>
 
               <div className="flex-1 overflow-y-auto px-5 pt-[70px] pb-10 md:px-11 flex flex-col justify-between">
                 <nav className="flex flex-col">
-                  {NAV.map((item) => {
+                  {MOBILE_NAV.filter((item) => item.label !== 'HOME').map((item) => {
                     const hasChildren = !!item.children?.length;
                     const expanded = openSection === item.label;
                     // When a section is open, dim every other top-level word
@@ -308,9 +326,13 @@ const Masthead = () => {
                             type="button"
                             aria-expanded={expanded}
                             onClick={() => setOpenSection(expanded ? null : item.label)}
-                            className={`block text-left w-full font-montserrat font-extrabold uppercase tracking-normal transition-colors leading-[34px] text-[26px] hover:text-menu-foreground ${labelColor}`}
+                            className={`flex items-center justify-between gap-3 w-full text-left font-montserrat font-extrabold uppercase tracking-normal transition-colors leading-[34px] text-[26px] hover:text-menu-foreground ${labelColor}`}
                           >
                             {item.label}
+                            <ChevronDown
+                              size={20}
+                              className={`shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+                            />
                           </button>
                         ) : (
                           <Link
@@ -346,24 +368,6 @@ const Masthead = () => {
                   <div className="block">
                     <LanguageToggle tone="text-menu-foreground" className="text-[26px]" />
                   </div>
-
-                  {user ? (
-                    <Link
-                      to="/account"
-                      onClick={() => setOpen(false)}
-                      className="inline-flex items-center justify-center gap-2 border border-menu-foreground text-menu-foreground px-4 py-1.5 text-sm font-montserrat font-normal hover:bg-menu-foreground hover:text-menu transition-colors w-fit"
-                    >
-                      <UserIcon size={16} /> My account
-                    </Link>
-                  ) : (
-                    <Link
-                      to={`${pathname}?auth=1`}
-                      onClick={() => setOpen(false)}
-                      className="inline-flex items-center justify-center gap-2 border border-menu-foreground text-menu-foreground px-4 py-1.5 text-sm font-montserrat font-normal hover:bg-menu-foreground hover:text-menu transition-colors w-fit"
-                    >
-                      <UserIcon size={16} /> Sign in
-                    </Link>
-                  )}
 
                   <div className="flex flex-col gap-4 text-base">
                     <a href="https://www.facebook.com/profile.php?id=61590658206461" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-menu-foreground/90 hover:text-accent transition-colors">
