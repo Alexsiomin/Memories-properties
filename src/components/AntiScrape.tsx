@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 
 /**
- * Casual anti-copy deterrents: disables right-click context menu, text
- * selection, copy, and image dragging across the public site.
+ * Casual anti-copy deterrents: disables text selection, copy, and image
+ * dragging across the public site. Right-click/context-menu is intentionally
+ * left alone so the site owner can inspect the live page.
  *
  * NOTE: This only stops casual copying — it cannot stop a determined
  * scraper. Form inputs/textareas and contenteditable areas stay usable,
@@ -21,11 +22,6 @@ const AntiScrape = () => {
       return !!node.closest(
         'input, textarea, select, [contenteditable=""], [contenteditable="true"]'
       );
-    };
-
-    const blockContextMenu = (e: MouseEvent) => {
-      if (isAdmin() || isLegalPage() || isEditable(e.target)) return;
-      e.preventDefault();
     };
 
     const blockCopy = (e: ClipboardEvent) => {
@@ -73,12 +69,10 @@ const AntiScrape = () => {
     window.addEventListener("popstate", syncRouteClasses);
     const intervalId = window.setInterval(syncRouteClasses, 1000);
 
-    document.addEventListener("contextmenu", blockContextMenu);
     document.addEventListener("copy", blockCopy);
     document.addEventListener("dragstart", blockDragStart);
 
     return () => {
-      document.removeEventListener("contextmenu", blockContextMenu);
       document.removeEventListener("copy", blockCopy);
       document.removeEventListener("dragstart", blockDragStart);
       window.removeEventListener("popstate", syncRouteClasses);
