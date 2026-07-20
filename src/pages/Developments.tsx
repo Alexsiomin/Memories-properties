@@ -167,12 +167,13 @@ const Developments = () => {
       {/* Search bar — same bar/BUY pill used across the site */}
       <div className="container mx-auto px-6">
         <form onSubmit={onSearch} className="w-full max-w-[974px] mx-auto">
-          <div className="flex items-stretch bg-[hsl(0_0%_90%)] gap-0 pr-3">
+          <div className="flex flex-col sm:flex-row sm:items-stretch gap-3 sm:gap-0 sm:bg-[hsl(0_0%_90%)]">
+            <div className="flex items-stretch bg-[hsl(0_0%_90%)] sm:bg-transparent sm:contents">
             <Popover open={openPopover === 'type'} onOpenChange={(o) => setOpenPopover(o ? 'type' : null)}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="group/ctrl inline-flex items-center justify-between gap-3 w-44 pl-6 pr-5 h-[48px] bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.08em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs"
+                  className="group/ctrl inline-flex items-center justify-between gap-3 w-32 sm:w-44 pl-4 sm:pl-6 pr-3 sm:pr-5 h-[48px] bg-[hsl(212_100%_10%)] text-white uppercase tracking-[0.08em] font-montserrat font-extrabold hover:opacity-95 transition-opacity whitespace-nowrap text-xs shrink-0"
                 >
                   <span>{tab}</span>
                   <ChevronDown size={18} className="opacity-80 transition-transform duration-200 group-data-[state=open]/ctrl:rotate-180" />
@@ -221,12 +222,22 @@ const Developments = () => {
               )}
             </div>
 
+            <button
+              type="submit"
+              aria-label="Search"
+              className="sm:hidden inline-flex items-center justify-center w-10 h-full text-foreground shrink-0"
+            >
+              <Search size={18} strokeWidth={2} />
+            </button>
+            </div>
+
+            {/* Filter pill (desktop) */}
             <Popover open={openPopover === 'filters'} onOpenChange={(o) => setOpenPopover(o ? 'filters' : null)}>
               <PopoverTrigger asChild>
-                <div className="flex items-center bg-[hsl(0_0%_90%)]">
+                <div className="hidden sm:flex items-center bg-[hsl(0_0%_90%)] pr-3 py-1.5 pl-2">
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center gap-1.5 px-4 h-9 bg-white text-foreground text-xs font-medium hover:bg-white/80 transition-colors whitespace-nowrap shrink-0"
+                    className="inline-flex items-center justify-center gap-1.5 px-4 h-8 bg-white text-foreground text-xs font-medium border border-[hsl(212_100%_10%)]/10 hover:border-accent/40 transition-colors whitespace-nowrap shrink-0"
                   >
                     <span>Filter</span>
                     <span className="text-base leading-none">+</span>
@@ -252,14 +263,32 @@ const Developments = () => {
               </PopoverContent>
             </Popover>
 
+            {/* Desktop search submit (icon only) */}
             <button
               type="submit"
               aria-label="Search"
-              className="inline-flex items-center justify-center w-10 h-[48px] text-foreground hover:text-foreground/70 transition-colors shrink-0"
+              className="hidden sm:inline-flex items-center justify-center w-10 h-[48px] text-foreground hover:text-foreground/70 transition-colors shrink-0 bg-[hsl(0_0%_90%)]"
             >
               <Search size={18} strokeWidth={2} />
             </button>
           </div>
+
+          {/* Mobile filter row — full width, with + on the right */}
+          <button
+            type="button"
+            onClick={() => setOpenPopover('filters')}
+            className="sm:hidden mt-2 inline-flex items-center justify-between px-5 h-10 max-h-10 bg-white border border-[hsl(212_100%_10%)]/15 text-[hsl(212_100%_10%)] text-sm font-medium w-full"
+          >
+            <span>Filter</span>
+            <span className="inline-flex items-center gap-2">
+              {activeCats.length > 0 && (
+                <span className="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full bg-accent text-accent-foreground text-[10px] font-semibold">
+                  {activeCats.length}
+                </span>
+              )}
+              <span className="text-lg leading-none">+</span>
+            </span>
+          </button>
         </form>
       </div>
 
