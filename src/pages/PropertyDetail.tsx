@@ -880,6 +880,40 @@ const PropertyDetail = () => {
           {/* Property details list */}
           <div className="mt-6 border border-border bg-card p-5">
             <h3 className="font-montserrat font-extrabold text-foreground text-xl">Property details</h3>
+            {isVilla ? (
+              // Villa-specific order: Status, Category, Bedrooms, Bathrooms,
+              // Total covered area, Internal area, Covered verandas,
+              // Uncovered verandas, Storage room, Plot size, Parking spaces,
+              // Location, Energy class, VAT, Reference.
+              <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-base">
+                <DetailRow label="Status" value={property.status} />
+                {property.category && <DetailRow label="Category" value={property.category} />}
+                {property.beds != null && <DetailRow label="Bedrooms" value={String(property.beds)} />}
+                {!property.tags?.includes('hidden:baths') && (property.baths ?? property.beds) != null && (
+                  <DetailRow label="Bathrooms" value={String(property.baths ?? property.beds)} />
+                )}
+                {totalCoveredArea != null && <DetailRow label="Total covered area" value={totalCoveredArea} />}
+                {!colHidden('internal_area') && property.internal_area && <DetailRow label="Internal area" value={property.internal_area} />}
+                {!colHidden('covered_verandas') && property.covered_verandas && <DetailRow label="Covered verandas" value={property.covered_verandas} />}
+                {!colHidden('uncovered_verandas') && uncovered && <DetailRow label="Uncovered verandas" value={uncovered} />}
+                {!colHidden('storage_room') && storage && <DetailRow label="Storage room" value={storage} />}
+                {!colHidden('lot_size') && plot && <DetailRow label="Plot size" value={plot} />}
+                {property.parking_spaces != null && <DetailRow label="Parking spaces" value={String(property.parking_spaces)} />}
+                <DetailRow label="Location" value={locationWithDistrict} />
+                {(property.energy_rating || property.tags?.find((x) => x.toLowerCase().startsWith('energy '))) && (
+                  <DetailRow
+                    label="Energy class"
+                    value={
+                      property.energy_rating ||
+                      property.tags!.find((x) => x.toLowerCase().startsWith('energy '))!.replace(/^energy\s+/i, '').toUpperCase()
+                    }
+                  />
+                )}
+                {property.vat_included != null && <DetailRow label="VAT" value={property.vat_included ? 'Included in price' : 'Not included'} />}
+                <DetailRow label="Reference" value={displayReference(property.reference_code, property.id)} mono />
+              </dl>
+            ) : (
+            <>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-base">
               <dl className="flex flex-col gap-2">
                 {property.beds != null && (
@@ -929,6 +963,8 @@ const PropertyDetail = () => {
               {property.yield && <DetailRow label="Yield" value={property.yield} />}
               <DetailRow label="Reference" value={displayReference(property.reference_code, property.id)} mono />
             </dl>
+            </>
+            )}
             {property.tags?.length > 0 && (
               <div className="mt-5 pt-5 border-t border-border">
                 <p className="text-sm font-medium text-muted-foreground mb-3">Tags</p>
