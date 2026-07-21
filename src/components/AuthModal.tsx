@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 import { signInWithGoogle } from '@/lib/auth-redirect';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Eye, EyeOff } from 'lucide-react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { Dialog, DialogTitle } from '@/components/ui/dialog';
+import { Eye, EyeOff, X } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { setRememberSession } from '@/lib/session-bootstrap';
 
@@ -123,8 +124,20 @@ const AuthModal = () => {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="!z-[100] !fixed !inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !w-full !h-full !max-w-full !rounded-none data-[state=open]:!slide-in-from-left-0 data-[state=open]:!slide-in-from-top-0 data-[state=closed]:!slide-out-to-left-0 data-[state=closed]:!slide-out-to-top-0 sm:!inset-auto sm:!left-[50%] sm:!top-[50%] sm:!translate-x-[-50%] sm:!translate-y-[-50%] sm:!w-full sm:!h-auto sm:!max-w-md sm:!rounded-lg sm:data-[state=open]:!slide-in-from-left-1/2 sm:data-[state=open]:!slide-in-from-top-[48%] sm:data-[state=closed]:!slide-out-to-left-1/2 sm:data-[state=closed]:!slide-out-to-top-[48%] bg-[#00101f] text-white border-0 p-0 gap-0 max-h-full sm:max-h-[92vh] overflow-y-auto [&>button]:text-white/70 [&>button:hover]:text-white [&>button]:top-4 [&>button]:right-4 [&>button]:z-10">
-        <DialogTitle className="sr-only">{title}</DialogTitle>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-[100] bg-black/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content
+          className="fixed inset-0 z-[100] w-full h-full overflow-y-auto bg-[#00101f] text-white
+            data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0
+            sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:h-auto sm:max-w-md sm:max-h-[92vh] sm:rounded-lg"
+        >
+          <DialogTitle className="sr-only">{title}</DialogTitle>
+          <DialogPrimitive.Close
+            aria-label="Close"
+            className="absolute right-4 top-4 z-10 text-white/70 hover:text-white transition-colors focus:outline-none"
+          >
+            <X className="w-5 h-5" />
+          </DialogPrimitive.Close>
 
         <div className="flex flex-col items-center gap-3 pt-10 pb-6">
           <MonogramIcon className="h-9 w-auto text-white" />
@@ -276,7 +289,8 @@ const AuthModal = () => {
             By continuing, you agree to our Terms and Privacy Policy.
           </p>
         </div>
-      </DialogContent>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
     </Dialog>
   );
 };
