@@ -25,6 +25,9 @@ const valuationSchema = z.object({
 });
 
 const SellWithUs = () => {
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : 'https://memoriesproperties.com';
+
   const [form, setForm] = useState({
     firstName: '',
     email: '',
@@ -60,6 +63,22 @@ const SellWithUs = () => {
       <SEO
         title="Sell Your Property With Memories"
         description="Experience the difference with Memories. Expert agents, world-class marketing campaigns, and a commitment to exceptional results across Cyprus."
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          name: 'Sell Your Property With Memories',
+          description: 'Experience the difference with Memories. Expert agents, world-class marketing campaigns, and a commitment to exceptional results across Cyprus.',
+          serviceType: 'Real estate selling and valuation service',
+          areaServed: {
+            '@type': 'Country',
+            name: 'Cyprus',
+          },
+          provider: {
+            '@type': 'Organization',
+            name: 'Memories Properties',
+            logo: { '@type': 'ImageObject', url: `${origin}/favicon.png` },
+          },
+        }}
       />
 
       {/* ─── Hero ─── */}
