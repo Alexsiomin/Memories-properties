@@ -27,6 +27,14 @@ const MonogramIcon = ({ className = '' }: { className?: string }) => (
 
 type Mode = 'signin' | 'signup' | 'forgot';
 
+// "shorer@gmail.com" -> "s***r@gmail.com"
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return email;
+  if (local.length <= 2) return `${local[0]}***@${domain}`;
+  return `${local[0]}***${local[local.length - 1]}@${domain}`;
+}
+
 const AuthModal = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -170,7 +178,7 @@ const AuthModal = () => {
         </div>
 
         {showWelcomeBack && lastUser ? (
-          <div className="w-full max-w-[400px] mx-auto flex flex-col items-center gap-4 px-6 pb-10">
+          <div className="w-full max-w-[400px] mx-auto flex flex-col items-center gap-3 px-6 pb-10">
             {lastUser.avatar ? (
               <img
                 src={lastUser.avatar}
@@ -187,6 +195,9 @@ const AuthModal = () => {
             <p className="text-lg text-white text-center">
               Welcome back{lastUser.name ? `, ${lastUser.name.split(' ')[0]}` : ''}
             </p>
+            {lastUser.email && (
+              <p className="text-sm text-white/50 text-center -mt-2">{maskEmail(lastUser.email)}</p>
+            )}
 
             <button
               type="button"
@@ -199,7 +210,7 @@ const AuthModal = () => {
                   setGoogleBusy(false);
                 }
               }}
-              className="btn-cta btn-cta-solid btn-cta-block !h-[50px] border border-white bg-white text-[#00101f] w-full"
+              className="btn-cta btn-cta-solid btn-cta-block !h-[50px] border border-white bg-white text-[#00101f] w-full mt-2"
             >
               {googleBusy ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
