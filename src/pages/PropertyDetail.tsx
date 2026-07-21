@@ -9,7 +9,6 @@ import {
   Star,
   Share2,
   Plus,
-  CheckCircle2,
   Calendar,
   Tag,
   BedDouble,
@@ -1282,21 +1281,6 @@ const PropertyDetail = () => {
               </div>
             );
           })()}
-
-          {/* Features */}
-          {visibleFeatureTags.length > 0 && (
-            <div className="mt-10">
-              <h3 className="text-2xl font-montserrat font-extrabold text-foreground uppercase">Features</h3>
-              <ul className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {visibleFeatureTags
-                  .map((t) => (
-                    <li key={t} className="flex items-center gap-2 text-base text-foreground">
-                      <CheckCircle2 size={18} className="text-accent shrink-0" /> {t}
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          )}
 
           {/* Location map */}
           {property.latitude != null && property.longitude != null && (
