@@ -139,18 +139,15 @@ const AuthModal = () => {
             <X className="w-5 h-5" />
           </DialogPrimitive.Close>
 
-        <div className="flex flex-col items-center gap-3 pt-10 pb-6">
+        <div className="flex flex-col items-center gap-4 pt-10 pb-4">
           <MonogramIcon className="h-9 w-auto text-white" />
-          <span className="font-light uppercase tracking-[0.32em] text-white text-2xl">
-            Memories
-          </span>
+          <h2 className="text-xl font-bold text-white leading-snug tracking-tight text-center">{title}</h2>
         </div>
 
         <div className="w-full max-w-[400px] mx-auto flex flex-col gap-4 px-6 pb-8">
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-white leading-snug tracking-tight">{title}</h2>
-            <p className="text-sm text-white/60 mt-1.5 leading-relaxed">{subtitle}</p>
-          </div>
+          {subtitle && (
+            <p className="text-sm text-white/60 leading-relaxed text-center">{subtitle}</p>
+          )}
 
           <button
             type="button"
@@ -163,7 +160,7 @@ const AuthModal = () => {
                 setGoogleBusy(false);
               }
             }}
-            className="btn-cta btn-cta-solid btn-cta-block bg-white text-[#00101f]"
+            className="btn-cta btn-cta-solid btn-cta-block !h-[50px] border border-white bg-white text-[#00101f]"
           >
             {googleBusy ? (
               <Loader2 className="w-4 h-4 animate-spin" />
