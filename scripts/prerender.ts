@@ -108,6 +108,42 @@ const staticRoutes: RouteMeta[] = [
       "Explore our portfolio of sold-out developments and completed projects \u2014 a track record of successful new-build communities.",
   },
   {
+    path: "/sold-properties",
+    title: "Sold Properties | Memories",
+    description:
+      "Browse our track record of sold properties \u2014 individual homes and villas we have successfully closed.",
+  },
+  {
+    path: "/our-expertise",
+    title: "Our Expertise \u2014 Buy, Sell & Projects in Cyprus",
+    description:
+      "Discover the Memories Properties expertise: bespoke buying, strategic selling, premium leasing and off-the-plan projects across Cyprus.",
+  },
+  {
+    path: "/project-expertise",
+    title: "Project Expertise | Memories",
+    description:
+      "How Memories Properties works with developers to bring new projects to market across Cyprus.",
+  },
+  {
+    path: "/project-buyer-faqs",
+    title: "Project Buyer FAQs \u2014 Off-the-Plan Property in Cyprus | Memories",
+    description:
+      "Everything off-the-plan buyers need to know about Cyprus property: how buying new works, downsizer and first home buyer guidance, investor insights and our points of difference.",
+  },
+  {
+    path: "/blog",
+    title: "Cyprus Property Blog \u2014 Paphos & Limassol Real Estate News",
+    description:
+      "Expert guides, market updates and area spotlights on buying, selling and investing in property in Paphos, Limassol and across Cyprus.",
+  },
+  {
+    path: "/insights/limassol",
+    title: "Limassol Property Market Insights & Sold Prices | Memories",
+    description:
+      "Track Limassol real estate trends, recent sales, asset mix and price benchmarks with Memories' market insights.",
+  },
+  {
     path: "/about",
     title: "Our Story \u2014 A Decade of Real Estate Leadership",
     description:
