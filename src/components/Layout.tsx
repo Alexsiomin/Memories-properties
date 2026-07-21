@@ -1,6 +1,7 @@
 import { useEffect, useState, lazy, Suspense, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Masthead, { MobileBottomNav } from '@/components/Masthead';
+import GlobalSEO from '@/components/GlobalSEO';
 import AuthModal from '@/components/AuthModal';
 // import GoogleOneTapPrompt from '@/components/GoogleOneTapPrompt';
 // Lazy-loaded: pulls react-markdown (~70KB) — keep it out of the main bundle.
@@ -65,6 +66,7 @@ const Layout = () => {
 
   return (
     <div ref={ref} className="min-h-screen flex flex-col bg-background text-foreground">
+      <GlobalSEO />
       <Masthead />
       {/* Spacer for fixed header on non-hero routes */}
       {!isHeroRoute && !isDevPage && !isPropertyDetail && <div aria-hidden className="h-16 md:h-20" />}
