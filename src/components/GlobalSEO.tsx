@@ -118,9 +118,14 @@ const WEBSITE_SEARCH = {
 };
 
 const GlobalSEO = () => (
-  <Helmet>
-    <script type="application/ld+json">{JSON.stringify([ORG_GRAPH, WEBSITE_SEARCH])}</script>
-  </Helmet>
+  <Helmet
+    script={[
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify([ORG_GRAPH, WEBSITE_SEARCH]),
+      },
+    ]}
+  />
 );
 
 export default GlobalSEO;
