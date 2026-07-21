@@ -135,6 +135,51 @@ export function formatEur(n: number | null): string {
  * - { sold: true }: only developments where EVERY unit is sold (fully sold-out).
  * - { all: true }: every unit regardless of status (sold ones still grouped).
  */
+// Category data is entered inconsistently in the admin (e.g. "Villa" vs
+// "Villas"), so these are normalized to one canonical singular form before
+// being compared — otherwise a project where every unit is actually a villa
+// could look like it has two different categories, and incorrectly show as
+// a "Mix development".
+const CATEGORY_ALIASES: Record<string, string> = {
+  apartment: 'Apartment',
+  apartments: 'Apartment',
+  villa: 'Villa',
+  villas: 'Villa',
+  plot: 'Land / Plot',
+  plots: 'Land / Plot',
+  land: 'Land / Plot',
+  'land / plot': 'Land / Plot',
+  'boutique hotel': 'Hotel',
+  hotel: 'Hotel',
+  maisonette: 'Maisonette',
+  maisonettes: 'Maisonette',
+};
+
+function normalizeCategory(category: string | null | undefined): string {
+  const trimmed = (category ?? '').trim();
+  return CATEGORY_ALIASES[trimmed.toLowerCase()] ?? trimmed;
+}
+
+const PLURAL_OVERRIDES: Record<string, string> = {
+  'Land / Plot': 'Land / Plots',
+};
+
+/** "Villa" -> "Villas", "Apartment" -> "Apartments", etc. */
+export function pluralizeCategory(category: string): string {
+  return PLURAL_OVERRIDES[category] ?? (category.endsWith('s') ? category : `${category}s`);
+}
+
+/**
+ * The display label for a project's category: the pluralized category name
+ * if every unit shares one (normalized) category, or "Mix development" if
+ * the project genuinely contains more than one kind of unit.
+ */
+export function developmentCategoryLabel(categories: string[]): string {
+  if (categories.length === 0) return '';
+  if (categories.length === 1) return pluralizeCategory(categories[0]);
+  return 'Mix development';
+}
+
 export function buildDevelopments(rows: UnitRow[], opts?: { sold?: boolean; all?: boolean }): Development[] {
   // For sold mode we need every unit of a project to judge "fully sold", so
   // group all units first and filter afterwards.
@@ -161,7 +206,7 @@ export function buildDevelopments(rows: UnitRow[], opts?: { sold?: boolean; all?
     const prices = units.map((u) => u.price_value).filter((v): v is number => v != null && v > 0);
     const beds = units.map((u) => u.beds).filter((v): v is number => v != null && v > 0);
     const baths = units.map((u) => u.baths).filter((v): v is number => v != null && v > 0);
-    const categories = Array.from(new Set(units.map((u) => u.category).filter(Boolean) as string[]));
+    const categories = Array.from(new Set(units.map((u) => normalizeCategory(u.category)).filter(Boolean)));
     const cover = units.find((u) => u.cover_image)?.cover_image
       ?? units.find((u) => u.images && u.images.length)?.images?.[0]
       ?? null;
@@ -268,6 +313,20 @@ export function bathRange(d: Development): string {
   if (d.minBaths == null) return '';
   if (d.minBaths === d.maxBaths) return `${d.minBaths} bathroom${d.minBaths === 1 ? '' : 's'}`;
   return `${d.minBaths}–${d.maxBaths} bathrooms`;
+}
+
+/** Render a short bed range, e.g. "1-3 Beds" or "3 Beds". */
+export function bedRangeShort(d: Development): string {
+  if (d.minBeds == null) return '';
+  if (d.minBeds === d.maxBeds) return `${d.minBeds} Bed${d.minBeds === 1 ? '' : 's'}`;
+  return `${d.minBeds}-${d.maxBeds} Beds`;
+}
+
+/** Render a short bath range, e.g. "1-3 Baths" or "3 Baths". */
+export function bathRangeShort(d: Development): string {
+  if (d.minBaths == null) return '';
+  if (d.minBaths === d.maxBaths) return `${d.minBaths} Bath${d.minBaths === 1 ? '' : 's'}`;
+  return `${d.minBaths}-${d.maxBaths} Baths`;
 }
 
 const parseAreaNum = (s: string | null | undefined): number | null => {

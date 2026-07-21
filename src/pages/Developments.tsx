@@ -15,8 +15,9 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   buildDevelopments,
-  bedRange,
-  bathRange,
+  bedRangeShort,
+  bathRangeShort,
+  developmentCategoryLabel,
   priceRange,
   formatEur,
   soldStatsByProject,
@@ -405,7 +406,7 @@ const Developments = () => {
                       </p>
                     )}
                     <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
-                      {[bedRange(d), bathRange(d), d.categories[0]].filter(Boolean).join(' | ')}
+                      {[bedRangeShort(d), bathRangeShort(d), developmentCategoryLabel(d.categories)].filter(Boolean).join(' | ')}
                     </p>
                     {(() => {
                       const s = soldStats.get(d.name);
