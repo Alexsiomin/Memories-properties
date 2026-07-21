@@ -356,7 +356,7 @@ const Developments = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="rounded-none overflow-hidden border border-border">
-                <div className="aspect-[4/3] bg-muted animate-pulse" />
+                <div className="aspect-[4/3] sm:aspect-[652/460] bg-muted animate-pulse" />
                 <div className="p-5 space-y-3">
                   <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
                   <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
@@ -382,7 +382,7 @@ const Developments = () => {
                     <Thumbnail
                       src={d.cover || residential}
                       alt={d.location ? `New development in ${d.location}` : 'New development'}
-                      wrapperClassName="aspect-[4/3]"
+                      wrapperClassName="aspect-[4/3] sm:aspect-[652/460]"
                       className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                     />
                     {d.location && (
