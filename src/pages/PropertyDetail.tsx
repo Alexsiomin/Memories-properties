@@ -1206,7 +1206,7 @@ const PropertyDetail = () => {
                         key={f}
                         tabIndex={0}
                         role="listitem"
-                        className="inline-flex items-center px-4 py-2 uppercase tracking-wider text-xs font-bold transition-colors duration-150 cursor-default bg-accent text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                        className="inline-flex items-center px-4 py-2 uppercase tracking-wider text-xs font-bold transition-colors duration-150 cursor-default bg-[#deebff] text-[#151923] border border-[#151923]/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                       >
                         {f}
                       </span>
@@ -1227,7 +1227,7 @@ const PropertyDetail = () => {
                         key={t}
                         tabIndex={0}
                         role="listitem"
-                        className="inline-flex items-center px-4 py-2 uppercase tracking-wider text-xs font-bold bg-accent text-accent-foreground cursor-default"
+                        className="inline-flex items-center px-4 py-2 uppercase tracking-wider text-xs font-bold bg-[#deebff] text-[#151923] border border-[#151923]/15 cursor-default"
                       >
                         {t}
                       </span>
