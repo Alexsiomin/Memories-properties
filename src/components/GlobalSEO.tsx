@@ -119,8 +119,7 @@ const WEBSITE_SEARCH = {
 
 const GlobalSEO = () => (
   <Helmet>
-    <script type="application/ld+json">{JSON.stringify(ORG_GRAPH)}</script>
-    <script type="application/ld+json">{JSON.stringify(WEBSITE_SEARCH)}</script>
+    <script type="application/ld+json">{JSON.stringify([ORG_GRAPH, WEBSITE_SEARCH])}</script>
   </Helmet>
 );
 
