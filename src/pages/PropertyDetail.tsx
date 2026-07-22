@@ -1140,18 +1140,16 @@ const PropertyDetail = () => {
                                 isCurrent ? 'bg-menu text-menu-foreground ring-1 ring-menu-foreground/20' : 'bg-card border-transparent hover:border-accent/60 hover:bg-accent/10 hover:text-accent hover:shadow-sm'
                               }`}
                             >
-                              {/* Mobile header / desktop first two columns */}
-                              <div className="order-1 flex items-center gap-3 md:contents">
-                                <div className="w-16 h-16 md:size-12 overflow-hidden bg-muted shrink-0 relative">
-                                  <img src={optimizeImage(img, 96)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                              {/* Desktop columns — unchanged */}
+                              <div className="hidden md:contents">
+                                <div className="flex items-center gap-3">
+                                  <div className="size-12 overflow-hidden bg-muted shrink-0 relative">
+                                    <img src={optimizeImage(img, 96)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                  </div>
+                                  <div className={`flex-1 min-w-0 text-base font-medium truncate ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
+                                    {lot.reference_code ? lot.reference_code : publicTitle(lot.title)}
+                                  </div>
                                 </div>
-                                <div className={`flex-1 min-w-0 text-sm md:text-base font-medium truncate ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
-                                  {lot.reference_code ? lot.reference_code : publicTitle(lot.title)}
-                                </div>
-                              </div>
-
-                              {/* Mobile metrics grid / desktop columns */}
-                              <div className="order-3 grid grid-cols-2 gap-x-4 gap-y-1 mt-2 md:mt-0 md:contents">
                                 {showInternal && <LotMetric label="Internal" value={lot.internal_area} highlighted={isCurrent} />}
                                 {showCovered && <LotMetric label="Veranda" value={lot.covered_verandas} highlighted={isCurrent} />}
                                 <LotMetric label="Total" value={lot.size} highlighted={isCurrent} />
@@ -1163,14 +1161,69 @@ const PropertyDetail = () => {
                                 {showBeds && <LotMetric label="Beds" value={lot.beds != null ? String(lot.beds) : null} highlighted={isCurrent} />}
                                 {showBaths && <LotMetric label="Baths" value={lot.baths != null ? String(lot.baths) : null} highlighted={isCurrent} />}
                                 {showLand && <LotMetric label="Land" value={lot.lot_size} highlighted={isCurrent} />}
-                              </div>
-
-                              {/* Mobile price / desktop last column */}
-                              <div className="order-2 md:contents">
-                                <div className={`text-sm md:text-base font-semibold text-right whitespace-nowrap mt-1 md:mt-0 ${isCurrent ? 'text-menu-foreground' : 'text-foreground'} ${/reserved|sold/i.test(lot.status ?? '') ? 'text-muted-foreground' : ''}`}>
+                                <div className={`text-base font-semibold text-right whitespace-nowrap ${isCurrent ? 'text-menu-foreground' : 'text-foreground'} ${/reserved|sold/i.test(lot.status ?? '') ? 'text-muted-foreground' : ''}`}>
                                   {/reserved|sold/i.test(lot.status ?? '') ? lot.status : publicPrice(lot.price, lot.price_value, lot.status)}
                                 </div>
                               </div>
+
+                              {/* Mobile card — redesigned: status badge in the corner, price
+                                  only when it's a real value, and the secondary details grid
+                                  only ever shows fields that actually have data (no "—" filler
+                                  for empty ones). */}
+                              {(() => {
+                                const isReservedOrSold = /reserved|sold/i.test(lot.status ?? '');
+                                const hasPrice = !isReservedOrSold && lot.price_value != null && lot.price_value > 0;
+                                const specsLine = [
+                                  showBeds && lot.beds != null ? `${lot.beds} bed${lot.beds === 1 ? '' : 's'}` : null,
+                                  showBaths && lot.baths != null ? `${lot.baths} bath${lot.baths === 1 ? '' : 's'}` : null,
+                                  showInternal && lot.internal_area ? lot.internal_area : null,
+                                ].filter(Boolean).join(' \u00b7 ');
+                                const secondaryFields: { label: string; value: string | null }[] = [
+                                  showLand ? { label: 'Land', value: lot.lot_size ?? null } : null,
+                                  showStorage ? { label: 'Storage', value: storage } : null,
+                                  showUncovered ? { label: 'Uncovered', value: uncovered } : null,
+                                  showCoveredParking ? { label: 'Parking', value: coveredParking } : null,
+                                  showCovered ? { label: 'Veranda', value: lot.covered_verandas ?? null } : null,
+                                  showBasement ? { label: 'Basement', value: basement } : null,
+                                  showRoofGarden ? { label: 'Roof garden', value: roofGarden } : null,
+                                ].filter((f): f is { label: string; value: string | null } => f !== null && !!f.value);
+
+                                return (
+                                  <div className="md:hidden relative -mx-4 -my-3 px-3.5 py-3">
+                                    <span className={`absolute top-3 right-3.5 text-[11px] font-medium px-2.5 py-1 whitespace-nowrap ${isReservedOrSold ? 'text-muted-foreground bg-muted' : 'text-accent bg-accent/10'}`}>
+                                      {isReservedOrSold ? lot.status : 'Available'}
+                                    </span>
+                                    <div className="flex gap-3 items-center">
+                                      <div className="size-14 overflow-hidden bg-muted shrink-0 relative">
+                                        <img src={optimizeImage(img, 96)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                      </div>
+                                      <div className="flex-1 min-w-0 pr-20">
+                                        <p className={`text-sm font-medium truncate ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
+                                          {lot.reference_code ? lot.reference_code : publicTitle(lot.title)}
+                                        </p>
+                                        {hasPrice && (
+                                          <p className={`text-[15px] font-semibold ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
+                                            {publicPrice(lot.price, lot.price_value, lot.status)}
+                                          </p>
+                                        )}
+                                        {specsLine && (
+                                          <p className="text-xs text-muted-foreground truncate">{specsLine}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {secondaryFields.length > 0 && (
+                                      <div className={`mt-3 pt-2.5 border-t grid grid-cols-2 gap-x-4 gap-y-1.5 ${isCurrent ? 'border-menu-foreground/20' : 'border-border'}`}>
+                                        {secondaryFields.map((f) => (
+                                          <div key={f.label} className="flex items-center justify-between text-xs">
+                                            <span className="text-muted-foreground">{f.label}</span>
+                                            <span className={isCurrent ? 'text-menu-foreground' : 'text-foreground'}>{f.value}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </Link>
                           );
                         })}
