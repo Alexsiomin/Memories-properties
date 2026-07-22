@@ -309,7 +309,7 @@ const Masthead = () => {
                 onClick={() => setOpen(false)}
                 className="absolute top-3.5 left-4 md:left-6 flex items-center"
               >
-                <MonogramM className="h-7 w-auto text-menu-foreground" />
+                <MonogramM className="h-[24px] w-auto text-menu-foreground" />
               </Link>
 
               <div className="flex-1 overflow-y-auto px-5 pt-[70px] pb-10 md:px-11 flex flex-col justify-between">
