@@ -543,6 +543,29 @@ const PropertyDetail = () => {
   const goPrev = () => setGalleryIndex((i) => (i - 1 + total) % total);
   const goNext = () => setGalleryIndex((i) => (i + 1) % total);
 
+  // Swipe left/right to change photos on mobile (chevron buttons are
+  // desktop-only there, so this is the primary way to navigate on touch).
+  const galleryTouchStartX = useRef<number | null>(null);
+  const galleryTouchStartY = useRef<number | null>(null);
+  const onGalleryTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const t = e.touches[0];
+    galleryTouchStartX.current = t.clientX;
+    galleryTouchStartY.current = t.clientY;
+  };
+  const onGalleryTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (galleryTouchStartX.current == null || galleryTouchStartY.current == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - galleryTouchStartX.current;
+    const dy = t.clientY - galleryTouchStartY.current;
+    // Only treat it as a swipe if the movement is mostly horizontal and
+    // past a small threshold, so a vertical scroll doesn't change photos.
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      if (dx < 0) goNext(); else goPrev();
+    }
+    galleryTouchStartX.current = null;
+    galleryTouchStartY.current = null;
+  };
+
   const onShare = async () => {
     const url = window.location.href;
     const title = publicTitle(property?.title) || 'Property';
@@ -802,7 +825,11 @@ const PropertyDetail = () => {
       <section className="container mx-auto px-4 md:px-8 grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8 items-start">
         {/* LEFT — Gallery */}
         <div className="lg:col-span-1 min-w-0">
-          <div className="relative overflow-hidden bg-muted group -mx-4 md:mx-0">
+          <div
+            className="relative overflow-hidden bg-muted group -mx-4 md:mx-0"
+            onTouchStart={onGalleryTouchStart}
+            onTouchEnd={onGalleryTouchEnd}
+          >
             <button
               type="button"
               onClick={() => setLightboxOpen(true)}
@@ -831,19 +858,17 @@ const PropertyDetail = () => {
                   type="button"
                   aria-label="Previous photo"
                   onClick={goPrev}
-                  className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 size-9 md:size-11 rounded-full bg-white/95 text-foreground border border-border shadow-sm flex items-center justify-center hover:text-accent transition-colors text-xs"
+                  className="hidden md:flex absolute left-3 md:left-4 top-1/2 -translate-y-1/2 size-9 md:size-11 rounded-full bg-white/95 text-foreground border border-border shadow-sm items-center justify-center hover:text-accent transition-colors text-xs"
                 >
-                  <ChevronLeft size={18} className="md:hidden" />
-                  <ChevronLeft size={20} className="hidden md:block" />
+                  <ChevronLeft size={20} />
                 </button>
                 <button
                   type="button"
                   aria-label="Next photo"
                   onClick={goNext}
-                  className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 size-9 md:size-11 rounded-full bg-white/95 text-foreground border border-border shadow-sm flex items-center justify-center hover:text-accent transition-colors text-xs"
+                  className="hidden md:flex absolute right-3 md:right-4 top-1/2 -translate-y-1/2 size-9 md:size-11 rounded-full bg-white/95 text-foreground border border-border shadow-sm items-center justify-center hover:text-accent transition-colors text-xs"
                 >
-                  <ChevronRight size={18} className="md:hidden" />
-                  <ChevronRight size={20} className="hidden md:block" />
+                  <ChevronRight size={20} />
                 </button>
 
                 <div className="absolute bottom-4 right-4 px-3 py-1 rounded-full bg-foreground/75 text-background text-xs backdrop-blur">
