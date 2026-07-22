@@ -1190,7 +1190,7 @@ const PropertyDetail = () => {
 
                                 return (
                                   <div className="md:hidden relative -mx-4 -my-3 px-3.5 py-3">
-                                    <span className={`absolute top-3 right-3.5 text-[11px] font-medium px-2.5 py-1 whitespace-nowrap ${isReservedOrSold ? 'text-muted-foreground bg-muted' : 'text-accent bg-accent/10'}`}>
+                                    <span className={`absolute top-3 right-3.5 text-xs font-medium px-2.5 py-1 whitespace-nowrap ${isReservedOrSold ? 'text-muted-foreground bg-muted' : 'text-accent bg-accent/10'}`}>
                                       {isReservedOrSold ? lot.status : 'Available'}
                                     </span>
                                     <div className="flex gap-3 items-center">
@@ -1198,23 +1198,23 @@ const PropertyDetail = () => {
                                         <img src={optimizeImage(img, 96)} alt="" className="w-full h-full object-cover" loading="lazy" />
                                       </div>
                                       <div className="flex-1 min-w-0 pr-20">
-                                        <p className={`text-sm font-medium truncate ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
+                                        <p className={`text-base font-medium truncate ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
                                           {lot.reference_code ? lot.reference_code : publicTitle(lot.title)}
                                         </p>
                                         {hasPrice && (
-                                          <p className={`text-[15px] font-semibold ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
+                                          <p className={`text-lg font-semibold ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
                                             {publicPrice(lot.price, lot.price_value, lot.status)}
                                           </p>
                                         )}
                                         {specsLine && (
-                                          <p className="text-xs text-muted-foreground truncate">{specsLine}</p>
+                                          <p className="text-sm text-muted-foreground truncate">{specsLine}</p>
                                         )}
                                       </div>
                                     </div>
                                     {secondaryFields.length > 0 && (
                                       <div className={`mt-3 pt-2.5 border-t grid grid-cols-2 gap-x-4 gap-y-1.5 ${isCurrent ? 'border-menu-foreground/20' : 'border-border'}`}>
                                         {secondaryFields.map((f) => (
-                                          <div key={f.label} className="flex items-center justify-between text-xs">
+                                          <div key={f.label} className="flex items-center justify-between text-sm">
                                             <span className="text-muted-foreground">{f.label}</span>
                                             <span className={isCurrent ? 'text-menu-foreground' : 'text-foreground'}>{f.value}</span>
                                           </div>
