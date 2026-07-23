@@ -74,14 +74,14 @@ const About = () => {
       </section>
 
       {/* PORTRAIT */}
-      <section className="mt-24 bg-[hsl(14_72%_32%)] text-[hsl(28_80%_70%)]">
+      <section className="mt-24 bg-[#400001] text-white">
         <div className="container mx-auto px-6 py-14 md:py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             <div className="reveal" data-reveal-delay="200">
-              <h2 className="font-montserrat font-bold tracking-tight text-2xl md:text-3xl leading-tight">
-                Our mission
+              <h2 className="font-montserrat font-bold tracking-tight text-2xl md:text-3xl leading-tight text-white">
+                OUR MISSION
               </h2>
-              <div className="mt-6 space-y-4 text-base md:text-lg leading-relaxed">
+              <div className="mt-6 space-y-4 text-base md:text-lg leading-relaxed text-white">
                 <p>We are Memories a Cyprus real estate agency built on people, stories, and heart.</p>
                 <p>We are Estate Agents, Property Valuers, Dreamers, Community Builders and Animal Lovers.</p>
                 <p>We believe in the spirit of place.</p>
