@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import heroVilla from '@/assets/about-hero-villa.jpg';
@@ -40,6 +41,34 @@ const PILLARS = [
 ];
 
 const About = () => {
+  const themeRef = useRef<HTMLDivElement>(null);
+  const [dark, setDark] = useState(false);
+
+  // Marshall White–style scroll theme switch: the section flips between the
+  // site's two real palette colors (white and menu navy) with a smooth CSS
+  // transition once it's scrolled past the midpoint of the viewport.
+  useEffect(() => {
+    const el = themeRef.current;
+    if (!el) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const rect = el.getBoundingClientRect();
+      setDark(rect.top <= window.innerHeight * 0.4);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <>
       <SEO
@@ -106,36 +135,50 @@ const About = () => {
         </div>
       </section>
 
-      {/* KEY PILLARS */}
-      <section className="container mx-auto px-6 mt-24 text-center">
-        <div className="max-w-3xl mx-auto">
-          <p className="label text-accent reveal">Our Key Pillars</p>
-          <p
-            className="mt-6 text-lg leading-relaxed text-foreground/75 reveal text-left"
-            data-reveal-delay="200"
-          >
-            Our core values are the foundation of Memories Properties as a practice and a
-            community — shaping our culture, inspiring our vision and upholding
-            our standard of excellence.
-          </p>
-        </div>
-
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-14">
-          {PILLARS.map((p, i) => (
-            <article
-              key={p.title}
-              className="reveal text-left"
-              data-reveal-delay={String(i * 100)}
+      {/* KEY PILLARS (scroll-triggered theme switch) */}
+      <div
+        ref={themeRef}
+        style={{
+          background: dark ? 'hsl(var(--menu))' : 'hsl(var(--background))',
+          color: dark ? 'hsl(var(--menu-foreground))' : 'hsl(var(--foreground))',
+          transition: 'background-color 0.6s ease, color 0.6s ease',
+        }}
+      >
+        <section className="container mx-auto px-6 mt-24 pt-24 pb-24 text-center">
+          <div className="max-w-3xl mx-auto">
+            <p className="label text-accent reveal">Our Key Pillars</p>
+            <p
+              className="mt-6 text-lg leading-relaxed reveal text-left"
+              style={{ color: 'inherit', opacity: 0.75 }}
+              data-reveal-delay="200"
             >
-              <h3 className="text-2xl font-montserrat font-extrabold">{p.title}</h3>
-              <p className="mt-3 italic text-foreground/70">{p.italic}</p>
-              <p className="mt-5 text-base leading-relaxed text-foreground/75">
-                {p.body}
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
+              Our core values are the foundation of Memories Properties as a practice and a
+              community — shaping our culture, inspiring our vision and upholding
+              our standard of excellence.
+            </p>
+          </div>
+
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-14">
+            {PILLARS.map((p, i) => (
+              <article
+                key={p.title}
+                className="reveal text-left"
+                data-reveal-delay={String(i * 100)}
+              >
+                <h3 className="text-2xl font-montserrat font-extrabold" style={{ color: 'inherit' }}>
+                  {p.title}
+                </h3>
+                <p className="mt-3 italic" style={{ color: 'inherit', opacity: 0.7 }}>
+                  {p.italic}
+                </p>
+                <p className="mt-5 text-base leading-relaxed" style={{ color: 'inherit', opacity: 0.75 }}>
+                  {p.body}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
 
       {/* JOURNEY INTRO */}
       <section className="container mx-auto px-6 mt-24 max-w-3xl text-center">
