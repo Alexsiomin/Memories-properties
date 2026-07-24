@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import PropertyMap from '@/components/PropertyMap';
 import { Link, useParams, useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import ListingGallery from '@/components/ListingGallery';
 import TourDialog, { type TourProperty } from '@/components/TourDialog';
 import EnquiryDialog, { type EnquiryProperty } from '@/components/EnquiryDialog';
 import { publicPrice, publicTitle } from '@/lib/propertyDisplay';
+import { PROPERTY_FEATURE_GROUPS, matchPropertyFeatures } from '@/lib/property-features';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -177,6 +178,27 @@ const DevelopmentDetail = () => {
   const goPrev = () => setGalleryIndex((i) => (i - 1 + totalGallery) % totalGallery);
   const goNext = () => setGalleryIndex((i) => (i + 1) % totalGallery);
 
+  // Swipe left/right to change photos on mobile, since the thumbnail strip
+  // is desktop-only and the chevron buttons are small touch targets.
+  const galleryTouchStartX = useRef<number | null>(null);
+  const galleryTouchStartY = useRef<number | null>(null);
+  const onGalleryTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const t = e.touches[0];
+    galleryTouchStartX.current = t.clientX;
+    galleryTouchStartY.current = t.clientY;
+  };
+  const onGalleryTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (galleryTouchStartX.current == null || galleryTouchStartY.current == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - galleryTouchStartX.current;
+    const dy = t.clientY - galleryTouchStartY.current;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      if (dx < 0) goNext(); else goPrev();
+    }
+    galleryTouchStartX.current = null;
+    galleryTouchStartY.current = null;
+  };
+
   if (!loading && !dev) {
     return (
       <section className="container mx-auto px-6 py-24 text-center">
@@ -317,8 +339,12 @@ const DevelopmentDetail = () => {
           </div>
           {/* Gallery block — first on mobile, second row on desktop */}
           <div className="order-1 lg:col-span-2 lg:row-start-2">
-            <div className="relative overflow-hidden bg-muted group -mx-6 md:mx-0 h-[75vh] md:h-auto">
-              {allSold && (
+            <div
+              className="relative overflow-hidden bg-muted group -mx-6 md:mx-0 h-[75vh] md:h-auto"
+              onTouchStart={onGalleryTouchStart}
+              onTouchEnd={onGalleryTouchEnd}
+            >
+              {allSold && galleryIndex === 0 && (
                 <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none bg-black/50">
                   <span className="font-montserrat font-extrabold tracking-tight uppercase text-white text-4xl md:text-6xl border-2 border-white px-6 py-3 md:px-10 md:py-5 -rotate-6">
                     Sold Out
@@ -384,16 +410,16 @@ const DevelopmentDetail = () => {
               )}
             </div>
 
-            {/* Thumbnail strip */}
+            {/* Thumbnail strip — all photos, scrollable so every image is reachable */}
             {totalGallery > 1 && (
-              <div className="mt-3 hidden md:grid grid-cols-5 gap-3">
-                {gallery.slice(0, 5).map((src, i) => (
+              <div className="mt-3 hidden md:flex gap-3 overflow-x-auto pb-1">
+                {gallery.map((src, i) => (
                   <button
                     key={src + i}
                     type="button"
                     onClick={() => setGalleryIndex(i)}
                     aria-label={`View photo ${i + 1}`}
-                    className={`relative overflow-hidden aspect-[4/3] bg-muted transition-all ${
+                    className={`relative shrink-0 w-[120px] overflow-hidden aspect-[4/3] bg-muted transition-all ${
                       i === galleryIndex ? 'ring-2 ring-accent ring-offset-2 ring-offset-background' : 'opacity-80 hover:opacity-100'
                     }`}
                   >
@@ -538,6 +564,66 @@ const DevelopmentDetail = () => {
                   </table>
                 </div>
               )}
+
+              {/* Property features — union of tags across every unit in the project */}
+              {(() => {
+                const allTags = units.flatMap((u: any) => u.tags ?? []);
+                const { activeFeatures, extraTags } = matchPropertyFeatures(allTags);
+                if (activeFeatures.size === 0 && extraTags.length === 0) return null;
+                return (
+                  <div className="mt-10 border border-border bg-card p-6">
+                    <h3 className="font-montserrat font-extrabold text-foreground text-xl">Property features</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Features present across this development.
+                    </p>
+                    <div className="mt-8 space-y-8">
+                      {PROPERTY_FEATURE_GROUPS.map((group) => {
+                        const activeItems = group.items.filter((f) => activeFeatures.has(f));
+                        if (activeItems.length === 0) return null;
+                        return (
+                          <div key={group.title}>
+                            <p className="font-semibold uppercase tracking-wider text-muted-foreground mb-3 text-sm">
+                              {group.title}
+                            </p>
+                            <div className="flex flex-wrap gap-2.5">
+                              {activeItems.map((f) => (
+                                <span
+                                  key={f}
+                                  tabIndex={0}
+                                  role="listitem"
+                                  className="inline-flex items-center px-4 py-2 uppercase tracking-wider text-xs font-bold transition-colors duration-150 cursor-default bg-[#deebff] text-[#151923] border border-[#151923]/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                                >
+                                  {f}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {extraTags.length > 0 && (
+                        <div>
+                          <p className="font-semibold uppercase tracking-wider text-muted-foreground mb-3 text-sm">
+                            Other features on this development
+                          </p>
+                          <div className="flex flex-wrap gap-2.5">
+                            {extraTags.map((t) => (
+                              <span
+                                key={t}
+                                tabIndex={0}
+                                role="listitem"
+                                className="inline-flex items-center px-4 py-2 uppercase tracking-wider text-xs font-bold bg-[#deebff] text-[#151923] border border-[#151923]/15 cursor-default"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Location map */}
               {(() => {
@@ -710,11 +796,37 @@ const DevelopmentDetail = () => {
           </div>
 
           <div className="relative flex-1 flex items-center justify-center overflow-hidden px-4 pb-4">
-            <img
-              src={floorPlans[floorPlanIndex]?.url}
-              alt={floorPlans[floorPlanIndex]?.label || `Floor plan ${floorPlanIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
-            />
+            {(() => {
+              const url = floorPlans[floorPlanIndex]?.url ?? '';
+              const label = floorPlans[floorPlanIndex]?.label || `Floor plan ${floorPlanIndex + 1}`;
+              const isPdf = /\.pdf(\?|$)/i.test(url);
+              if (isPdf) {
+                return (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+                    <iframe
+                      src={url}
+                      title={label}
+                      className="w-full h-full max-w-4xl bg-white"
+                    />
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white/90 hover:text-white text-sm underline underline-offset-4"
+                    >
+                      Open PDF in a new tab
+                    </a>
+                  </div>
+                );
+              }
+              return (
+                <img
+                  src={url}
+                  alt={label}
+                  className="max-w-full max-h-full object-contain"
+                />
+              );
+            })()}
 
             {floorPlans.length > 1 && (
               <>
