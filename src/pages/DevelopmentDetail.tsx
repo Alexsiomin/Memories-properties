@@ -568,7 +568,13 @@ const DevelopmentDetail = () => {
               {/* Property features — union of tags across every unit in the project */}
               {(() => {
                 const allTags = units.flatMap((u: any) => u.tags ?? []);
-                const { activeFeatures, extraTags } = matchPropertyFeatures(allTags);
+                const { activeFeatures, extraTags: rawExtraTags } = matchPropertyFeatures(allTags);
+                // Drop structural per-unit measurement tags (already shown in the
+                // units table above) so they don't clutter "Other features".
+                const STRUCTURAL_TAG = /^(covered|uncovered)\s+veranda|^roof garden|^basement|^storage room|^floor level|^covered parking/i;
+                const extraTags = Array.from(new Set(
+                  rawExtraTags.filter((t) => !STRUCTURAL_TAG.test(t.trim()))
+                ));
                 if (activeFeatures.size === 0 && extraTags.length === 0) return null;
                 return (
                   <div className="mt-10 border border-border bg-card p-6">
