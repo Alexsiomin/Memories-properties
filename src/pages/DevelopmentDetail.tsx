@@ -141,6 +141,22 @@ const DevelopmentDetail = () => {
   );
   const floorPlanIsPdf = /\.pdf(\?|$)/i.test(floorPlans[0]?.url ?? '');
 
+  // Completion date is shared across every unit in the project (same as floor
+  // plans and project name). Admin sets it by adding a tag like
+  // "completion:Q3 2027" (or just "completion:2027") to any unit in the
+  // project — works the same for near-term handovers and projects sold out
+  // years ahead of delivery.
+  const completionDate = useMemo(() => {
+    for (const u of units) {
+      const tag = (u.tags ?? []).find((t: string) => /^completion\s*:/i.test(t.trim()));
+      if (tag) {
+        const value = tag.trim().replace(/^completion\s*:\s*/i, '').trim();
+        if (value) return value;
+      }
+    }
+    return null;
+  }, [units]);
+
   useEffect(() => {
     if (!floorPlanOpen) return;
     const prev = document.body.style.overflow;
@@ -487,11 +503,12 @@ const DevelopmentDetail = () => {
             </div>
 
             {/* Key details */}
-            <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="pt-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
               <FactCard icon={<Building2 size={18} />} label="Units" value={`${dev.unitCount}`} />
               <FactCard icon={<BedDouble size={18} />} label="Beds" value={dev.minBeds != null ? bedRange(dev) : '—'} />
               <FactCard icon={<Tag size={18} />} label="Price" value={dev.minPrice != null ? (dev.minPrice === dev.maxPrice ? formatEur(dev.minPrice) : `From ${formatEur(dev.minPrice)}`) : '—'} />
               <FactCard icon={<HomeIcon size={18} />} label="Type" value={dev.categories[0] ?? '—'} />
+              <FactCard icon={<Calendar size={18} />} label="Completion" value={completionDate ?? '—'} />
             </div>
 
             {/* Units table */}
