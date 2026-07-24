@@ -67,7 +67,7 @@ const SoldProjects = () => {
         {!loading && developments.length > 0 && (
           <div className="flex items-center justify-between border-b border-border pb-4 mb-8">
             <p className="text-sm text-muted-foreground">
-              {developments.length} of {developments.length} Results
+              {developments.length} Results
             </p>
             <select
               value={sort}
