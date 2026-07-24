@@ -19,7 +19,7 @@ import residential from '@/assets/proj-residential.jpg';
 const SoldProjects = () => {
   const [rows, setRows] = useState<UnitRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sort, setSort] = useState<'az' | 'za'>('az');
+  const [sort, setSort] = useState<'price-asc' | 'price-desc'>('price-asc');
 
   useEffect(() => {
     let cancelled = false;
@@ -39,8 +39,8 @@ const SoldProjects = () => {
 
   const developments = useMemo(() => {
     const list = buildDevelopments(rows, { sold: true });
-    const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name));
-    return sort === 'az' ? sorted : sorted.reverse();
+    const sorted = [...list].sort((a, b) => (a.minPrice ?? Infinity) - (b.minPrice ?? Infinity));
+    return sort === 'price-asc' ? sorted : sorted.reverse();
   }, [rows, sort]);
 
   // Sold-progress stats need the full unfiltered row set — every project
@@ -71,12 +71,12 @@ const SoldProjects = () => {
             </p>
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value as 'az' | 'za')}
+              onChange={(e) => setSort(e.target.value as 'price-asc' | 'price-desc')}
               className="text-sm border border-border rounded-none px-3 py-1.5 bg-background text-foreground"
               aria-label="Sort projects"
             >
-              <option value="az">Sort A to Z</option>
-              <option value="za">Sort Z to A</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
             </select>
           </div>
         )}
@@ -124,8 +124,11 @@ const SoldProjects = () => {
                     )}
                   </div>
                   <div className="p-5">
+                    <h3 className="text-lg font-montserrat font-extrabold text-foreground">
+                      {d.name}
+                    </h3>
                     {d.minPrice != null && (
-                      <p className="text-lg font-semibold text-foreground flex items-start gap-1.5">
+                      <p className="mt-1 text-lg font-semibold text-foreground flex items-start gap-1.5">
                         {d.minPrice === d.maxPrice
                           ? formatEur(d.minPrice)
                           : `From ${priceRange(d)}`}

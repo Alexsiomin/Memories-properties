@@ -139,6 +139,7 @@ const DevelopmentDetail = () => {
     () => units.find((u) => Array.isArray(u.floor_plans) && u.floor_plans.length > 0)?.floor_plans ?? [],
     [units],
   );
+  const floorPlanIsPdf = /\.pdf(\?|$)/i.test(floorPlans[0]?.url ?? '');
 
   useEffect(() => {
     if (!floorPlanOpen) return;
@@ -346,7 +347,7 @@ const DevelopmentDetail = () => {
             >
               {allSold && galleryIndex === 0 && (
                 <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none bg-black/50">
-                  <span className="font-montserrat font-extrabold tracking-tight uppercase text-white text-4xl md:text-6xl border-2 border-white px-6 py-3 md:px-10 md:py-5 -rotate-6">
+                  <span className="font-montserrat font-extrabold tracking-tight uppercase text-white text-4xl md:text-6xl border-2 border-white px-6 py-3 md:px-10 md:py-5">
                     Sold Out
                   </span>
                 </div>
@@ -412,7 +413,7 @@ const DevelopmentDetail = () => {
 
             {/* Thumbnail strip — all photos, scrollable so every image is reachable */}
             {totalGallery > 1 && (
-              <div className="mt-3 hidden md:flex gap-3 overflow-x-auto pb-1">
+              <div className="mt-3 hidden md:flex gap-3 overflow-x-auto pb-1 no-scrollbar">
                 {gallery.map((src, i) => (
                   <button
                     key={src + i}
@@ -430,14 +431,26 @@ const DevelopmentDetail = () => {
             )}
 
             {floorPlans.length > 0 && (
-              <button
-                type="button"
-                onClick={() => { setFloorPlanIndex(0); setFloorPlanOpen(true); }}
-                className="mt-3 w-full btn-cta btn-cta-sm justify-center"
-              >
-                <Layers size={16} />
-                View Floor Plan{floorPlans.length > 1 ? 's' : ''}
-              </button>
+              floorPlanIsPdf ? (
+                <a
+                  href={floorPlans[0].url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 w-full btn-cta btn-cta-sm justify-center"
+                >
+                  <Layers size={16} />
+                  View Floor Plan{floorPlans.length > 1 ? 's' : ''}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { setFloorPlanIndex(0); setFloorPlanOpen(true); }}
+                  className="mt-3 w-full btn-cta btn-cta-sm justify-center"
+                >
+                  <Layers size={16} />
+                  View Floor Plan{floorPlans.length > 1 ? 's' : ''}
+                </button>
+              )
             )}
           </div>
 
@@ -802,37 +815,11 @@ const DevelopmentDetail = () => {
           </div>
 
           <div className="relative flex-1 flex items-center justify-center overflow-hidden px-4 pb-4">
-            {(() => {
-              const url = floorPlans[floorPlanIndex]?.url ?? '';
-              const label = floorPlans[floorPlanIndex]?.label || `Floor plan ${floorPlanIndex + 1}`;
-              const isPdf = /\.pdf(\?|$)/i.test(url);
-              if (isPdf) {
-                return (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-                    <iframe
-                      src={url}
-                      title={label}
-                      className="w-full h-full max-w-4xl bg-white"
-                    />
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white/90 hover:text-white text-sm underline underline-offset-4"
-                    >
-                      Open PDF in a new tab
-                    </a>
-                  </div>
-                );
-              }
-              return (
-                <img
-                  src={url}
-                  alt={label}
-                  className="max-w-full max-h-full object-contain"
-                />
-              );
-            })()}
+            <img
+              src={floorPlans[floorPlanIndex]?.url}
+              alt={floorPlans[floorPlanIndex]?.label || `Floor plan ${floorPlanIndex + 1}`}
+              className="max-w-full max-h-full object-contain"
+            />
 
             {floorPlans.length > 1 && (
               <>
