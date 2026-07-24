@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import PropertyMap from '@/components/PropertyMap';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, Building2, Calendar, Tag, MapPin, BedDouble, Bath, ChevronLeft, ChevronRight, Home as HomeIcon, Ruler, Layers, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Building2, Calendar, Tag, MapPin, BedDouble, Bath, ChevronLeft, ChevronRight, Home as HomeIcon, Ruler, Layers, X, ZoomIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import Thumbnail from '@/components/Thumbnail';
@@ -140,6 +140,62 @@ const DevelopmentDetail = () => {
     [units],
   );
   const floorPlanIsPdf = /\.pdf(\?|$)/i.test(floorPlans[0]?.url ?? '');
+
+  // Render the current floor plan PDF page onto a canvas, so it displays
+  // inline (crisp, zoomable) instead of relying on the browser's native PDF
+  // handling, which is inconsistent across mobile browsers.
+  const pdfCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
+  const [pdfZoomed, setPdfZoomed] = useState(false);
+
+  useEffect(() => {
+    if (!floorPlanOpen) return;
+    const current = floorPlans[floorPlanIndex];
+    if (!current || !/\.pdf(\?|$)/i.test(current.url)) return;
+
+    let cancelled = false;
+    setPdfLoading(true);
+    setPdfError(false);
+    setPdfZoomed(false);
+
+    (async () => {
+      try {
+        const pdfjs: any = await import('pdfjs-dist');
+        const workerSrc = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
+        pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+
+        const res = await fetch(current.url);
+        const buf = await res.arrayBuffer();
+        const doc = await pdfjs.getDocument({ data: buf }).promise;
+        const page = await doc.getPage(1);
+
+        // Scale relative to the actual viewport width and device pixel
+        // ratio, capped, so large architectural sheets don't render an
+        // oversized canvas that stalls or crashes on mobile devices.
+        const baseViewport = page.getViewport({ scale: 1 });
+        const containerWidth = Math.min(window.innerWidth, 900);
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const scale = Math.min(
+          (containerWidth / baseViewport.width) * dpr * 2, // *2 so zoom-in still looks crisp
+          3,
+        );
+        const viewport = page.getViewport({ scale });
+        const canvas = pdfCanvasRef.current;
+        if (!canvas || cancelled) return;
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        if (!cancelled) setPdfLoading(false);
+      } catch {
+        if (!cancelled) { setPdfLoading(false); setPdfError(true); }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [floorPlanOpen, floorPlanIndex, floorPlans]);
 
   // Completion date is shared across every unit in the project (same as floor
   // plans and project name). Admin sets it by adding a tag like
@@ -447,26 +503,14 @@ const DevelopmentDetail = () => {
             )}
 
             {floorPlans.length > 0 && (
-              floorPlanIsPdf ? (
-                <a
-                  href={floorPlans[0].url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 w-full btn-cta btn-cta-sm justify-center"
-                >
-                  <Layers size={16} />
-                  View Floor Plan{floorPlans.length > 1 ? 's' : ''}
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => { setFloorPlanIndex(0); setFloorPlanOpen(true); }}
-                  className="mt-3 w-full btn-cta btn-cta-sm justify-center"
-                >
-                  <Layers size={16} />
-                  View Floor Plan{floorPlans.length > 1 ? 's' : ''}
-                </button>
-              )
+              <button
+                type="button"
+                onClick={() => { setFloorPlanIndex(0); setFloorPlanOpen(true); }}
+                className="mt-3 w-full btn-cta btn-cta-sm justify-center"
+              >
+                <Layers size={16} />
+                View Floor Plan{floorPlans.length > 1 ? 's' : ''}
+              </button>
             )}
           </div>
 
@@ -826,17 +870,68 @@ const DevelopmentDetail = () => {
             <span className="text-sm tracking-wide">
               {floorPlans[floorPlanIndex]?.label || `${floorPlanIndex + 1} / ${floorPlans.length}`}
             </span>
-            <button type="button" onClick={() => setFloorPlanOpen(false)} aria-label="Close" className="text-white/90 hover:text-white transition-colors">
-              <X size={22} />
-            </button>
+            <div className="flex items-center gap-4">
+              {/\.pdf(\?|$)/i.test(floorPlans[floorPlanIndex]?.url ?? '') && !pdfLoading && !pdfError && (
+                <button
+                  type="button"
+                  onClick={() => setPdfZoomed((z) => !z)}
+                  aria-label={pdfZoomed ? 'Zoom out' : 'Zoom in'}
+                  className="text-white/90 hover:text-white transition-colors"
+                >
+                  {pdfZoomed ? <span className="text-lg leading-none">−</span> : <ZoomIn size={20} />}
+                </button>
+              )}
+              <button type="button" onClick={() => setFloorPlanOpen(false)} aria-label="Close" className="text-white/90 hover:text-white transition-colors">
+                <X size={22} />
+              </button>
+            </div>
           </div>
 
-          <div className="relative flex-1 flex items-center justify-center overflow-hidden px-4 pb-4">
-            <img
-              src={floorPlans[floorPlanIndex]?.url}
-              alt={floorPlans[floorPlanIndex]?.label || `Floor plan ${floorPlanIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
-            />
+          <div className="relative flex-1 overflow-auto px-4 pb-4 flex items-start justify-center">
+            {(() => {
+              const current = floorPlans[floorPlanIndex];
+              const isPdf = /\.pdf(\?|$)/i.test(current?.url ?? '');
+              if (isPdf) {
+                return (
+                  <div className="min-h-full w-full flex items-center justify-center py-4">
+                    {pdfLoading && (
+                      <div className="text-white/70 text-sm">Loading floor plan…</div>
+                    )}
+                    {pdfError && (
+                      <div className="text-white/70 text-sm flex flex-col items-center gap-3">
+                        <span>Couldn't load this floor plan.</span>
+                        <a
+                          href={current?.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline underline-offset-4"
+                        >
+                          Open PDF in a new tab
+                        </a>
+                      </div>
+                    )}
+                    <canvas
+                      ref={pdfCanvasRef}
+                      className={`bg-white transition-transform duration-200 ${pdfLoading || pdfError ? 'hidden' : ''}`}
+                      style={{
+                        maxWidth: pdfZoomed ? 'none' : '100%',
+                        height: 'auto',
+                        width: pdfZoomed ? '200%' : 'auto',
+                        cursor: pdfZoomed ? 'zoom-out' : 'zoom-in',
+                      }}
+                      onClick={() => setPdfZoomed((z) => !z)}
+                    />
+                  </div>
+                );
+              }
+              return (
+                <img
+                  src={current?.url}
+                  alt={current?.label || `Floor plan ${floorPlanIndex + 1}`}
+                  className="max-w-full max-h-full object-contain m-auto"
+                />
+              );
+            })()}
 
             {floorPlans.length > 1 && (
               <>
