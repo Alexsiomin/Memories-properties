@@ -1117,7 +1117,8 @@ const PropertyDetail = () => {
                 ].filter((c): c is string => !!c).join(' ');
 
                 return (
-                  <div className="rounded-2xl bg-muted/40 p-4" style={{ '--grid-cols': gridTemplate } as React.CSSProperties}>
+                  <div className="rounded-2xl bg-muted/40 p-4 overflow-x-auto" style={{ '--grid-cols': gridTemplate } as React.CSSProperties}>
+                    <div className="md:min-w-[1100px]">
                     <div className="hidden md:grid grid-cols-[var(--grid-cols)] gap-4 px-4 py-2 text-xs uppercase tracking-wider text-menu-foreground font-bold bg-menu">
                       <div>Plan</div>
                       <div>Lot</div>
@@ -1252,6 +1253,7 @@ const PropertyDetail = () => {
                             </Link>
                           );
                         })}
+                    </div>
                     </div>
                   </div>
                 );
