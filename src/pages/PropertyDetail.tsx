@@ -1325,9 +1325,31 @@ const PropertyDetail = () => {
             <h2 className="text-2xl font-montserrat font-extrabold text-foreground uppercase">About this Property</h2>
             <div className="mt-4 space-y-4 text-base leading-relaxed text-muted-foreground">
               {property.description?.trim() ? (
-                property.description.trim().split(/\n+/).map((para, i) => (
-                  <p key={i} className="whitespace-pre-line">{para}</p>
-                ))
+                (() => {
+                  const lines = property.description.trim().split(/\n+/);
+                  const blocks: { type: 'p' | 'ul'; lines: string[] }[] = [];
+                  for (const line of lines) {
+                    const isBullet = /^[-•]\s+/.test(line.trim());
+                    const last = blocks[blocks.length - 1];
+                    if (isBullet) {
+                      const text = line.trim().replace(/^[-•]\s+/, '');
+                      if (last?.type === 'ul') last.lines.push(text);
+                      else blocks.push({ type: 'ul', lines: [text] });
+                    } else {
+                      if (last?.type === 'p') last.lines.push(line);
+                      else blocks.push({ type: 'p', lines: [line] });
+                    }
+                  }
+                  return blocks.map((b, i) =>
+                    b.type === 'ul' ? (
+                      <ul key={i} className="list-disc pl-5 space-y-1.5">
+                        {b.lines.map((item, j) => <li key={j}>{item}</li>)}
+                      </ul>
+                    ) : (
+                      <p key={i} className="whitespace-pre-line">{b.lines.join('\n')}</p>
+                    )
+                  );
+                })()
               ) : (
                 <p>
                   {displayTitle} is positioned in {locationWithDistrict} as a {property.category.toLowerCase()} mandate currently {property.status.toLowerCase()}. The asset has been curated for investors seeking exposure to durable European real-estate themes with a clear capital plan.

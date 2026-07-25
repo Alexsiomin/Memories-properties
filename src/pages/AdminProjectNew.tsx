@@ -69,7 +69,9 @@ const CY_TOWNS: Record<string, string[]> = {
 const TOGGLEABLE_COLUMNS = [
   { key: 'internal_area', label: 'Internal m²' },
   { key: 'covered_verandas', label: 'Covered veranda m²' },
+  { key: 'semi_covered_verandas', label: 'Semi covered veranda m²' },
   { key: 'basement', label: 'Basement m²' },
+  { key: 'semi_basement', label: 'Semi basement m²' },
   { key: 'uncovered_verandas', label: 'Uncovered veranda m²' },
   { key: 'storage_room', label: 'Storage room m²' },
   { key: 'roof_garden', label: 'Roof garden m²' },
@@ -90,7 +92,9 @@ const LOT_COLUMNS: { key: string; label: string; width: string; toggleable: bool
   { key: 'baths', label: 'Baths', width: '0.7fr', toggleable: true },
   { key: 'internal_area', label: 'Internal m²', width: '0.9fr', toggleable: true },
   { key: 'covered_verandas', label: 'Covered veranda m²', width: '0.9fr', toggleable: true },
+  { key: 'semi_covered_verandas', label: 'Semi covered veranda m²', width: '0.9fr', toggleable: true },
   { key: 'basement', label: 'Basement m²', width: '0.9fr', toggleable: true },
+  { key: 'semi_basement', label: 'Semi basement m²', width: '0.9fr', toggleable: true },
   { key: 'uncovered_verandas', label: 'Uncovered veranda m²', width: '0.9fr', toggleable: true },
   { key: 'storage_room', label: 'Storage room m²', width: '0.9fr', toggleable: true },
   { key: 'roof_garden', label: 'Roof garden m²', width: '0.9fr', toggleable: true },
@@ -110,8 +114,10 @@ type LotRow = {
   baths: string;
   internal_area: string;        // m²
   covered_verandas: string;     // m²
+  semi_covered_verandas: string; // m²
   uncovered_verandas: string;   // m²
   basement: string;             // m²
+  semi_basement: string;        // m²
   storage_room: string;         // m²
   roof_garden: string;          // m²
   parking: string;              // spaces
@@ -131,8 +137,10 @@ const emptyLot = (category = 'Apartment'): LotRow => ({
   baths: '',
   internal_area: '0',
   covered_verandas: '',
+  semi_covered_verandas: '',
   uncovered_verandas: '',
   basement: '',
+  semi_basement: '',
   storage_room: '',
   roof_garden: '',
   parking: '1',
@@ -228,6 +236,7 @@ export default function AdminProjectNew() {
     address_line: '',
     country: 'Cyprus',
     description: '',
+    completion_date: '',
     image_key: 'hero',
   });
   const [pin, setPin] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
@@ -364,8 +373,10 @@ export default function AdminProjectNew() {
     'baths': 'baths', 'bath': 'baths', 'bathrooms': 'baths', 'bathroom': 'baths', 'wc': 'baths',
     'internal area': 'internal_area', 'internal': 'internal_area', 'covered area': 'internal_area', 'area': 'internal_area',
     'covered verandas': 'covered_verandas', 'covered veranda': 'covered_verandas', 'covered': 'covered_verandas',
+    'semi covered verandas': 'semi_covered_verandas', 'semi covered veranda': 'semi_covered_verandas', 'semi covered': 'semi_covered_verandas',
     'uncovered verandas': 'uncovered_verandas', 'uncovered veranda': 'uncovered_verandas', 'uncovered': 'uncovered_verandas',
     'basement': 'basement',
+    'semi basement': 'semi_basement',
     'storage': 'storage_room', 'storage room': 'storage_room', 'store': 'storage_room',
     'roof garden': 'roof_garden', 'roof': 'roof_garden',
     'parking': 'parking', 'parking spaces': 'parking', 'parking space': 'parking', 'car park': 'parking', 'garage': 'parking',
@@ -621,6 +632,9 @@ export default function AdminProjectNew() {
         address_line: (first.address_line as string) ?? '',
         country: (first.country as string) ?? 'Cyprus',
         description: (first.description as string) ?? '',
+        completion_date: (((first.tags as string[]) ?? []).find((t) => /^completion\s*:/i.test(t.trim())) ?? '')
+          .replace(/^completion\s*:\s*/i, '')
+          .trim(),
         image_key: (first.image_key as string) ?? 'hero',
       });
       setPin({
@@ -644,7 +658,7 @@ export default function AdminProjectNew() {
       const allTags: string[] = (first.tags as string[]) ?? [];
       const hidden = new Set(allTags.filter((t) => t.startsWith('hidden:')).map((t) => t.slice(7)));
       setVisibleCols(Object.fromEntries(TOGGLEABLE_COLUMNS.map((c) => [c.key, !hidden.has(c.key)])));
-      const internalPrefixes = ['hidden:', 'uncovered verandas ', 'basement ', 'storage room ', 'roof garden ', 'covered parking '];
+      const internalPrefixes = ['hidden:', 'uncovered verandas ', 'semi covered veranda ', 'basement ', 'semi basement ', 'storage room ', 'roof garden ', 'covered parking ', 'completion:'];
       setFeatures(allTags.filter((t) => !internalPrefixes.some((p) => t.startsWith(p))));
 
       setLots(props.map((p) => {
@@ -657,8 +671,10 @@ export default function AdminProjectNew() {
           baths: (p as Record<string, unknown>).baths != null ? String((p as Record<string, unknown>).baths) : '',
           internal_area: stripM2((p as Record<string, unknown>).internal_area),
           covered_verandas: stripM2((p as Record<string, unknown>).covered_verandas),
+          semi_covered_verandas: tagVal(tags, 'semi covered veranda '),
           uncovered_verandas: tagVal(tags, 'uncovered verandas '),
           basement: tagVal(tags, 'basement '),
+          semi_basement: tagVal(tags, 'semi basement '),
           storage_room: tagVal(tags, 'storage room '),
           roof_garden: tagVal(tags, 'roof garden '),
           parking: (p as Record<string, unknown>).parking_spaces != null ? String((p as Record<string, unknown>).parking_spaces) : '',
@@ -827,7 +843,9 @@ export default function AdminProjectNew() {
       case 'baths': return numInput('baths');
       case 'internal_area': return numInput('internal_area', '75');
       case 'covered_verandas': return numInput('covered_verandas', '23');
+      case 'semi_covered_verandas': return numInput('semi_covered_verandas', '12');
       case 'basement': return numInput('basement', '20');
+      case 'semi_basement': return numInput('semi_basement', '15');
       case 'uncovered_verandas': return numInput('uncovered_verandas', '10');
       case 'storage_room': return numInput('storage_room', '6');
       case 'roof_garden': return numInput('roof_garden', '15');
@@ -1040,11 +1058,14 @@ export default function AdminProjectNew() {
       lot_size: l.lot_size ? `${l.lot_size} m²` : null,
       tags: [
         ...(l.uncovered_verandas ? [`uncovered verandas ${l.uncovered_verandas} m²`] : []),
+        ...(l.semi_covered_verandas ? [`semi covered veranda ${l.semi_covered_verandas} m²`] : []),
         ...(l.basement ? [`basement ${l.basement} m²`] : []),
+        ...(l.semi_basement ? [`semi basement ${l.semi_basement} m²`] : []),
         ...(l.storage_room ? [`storage room ${l.storage_room} m²`] : []),
         ...(l.roof_garden ? [`roof garden ${l.roof_garden} m²`] : []),
         ...(l.covered_parking ? [`covered parking ${l.covered_parking}`] : []),
         ...(l.floor ? [`floor level ${l.floor}`] : []),
+        ...(project.completion_date.trim() ? [`completion:${project.completion_date.trim()}`] : []),
         ...TOGGLEABLE_COLUMNS.filter((c) => !visibleCols[c.key]).map((c) => `hidden:${c.key}`),
         ...features,
       ] as string[],
@@ -1270,9 +1291,27 @@ export default function AdminProjectNew() {
             </div>
 
 
+            <div>
+              <Label htmlFor="completion_date">Completion date</Label>
+              <Input
+                id="completion_date"
+                placeholder="e.g. Q3 2027"
+                value={project.completion_date}
+                onChange={(e) => setP('completion_date', e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Shown as a "Completion" fact on the project page. Use a year and quarter (e.g.
+                "Q3 2027") or just a year — this works the same whether handover is near-term
+                or a sold-out project isn't delivered for years yet.
+              </p>
+            </div>
+
             <div className="md:col-span-2">
               <Label htmlFor="desc">Description</Label>
               <Textarea id="desc" rows={4} value={project.description} onChange={(e) => setP('description', e.target.value)} />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Start a line with <code className="px-1 py-0.5 bg-muted rounded">- </code> to make it a bullet point.
+              </p>
             </div>
           </div>
         </section>
