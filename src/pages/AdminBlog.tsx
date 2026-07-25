@@ -366,6 +366,10 @@ export default function AdminBlog() {
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
                   placeholder="Write your article here. Separate paragraphs with a blank line."
                 />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  To add a clickable link to another website, write it as{' '}
+                  <code className="px-1 py-0.5 bg-muted rounded">[link text](https://example.com)</code>
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <Switch

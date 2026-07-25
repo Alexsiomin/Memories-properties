@@ -17,6 +17,37 @@ interface Post {
   published_at: string | null;
 }
 
+// Blog content is authored as plain text, but supports one bit of markup:
+// [link text](https://example.com) renders as a real, safe outbound link.
+// Anything else in the text is left exactly as written.
+const LINK_PATTERN = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+
+function renderContentWithLinks(text: string) {
+  const parts: (string | JSX.Element)[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  LINK_PATTERN.lastIndex = 0;
+  while ((match = LINK_PATTERN.exec(text)) !== null) {
+    if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+    const [, label, url] = match;
+    parts.push(
+      <a
+        key={key++}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity"
+      >
+        {label}
+      </a>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts;
+}
+
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<Post | null>(null);
@@ -122,7 +153,7 @@ export default function BlogPost() {
             .filter((p) => p.trim())
             .map((para, i) => (
               <p key={i} className="whitespace-pre-line">
-                {para}
+                {renderContentWithLinks(para)}
               </p>
             ))}
         </div>
