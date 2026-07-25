@@ -152,6 +152,7 @@ interface RelatedProperty {
   internal_area?: string | null;
   covered_verandas?: string | null;
   size?: string | null;
+  tags?: string[] | null;
 }
 
 interface LightboxSliderProps {
@@ -446,13 +447,42 @@ const PropertyDetail = () => {
 
       // Fetch related properties — smart tiered matching, available listings only:
       // 1) same project (developer + title), 2) same area + similar budget, 3) same type.
-      const selectCols = 'id, slug, title, location, price, price_value, category, region, city, district, image_key, cover_image, beds, baths, status, internal_area, covered_verandas, size';
+      const selectCols = 'id, slug, title, location, price, price_value, category, region, city, district, image_key, cover_image, beds, baths, status, internal_area, covered_verandas, size, tags';
       const RELATED_LIMIT = 6;
+      const CANDIDATE_POOL = 24; // fetch a wider pool per tier, then rank by feature overlap and keep the best RELATED_LIMIT
       const excludeSold = <T,>(q: T): T =>
         (q as any)
           .not('status', 'ilike', '%sold%')
           .not('status', 'ilike', '%reserved%')
           .not('status', 'ilike', '%under offer%') as T;
+
+      // How many catalogue features a candidate shares with the current
+      // property — this is what makes "properties like this one" mean
+      // something real, instead of just same category/price band.
+      const { activeFeatures: currentFeatures } = matchPropertyFeatures(row.tags as string[] | null);
+      const featureOverlapScore = (candidateTags: string[] | null | undefined) => {
+        if (currentFeatures.size === 0) return 0;
+        const { activeFeatures: candidateFeatures } = matchPropertyFeatures(candidateTags);
+        if (candidateFeatures.size === 0) return 0;
+        let shared = 0;
+        for (const f of candidateFeatures) if (currentFeatures.has(f)) shared++;
+        // Jaccard similarity — shared features relative to the total distinct
+        // features either property has, so a small candidate with 2/2 features
+        // matching ranks above a large candidate that happens to share 2/12.
+        const union = new Set([...currentFeatures, ...candidateFeatures]).size;
+        return union > 0 ? shared / union : 0;
+      };
+      const priceCloseness = (candidatePrice: number | null) => {
+        if (!row.price_value || !candidatePrice) return 0;
+        const diff = Math.abs(candidatePrice - row.price_value) / row.price_value;
+        return Math.max(0, 1 - diff); // 1 = identical price, 0 = 100%+ apart
+      };
+      const rankByRelevance = (list: RelatedProperty[]) =>
+        [...list].sort((a, b) => {
+          const scoreA = featureOverlapScore(a.tags) * 2 + priceCloseness(a.price_value);
+          const scoreB = featureOverlapScore(b.tags) * 2 + priceCloseness(b.price_value);
+          return scoreB - scoreA;
+        });
 
       let relList: RelatedProperty[] = [];
       const seen = new Set<string>([row.id]);
@@ -471,7 +501,8 @@ const PropertyDetail = () => {
         relList.forEach((r) => seen.add(r.id));
       }
 
-      // Tier 2: same area + same type, similar budget (±60%), available.
+      // Tier 2: same area + same type, similar budget (±60%), available —
+      // ranked by feature overlap so the closest matches surface first.
       if (relList.length < RELATED_LIMIT && row.region) {
         let q = supabase
           .from('properties')
@@ -483,13 +514,14 @@ const PropertyDetail = () => {
         if (row.price_value) {
           q = q.gte('price_value', Math.round(row.price_value * 0.4)).lte('price_value', Math.round(row.price_value * 1.6));
         }
-        const { data } = await q.order('sort_order', { ascending: true }).limit(RELATED_LIMIT - relList.length);
-        const extra = (data ?? []) as RelatedProperty[];
+        const { data } = await q.order('sort_order', { ascending: true }).limit(CANDIDATE_POOL);
+        const extra = rankByRelevance((data ?? []) as RelatedProperty[]).slice(0, RELATED_LIMIT - relList.length);
         relList = [...relList, ...extra];
         extra.forEach((r) => seen.add(r.id));
       }
 
-      // Tier 3: same type, any area, available — fills out the rest.
+      // Tier 3: same type, any area, available — fills out the rest, still
+      // ranked by feature overlap within this wider pool.
       if (relList.length < RELATED_LIMIT) {
         let q = supabase
           .from('properties')
@@ -497,8 +529,9 @@ const PropertyDetail = () => {
           .eq('category', row.category)
           .not('id', 'in', `(${[...seen].join(',')})`);
         q = excludeSold(q);
-        const { data } = await q.order('sort_order', { ascending: true }).limit(RELATED_LIMIT - relList.length);
-        relList = [...relList, ...((data ?? []) as RelatedProperty[])];
+        const { data } = await q.order('sort_order', { ascending: true }).limit(CANDIDATE_POOL);
+        const extra = rankByRelevance((data ?? []) as RelatedProperty[]).slice(0, RELATED_LIMIT - relList.length);
+        relList = [...relList, ...extra];
       }
 
       if (!cancelled) setRelated(relList);
