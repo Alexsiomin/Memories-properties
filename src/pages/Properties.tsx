@@ -15,8 +15,10 @@ import { toast } from 'sonner';
 import { BookmarkPlus, ArrowUpRight, Lock, Clock, Navigation, MapPin } from 'lucide-react';
 import { trackSearch } from '@/lib/visitor-journey';
 import { useRecentSearches } from '@/hooks/use-recent-searches';
+import { parseNaturalLanguageQuery } from '@/lib/nlSearchParser';
 import {
   Search,
+  Sparkles,
   ChevronDown,
   SlidersHorizontal,
   Circle,
@@ -291,6 +293,8 @@ const Properties = () => {
   const [surrounding, setSurrounding] = useState(false);
   const [page, setPage] = useState<number>(Math.max(1, Number(params.get('page') ?? 1)));
   const PAGE_SIZE = 24;
+  const [nlQuery, setNlQuery] = useState('');
+  const [nlSummary, setNlSummary] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (!filtersOpen) return;
@@ -341,6 +345,44 @@ const Properties = () => {
   };
   const removeLocation = (loc: string) =>
     setLocations((prev) => prev.filter((p) => p !== loc));
+
+  const handleNlSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = nlQuery.trim();
+    if (!text) return;
+    const parsed = parseNaturalLanguageQuery(text);
+
+    if (parsed.locations.length) setLocations(parsed.locations);
+    if (parsed.categories.length) setActiveCats(parsed.categories);
+    if (parsed.tags.length) setActiveTags(parsed.tags);
+    if (parsed.minPrice != null) setMinPrice(String(parsed.minPrice));
+    if (parsed.maxPrice != null) setMaxPrice(String(parsed.maxPrice));
+    if (parsed.minBeds != null) setMinBeds(parsed.minBeds);
+    if (parsed.maxBeds != null) setMaxBeds(parsed.maxBeds);
+    if (parsed.minBaths != null) setMinBaths(parsed.minBaths);
+    if (parsed.mode === 'Rent') setMode('Invest');
+    else if (parsed.mode === 'Buy') setMode('Buy');
+
+    // Show the person what was understood, so a miss is obvious rather than
+    // a silent wrong result.
+    const summary: string[] = [];
+    if (parsed.locations.length) summary.push(parsed.locations.join(', '));
+    if (parsed.categories.length) summary.push(parsed.categories.join(', '));
+    if (parsed.minBeds != null || parsed.maxBeds != null) {
+      summary.push(
+        parsed.minBeds != null && parsed.maxBeds != null
+          ? `${parsed.minBeds}-${parsed.maxBeds} beds`
+          : `${parsed.minBeds ?? parsed.maxBeds}+ beds`
+      );
+    }
+    if (parsed.minBaths != null) summary.push(`${parsed.minBaths}+ baths`);
+    if (parsed.minPrice != null && parsed.maxPrice != null) summary.push(`€${parsed.minPrice.toLocaleString()}–€${parsed.maxPrice.toLocaleString()}`);
+    else if (parsed.maxPrice != null) summary.push(`up to €${parsed.maxPrice.toLocaleString()}`);
+    else if (parsed.minPrice != null) summary.push(`from €${parsed.minPrice.toLocaleString()}`);
+    if (parsed.tags.length) summary.push(parsed.tags.join(', '));
+    if (parsed.mode) summary.push(parsed.mode === 'Rent' ? 'for rent' : 'for sale');
+    setNlSummary(summary.length ? summary : ['Didn\u2019t catch anything specific — try including a location, price, or bed count.']);
+  };
 
   const useCurrentLocation = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -865,6 +907,29 @@ const Properties = () => {
             </span>
             <span aria-hidden="true">{headingText}</span>
           </h1>
+          <form onSubmit={handleNlSearch} className="w-full max-w-[974px] mx-auto mb-4">
+            <div className="relative flex items-center bg-[hsl(0_0%_94%)] h-[48px] px-4 gap-3">
+              <Sparkles size={18} className="shrink-0 text-accent" strokeWidth={2} />
+              <input
+                type="text"
+                value={nlQuery}
+                onChange={(e) => setNlQuery(e.target.value)}
+                placeholder="Try: 3 bed villa near the sea in Paphos under €1.5M"
+                className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+              />
+              <button
+                type="submit"
+                className="shrink-0 px-4 h-8 bg-[hsl(212_100%_10%)] text-white text-xs font-semibold uppercase tracking-wider hover:opacity-90 transition-opacity"
+              >
+                Search
+              </button>
+            </div>
+            {nlSummary && (
+              <p className="mt-2 text-xs text-muted-foreground px-1">
+                Searching for: <span className="text-foreground font-medium">{nlSummary.join(' · ')}</span>
+              </p>
+            )}
+          </form>
           <form onSubmit={onSearch} className="w-full max-w-[974px] mx-auto">
             <div className="flex flex-col sm:flex-row sm:items-stretch gap-3 sm:gap-0 sm:bg-[hsl(0_0%_94%)] sm:h-[54px]">
               {/* Mode selector (BUY / RENT) */}
