@@ -942,14 +942,14 @@ const PropertyDetail = () => {
           {/* Key facts row */}
           <div className={`mt-10 grid grid-cols-2 gap-3 ${isVilla ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
             {property.category === 'Land / Plot' ? (
-              <FactCard icon={<Building size={18} />} label="Building density" value={property.beds != null ? String(property.beds) : '—'} />
+              <FactCard icon={<Building size={18} />} label="Building density" value={property.beds != null ? String(property.beds) : '—'} size="sm" />
             ) : (
-              <FactCard icon={<BedDouble size={18} />} label="Beds" value={property.beds ? String(property.beds) : '—'} />
+              <FactCard icon={<BedDouble size={18} />} label="Beds" value={property.beds ? String(property.beds) : '—'} size="sm" />
             )}
             {property.category === 'Land / Plot' ? (
-              <FactCard icon={<LandPlot size={18} />} label="Cover factor" value={property.baths != null ? String(property.baths) : '—'} />
+              <FactCard icon={<LandPlot size={18} />} label="Cover factor" value={property.baths != null ? String(property.baths) : '—'} size="sm" />
             ) : (
-              <FactCard icon={<Bath size={18} />} label="Baths" value={(property.baths ?? property.beds) ? String(property.baths ?? property.beds) : '—'} />
+              <FactCard icon={<Bath size={18} />} label="Baths" value={(property.baths ?? property.beds) ? String(property.baths ?? property.beds) : '—'} size="sm" />
             )}
             <FactCard icon={<Ruler size={18} />} label="Total Covered Area" value={totalCoveredArea ?? '—'} />
             <FactCard icon={<HomeIcon size={18} />} label="Type" value={property.category} />
@@ -1718,11 +1718,26 @@ const displayReference = (referenceCode: string | null | undefined, id: string) 
   return `MEM${number}`;
 };
 
-const FactCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
+const FACT_CARD_SIZES = {
+  sm: 'text-lg',
+  md: 'text-xl',
+  lg: 'text-2xl',
+} as const;
 
+const FactCard = ({
+  icon,
+  label,
+  value,
+  size = 'md',
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  size?: keyof typeof FACT_CARD_SIZES;
+}) => (
   <div className="border border-border bg-card p-4">
     <div className="text-muted-foreground">{icon}</div>
-    <p className="mt-2 font-semibold text-foreground leading-none truncate text-xl">{value}</p>
+    <p className={`mt-2 font-semibold text-foreground leading-none truncate ${FACT_CARD_SIZES[size]}`}>{value}</p>
     <p className="mt-1 text-xs text-muted-foreground">{label}</p>
   </div>
 );

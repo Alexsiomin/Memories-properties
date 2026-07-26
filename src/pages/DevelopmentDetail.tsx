@@ -548,11 +548,11 @@ const DevelopmentDetail = () => {
 
             {/* Key details */}
             <div className="pt-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <FactCard icon={<Building2 size={18} />} label="Units" value={`${dev.unitCount}`} />
+              <FactCard icon={<Building2 size={18} />} label="Units" value={`${dev.unitCount}`} size="sm" />
               <FactCard icon={<BedDouble size={18} />} label="Beds" value={dev.minBeds != null ? bedRange(dev) : '—'} />
-              <FactCard icon={<Tag size={18} />} label="Price" value={dev.minPrice != null ? (dev.minPrice === dev.maxPrice ? formatEur(dev.minPrice) : `From ${formatEur(dev.minPrice)}`) : '—'} />
+              <FactCard icon={<Tag size={18} />} label="Price" value={dev.minPrice != null ? (dev.minPrice === dev.maxPrice ? formatEur(dev.minPrice) : `From ${formatEur(dev.minPrice)}`) : '—'} size="lg" />
               <FactCard icon={<HomeIcon size={18} />} label="Type" value={dev.categories[0] ?? '—'} />
-              <FactCard icon={<Calendar size={18} />} label="Completion" value={completionDate ?? '—'} />
+              <FactCard icon={<Calendar size={18} />} label="Completion" value={completionDate ?? '—'} size="sm" />
             </div>
 
             {/* Units table */}
@@ -961,10 +961,26 @@ const DevelopmentDetail = () => {
   );
 };
 
-const FactCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
+const FACT_CARD_SIZES = {
+  sm: 'text-sm sm:text-lg',
+  md: 'text-base sm:text-xl',
+  lg: 'text-xl sm:text-2xl',
+} as const;
+
+const FactCard = ({
+  icon,
+  label,
+  value,
+  size = 'md',
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  size?: keyof typeof FACT_CARD_SIZES;
+}) => (
   <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
     <div className="text-muted-foreground">{icon}</div>
-    <p className="mt-2 font-semibold text-foreground leading-tight text-base sm:text-xl whitespace-nowrap">{value}</p>
+    <p className={`mt-2 font-semibold text-foreground leading-tight whitespace-nowrap ${FACT_CARD_SIZES[size]}`}>{value}</p>
     <p className="mt-1 text-xs text-muted-foreground">{label}</p>
   </div>
 );
