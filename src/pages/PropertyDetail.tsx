@@ -1357,6 +1357,45 @@ const PropertyDetail = () => {
           <div className="mt-12">
             <h2 className="text-2xl font-montserrat font-extrabold text-foreground uppercase">About this Property</h2>
             <div className="mt-4 space-y-4 text-base leading-relaxed text-muted-foreground">
+              {/* Unit-specific summary — built from this property's own data (beds,
+                  baths, size, plot, floor, price, reference). Project units share
+                  one description across every sibling unit, which reads as
+                  near-duplicate content to search engines when there are a dozen+
+                  units per project; this sentence gives every unit page genuinely
+                  unique body text regardless of what the shared description says. */}
+              {property.developer_id && (() => {
+                const parts: string[] = [];
+                const bedsBaths = [
+                  property.beds ? `${property.beds} bedroom${property.beds === 1 ? '' : 's'}` : null,
+                  property.baths ? `${property.baths} bathroom${property.baths === 1 ? '' : 's'}` : null,
+                ].filter(Boolean).join(' and ');
+                const area = property.internal_area || property.size;
+                const hasFollowUpClause = !!(area || property.lot_size || property.floor != null);
+
+                if (bedsBaths) parts.push(`This ${property.category.toLowerCase()} offers ${bedsBaths}`);
+                else if (hasFollowUpClause) parts.push(`This ${property.category.toLowerCase()} is`);
+                else parts.push(`This ${property.category.toLowerCase()}`);
+
+                let clauseStarted = false;
+                const appendClause = (text: string) => {
+                  parts[parts.length - 1] += clauseStarted ? `, ${text}` : ` ${text}`;
+                  clauseStarted = true;
+                };
+                if (area) appendClause(`across ${area} of internal living space`);
+                if (property.lot_size) appendClause(`set on a ${property.lot_size} plot`);
+                if (property.floor != null) appendClause(`on floor ${property.floor}`);
+                parts[parts.length - 1] += '.';
+
+                const priceBit = property.price
+                  ? `${/reserved|sold/i.test(property.status) ? 'It was offered at' : 'It is offered at'} ${property.price}${property.reference_code ? ` (reference ${property.reference_code})` : ''}.`
+                  : property.reference_code
+                    ? `Reference ${property.reference_code}.`
+                    : null;
+                if (priceBit) parts.push(priceBit);
+
+                return <p className="text-foreground/90">{parts.join(' ')}</p>;
+              })()}
+
               {property.description?.trim() ? (
                 (() => {
                   const lines = property.description.trim().split(/\n+/);
