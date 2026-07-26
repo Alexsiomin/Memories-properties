@@ -312,7 +312,7 @@ const Masthead = () => {
                 <MonogramM className="h-[24px] w-auto text-menu-foreground" />
               </Link>
 
-              <div className="flex-1 overflow-y-auto px-5 pt-[70px] pb-10 md:px-11 flex flex-col justify-between">
+              <div className="flex-1 overflow-y-auto px-5 pt-[70px] pb-10 md:px-6 flex flex-col justify-between">
                 <nav className="flex flex-col">
                   {MOBILE_NAV.filter((item) => item.label !== 'HOME').map((item) => {
                     const hasChildren = !!item.children?.length;
@@ -329,7 +329,7 @@ const Masthead = () => {
                             type="button"
                             aria-expanded={expanded}
                             onClick={() => setOpenSection(expanded ? null : item.label)}
-                            className={`flex items-center justify-between gap-3 w-full text-left font-montserrat font-extrabold uppercase tracking-normal transition-colors leading-[34px] text-[26px] hover:text-menu-foreground ${labelColor}`}
+                            className={`flex items-center justify-between gap-3 w-full text-left font-montserrat font-extrabold uppercase tracking-normal transition-colors leading-[34px] text-[22px] hover:text-menu-foreground ${labelColor}`}
                           >
                             {item.label}
                             <ChevronDown
@@ -341,7 +341,7 @@ const Masthead = () => {
                           <Link
                             to={item.to}
                             onClick={() => setOpen(false)}
-                            className={`block font-montserrat font-extrabold uppercase tracking-normal transition-colors leading-[34px] text-[26px] hover:text-menu-foreground ${labelColor}`}
+                            className={`block font-montserrat font-extrabold uppercase tracking-normal transition-colors leading-[34px] text-[22px] hover:text-menu-foreground ${labelColor}`}
                           >
                             {item.label}
                           </Link>
@@ -369,7 +369,7 @@ const Masthead = () => {
 
                 <div className="mt-auto pt-16 pb-8 space-y-6">
                   <div className="block">
-                    <LanguageToggle tone="text-menu-foreground" className="text-[26px]" />
+                    <LanguageToggle tone="text-menu-foreground" className="text-[22px]" />
                   </div>
 
                   {!user && (
