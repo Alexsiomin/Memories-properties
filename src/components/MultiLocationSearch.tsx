@@ -14,6 +14,7 @@ interface MultiLocationSearchProps {
   locating: boolean;
   nearMeLabel?: string | null;
   onRemoveNearMe?: () => void;
+  placeholder?: string;
 }
 
 export default function MultiLocationSearch({
@@ -28,6 +29,7 @@ export default function MultiLocationSearch({
   locating,
   nearMeLabel,
   onRemoveNearMe,
+  placeholder,
 }: MultiLocationSearchProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -147,7 +149,7 @@ export default function MultiLocationSearch({
                 onRemove(locations[locations.length - 1]);
               }
             }}
-            placeholder={locations.length === 0 ? 'Search by suburb, postcode or address' : 'Add another location'}
+            placeholder={locations.length === 0 ? (placeholder ?? 'Search by suburb, postcode or address') : 'Add another location'}
             className="flex-1 min-w-[120px] bg-transparent h-7 sm:h-8 text-sm sm:text-base leading-tight text-[hsl(222_24%_7%)] placeholder:text-[hsl(222_24%_7%)]/70 focus:outline-none py-0"
           />
         )}
