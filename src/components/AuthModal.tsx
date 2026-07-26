@@ -210,7 +210,7 @@ const AuthModal = () => {
                   setGoogleBusy(false);
                 }
               }}
-              className="btn-cta btn-cta-block !h-[50px] border border-white bg-transparent text-white hover:bg-white/10 w-full mt-2"
+              className="btn-cta btn-cta-block !h-[50px] !border-white !bg-transparent !text-white hover:!bg-white/10 hover:!text-white w-full mt-2"
             >
               {googleBusy ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -337,7 +337,7 @@ const AuthModal = () => {
                 setGoogleBusy(false);
               }
             }}
-            className="btn-cta btn-cta-block !h-[50px] border border-white bg-transparent text-white hover:bg-white/10"
+            className="btn-cta btn-cta-block !h-[50px] !border-white !bg-transparent !text-white hover:!bg-white/10 hover:!text-white"
           >
             {googleBusy ? (
               <Loader2 className="w-4 h-4 animate-spin" />
