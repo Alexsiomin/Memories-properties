@@ -1737,7 +1737,7 @@ const FactCard = ({
 }) => (
   <div className="border border-border bg-card p-4">
     <div className="text-muted-foreground">{icon}</div>
-    <p className={`mt-2 font-semibold text-foreground leading-none truncate ${FACT_CARD_SIZES[size]}`}>{value}</p>
+    <p className={`mt-2 font-semibold text-foreground leading-tight break-words ${FACT_CARD_SIZES[size]}`}>{value}</p>
     <p className="mt-1 text-xs text-muted-foreground">{label}</p>
   </div>
 );

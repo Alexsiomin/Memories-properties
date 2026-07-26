@@ -964,7 +964,7 @@ const DevelopmentDetail = () => {
 const FACT_CARD_SIZES = {
   sm: 'text-sm sm:text-lg',
   md: 'text-base sm:text-xl',
-  lg: 'text-xl sm:text-2xl',
+  lg: 'text-lg sm:text-2xl',
 } as const;
 
 const FactCard = ({
@@ -980,7 +980,7 @@ const FactCard = ({
 }) => (
   <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
     <div className="text-muted-foreground">{icon}</div>
-    <p className={`mt-2 font-semibold text-foreground leading-tight whitespace-nowrap ${FACT_CARD_SIZES[size]}`}>{value}</p>
+    <p className={`mt-2 font-semibold text-foreground leading-tight break-words ${FACT_CARD_SIZES[size]}`}>{value}</p>
     <p className="mt-1 text-xs text-muted-foreground">{label}</p>
   </div>
 );
