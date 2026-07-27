@@ -32,6 +32,8 @@ export interface LocationDef {
   highlights: string[];
   /** Location-specific FAQs. */
   faqs: { question: string; answer: string }[];
+  /** Optional location-specific hero image; falls back to a generic shared image when unset. */
+  heroImage?: string;
 }
 
 export const LOCATIONS: LocationDef[] = [
@@ -455,6 +457,7 @@ export const LOCATIONS: LocationDef[] = [
           "Limassol is the island's main business and financial centre with limited seafront land, strong international demand and landmark developments — factors that place it at the top of the Cyprus property market.",
       },
     ],
+    heroImage: "/images/hero-limassol.jpg",
   },
   {
     slug: "germasogeia",

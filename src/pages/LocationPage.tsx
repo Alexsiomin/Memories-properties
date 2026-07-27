@@ -114,17 +114,17 @@ const LocationPage = () => {
       />
 
       {/* Hero */}
-      <section className="relative">
+      <section className="relative w-full h-screen min-h-[600px] -mt-px">
         <div className="absolute inset-0">
           <img
-            src={hero}
+            src={loc.heroImage || hero}
             alt={`${loc.name}, Cyprus`}
             className="w-full h-full object-cover"
             loading="eager"
           />
           <div className="absolute inset-0 bg-foreground/55" />
         </div>
-        <div className="relative container mx-auto px-4 md:px-8 py-20 md:py-28">
+        <div className="relative z-10 h-full flex flex-col justify-end container mx-auto px-4 md:px-8 pb-16 md:pb-24">
           <div className="max-w-3xl">
             <nav className="text-sm text-background/80 mb-3">
               <Link to="/" className="hover:text-background">Home</Link> ·{' '}
