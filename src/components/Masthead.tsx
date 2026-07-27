@@ -95,7 +95,7 @@ const Masthead = () => {
   
 
   // Transparent overlay only on routes with a full-bleed hero
-  const isHeroRoute = pathname === '/' || pathname === '/about' || pathname === '/advisory' || pathname === '/sell' || pathname === '/our-expertise' || pathname === '/project-buyer-faqs' || pathname === '/project-expertise';
+  const isHeroRoute = pathname === '/' || pathname === '/about' || pathname === '/advisory' || pathname === '/sell' || pathname === '/our-expertise' || pathname === '/project-buyer-faqs' || pathname === '/project-expertise' || pathname.startsWith('/locations/');
 
   // Listing pages (and Insights) show the full "Memories" text logo at the top,
   // then switch to the square "M" on scroll, but they do NOT have a hero image
