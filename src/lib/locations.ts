@@ -65,6 +65,7 @@ export const LOCATIONS: LocationDef[] = [
           "Yes. EU citizens buy on the same terms as locals. Non-EU buyers may purchase property with a straightforward permit from the Council of Ministers, which is routinely granted. We coordinate the legal process end-to-end with vetted Cypriot lawyers.",
       },
     ],
+    heroImage: "/images/hero-paphos.jpg",
   },
   {
     slug: "kato-paphos",
