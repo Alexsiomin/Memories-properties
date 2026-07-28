@@ -182,12 +182,22 @@ const DevelopmentDetail = () => {
         );
         const viewport = page.getViewport({ scale });
         const canvas = pdfCanvasRef.current;
-        if (!canvas || cancelled) return;
+        if (!canvas || cancelled) { if (!cancelled) { setPdfLoading(false); setPdfError(true); } return; }
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        await page.render({ canvasContext: ctx, viewport }).promise;
+        if (!ctx) { setPdfLoading(false); setPdfError(true); return; }
+
+        // Some PDFs (especially complex architectural sheets) can hang
+        // indefinitely inside pdf.js's own render call — never resolving or
+        // rejecting. Race it against a timeout so the person always lands on
+        // a working state (the "open in new tab" fallback) instead of a
+        // permanent loading spinner.
+        const RENDER_TIMEOUT_MS = 12000;
+        await Promise.race([
+          page.render({ canvasContext: ctx, viewport }).promise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('pdf render timeout')), RENDER_TIMEOUT_MS)),
+        ]);
         if (!cancelled) setPdfLoading(false);
       } catch {
         if (!cancelled) { setPdfLoading(false); setPdfError(true); }

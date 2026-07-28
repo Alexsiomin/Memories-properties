@@ -1709,7 +1709,7 @@ const PropertyDetail = () => {
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
             <button
-              onClick={() => setOpenTour(true)}
+              onClick={() => setOpenEnquiry(true)}
               className="btn-cta-solid btn-cta flex-1 rounded-none"
             >
               Enquire Now
