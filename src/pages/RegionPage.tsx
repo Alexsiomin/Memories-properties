@@ -30,6 +30,8 @@ const REGIONS: Record<
     country: string;
     matchTerms: string[]; // Substrings to match against property.location
     heroImage: keyof typeof IMAGE_MAP;
+    /** Optional region-specific photo; overrides the generic heroImage preset when set. */
+    heroImageUrl?: string;
     intro: string;
     market: string;
     investment: string;
@@ -41,6 +43,7 @@ const REGIONS: Record<
     country: 'Cyprus',
     matchTerms: ['paphos', 'pafos', 'coral bay', 'peyia', 'pegeia', 'chloraka', 'kato paphos', 'tala', 'tsada', 'polis'],
     heroImage: 'coastal',
+    heroImageUrl: '/images/hero-region-paphos.jpg',
     intro:
       'Paphos blends a relaxed coastal lifestyle with strong year-round rental demand and some of Cyprus\'s best value per square metre. From sea-view villas in Coral Bay to modern apartments in Kato Paphos, it remains a favourite among UK buyers and international investors.',
     market:
@@ -138,7 +141,7 @@ const RegionPage = () => {
     return () => { cancelled = true; };
   }, [config]);
 
-  const heroImg = useMemo(() => (config ? IMAGE_MAP[config.heroImage] : hero), [config]);
+  const heroImg = useMemo(() => (config ? (config.heroImageUrl || IMAGE_MAP[config.heroImage]) : hero), [config]);
 
   if (!region) return <Navigate to="/properties" replace />;
   if (!config) return <Navigate to="/properties" replace />;
@@ -188,19 +191,20 @@ const RegionPage = () => {
       />
 
       {/* Hero */}
-      <section className="relative">
-        <div className="aspect-[16/7] md:aspect-[21/8] w-full overflow-hidden bg-muted">
+      <section className="relative w-full h-screen min-h-[600px] -mt-px">
+        <div className="absolute inset-0 bg-muted">
           <img
             src={heroImg}
             alt={`${config.name}, ${config.country} — investment properties via Memories Properties`}
             width={1920}
-            height={840}
+            height={1080}
             // @ts-expect-error - fetchpriority is valid HTML
             fetchpriority="high"
             className="w-full h-full object-cover"
           />
+          <div className="absolute inset-0 bg-foreground/30" />
         </div>
-        <div className="container mx-auto px-4 md:px-8 -mt-16 md:-mt-24 relative z-10">
+        <div className="relative z-10 h-full flex flex-col justify-end container mx-auto px-4 md:px-8 pb-10 md:pb-16">
           <div className="rounded-2xl bg-card border border-border shadow-sm p-6 md:p-10 max-w-4xl">
             <nav className="text-sm text-muted-foreground mb-3">
               <Link to="/" className="hover:text-foreground">Home</Link> ·{' '}
