@@ -1201,13 +1201,11 @@ const PropertyDetail = () => {
                             >
                               {/* Desktop columns — unchanged */}
                               <div className="hidden md:contents">
-                                <div className="flex items-center gap-3">
-                                  <div className="size-12 overflow-hidden bg-muted shrink-0 relative">
-                                    <img src={optimizeImage(img, 96)} alt="" className="w-full h-full object-cover" loading="lazy" />
-                                  </div>
-                                  <div className={`flex-1 min-w-0 text-base font-medium truncate ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
-                                    {lot.reference_code ? lot.reference_code : publicTitle(lot.title)}
-                                  </div>
+                                <div className="size-12 overflow-hidden bg-muted shrink-0 relative">
+                                  <img src={optimizeImage(img, 96)} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                </div>
+                                <div className={`min-w-0 text-base font-medium truncate ${isCurrent ? 'text-menu-foreground' : 'text-foreground'}`}>
+                                  {lot.reference_code ? lot.reference_code : publicTitle(lot.title)}
                                 </div>
                                 {showInternal && <LotMetric label="Internal" value={lot.internal_area} highlighted={isCurrent} />}
                                 {showCovered && <LotMetric label="Veranda" value={lot.covered_verandas} highlighted={isCurrent} />}
