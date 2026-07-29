@@ -6,7 +6,7 @@ import { resolve } from "path";
 import { LOCATIONS } from "../src/lib/locations";
 import { curatedSearchSlugs } from "../src/lib/searchFacets";
 
-const BASE_URL = "https://memoriesproperties.com";
+const BASE_URL = "https://www.memoriesproperties.com";
 
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL || "https://wlugjzfztcwmlmgqfgno.supabase.co";

@@ -19,7 +19,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { LOCATIONS } from "../src/lib/locations";
 
-const BASE_URL = "https://memoriesproperties.com";
+const BASE_URL = "https://www.memoriesproperties.com";
 const DIST = resolve("dist");
 const TEMPLATE_PATH = resolve(DIST, "index.html");
 

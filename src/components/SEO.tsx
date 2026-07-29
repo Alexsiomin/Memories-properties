@@ -44,7 +44,7 @@ const SEO = ({
   const effImage = seoOverride?.og_image || image;
   const effNoindex = seoOverride ? seoOverride.noindex || noindex : noindex;
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://memoriesproperties.com';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.memoriesproperties.com';
   // Language-aware URLs: canonical self-references the current locale, and
   // hreflang links declare alternates for every supported language so all
   // are indexable and Google can offer the right one per searcher.
