@@ -71,9 +71,12 @@ const PropertiesPreview = () => {
       const { data, error } = await supabase
         .from('properties')
         .select('id, slug, title, location, city, region, district, category, price, price_value, beds, baths, cover_image, images, status, listing_type, sort_order, created_at, size, internal_area, covered_verandas, lot_size, developer_id')
+        .eq('listing_type', 'sale')
+        .not('status', 'ilike', '%sold%')
+        .not('status', 'ilike', '%under offer%')
         .order('sort_order', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(40);
+        .limit(60);
       if (cancelled || error || !data) return;
       const mapped: Property[] = data.map((row: any) => ({
         id: row.id,
