@@ -32,6 +32,7 @@ type Property = {
   internal_area?: string | null;
   covered_verandas?: string | null;
   lot_size?: string | null;
+  developer_id?: string | null;
 };
 
 const parseAreaNum = (s: string | null | undefined): number | null => {
@@ -42,9 +43,8 @@ const parseAreaNum = (s: string | null | undefined): number | null => {
 
 const TABS: Tab[] = ['Featured', 'Houses', 'Apartments', 'Projects'];
 
-const HOUSE_CATS = new Set(['Villa', 'Townhouse', 'Bungalow', 'Coastal', 'Vineyard']);
-const APARTMENT_CATS = new Set(['Apartment', 'Penthouse']);
-const PROJECT_CATS = new Set(['Commercial', 'Mixed-use', 'Commercial and Residential Building', 'Boutique Hotel', 'Hotel', 'Development', 'Urban Tower', 'Agricultural Estate']);
+const HOUSE_CATS = new Set(['Villa', 'Semi-detached', 'Maisonette']);
+const APARTMENT_CATS = new Set(['Apartment', 'Studio']);
 
 const filterByTab = (rows: Property[], tab: Tab): Property[] => {
   const sold = (s: string) => /sold|under offer/i.test(s);
@@ -52,7 +52,10 @@ const filterByTab = (rows: Property[], tab: Tab): Property[] => {
   if (tab === 'Featured') return rows.filter(activeSale);
   if (tab === 'Houses') return rows.filter((r) => activeSale(r) && HOUSE_CATS.has(r.cat));
   if (tab === 'Apartments') return rows.filter((r) => activeSale(r) && APARTMENT_CATS.has(r.cat));
-  return rows.filter((r) => activeSale(r) && PROJECT_CATS.has(r.cat));
+  // "Projects" means units that belong to a developer-led project, matching
+  // how "project" is defined everywhere else in this app — not a specific
+  // category, since developments span villas, apartments, and more.
+  return rows.filter((r) => activeSale(r) && !!r.developer_id);
 };
 
 const PropertiesPreview = () => {
@@ -67,7 +70,7 @@ const PropertiesPreview = () => {
     (async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('id, slug, title, location, city, region, district, category, price, price_value, beds, baths, cover_image, images, status, listing_type, sort_order, created_at, size, internal_area, covered_verandas, lot_size')
+        .select('id, slug, title, location, city, region, district, category, price, price_value, beds, baths, cover_image, images, status, listing_type, sort_order, created_at, size, internal_area, covered_verandas, lot_size, developer_id')
         .order('sort_order', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(40);
@@ -93,6 +96,7 @@ const PropertiesPreview = () => {
         internal_area: row.internal_area,
         covered_verandas: row.covered_verandas,
         lot_size: row.lot_size,
+        developer_id: row.developer_id,
       }));
       setRows(mapped);
     })();
