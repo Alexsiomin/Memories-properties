@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams, Navigate } from 'react-router-dom';
-import { MapPin } from 'lucide-react';
+import { Link, useParams, useNavigate, Navigate } from 'react-router-dom';
+import { Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import { publicLocation, publicTitle, publicPrice } from '@/lib/propertyDisplay';
-import { optimizeImage } from '@/lib/img';
 import FAQSection from '@/components/FAQSection';
+import ListingGallery from '@/components/ListingGallery';
+import EnquiryDialog, { type EnquiryProperty } from '@/components/EnquiryDialog';
+import { useFavorites } from '@/hooks/use-favorites';
 import residential from '@/assets/proj-residential.jpg';
 import vineyard from '@/assets/proj-vineyard.jpg';
 import coastal from '@/assets/proj-coastal.jpg';
@@ -109,17 +111,40 @@ interface PropertyRow {
   region: string | null;
   district: string | null;
   price: string;
+  price_value: number | null;
   category: string;
   status: string;
   image_key: string;
   cover_image: string | null;
+  images: string[] | null;
   description: string | null;
+  beds: number | null;
+  baths: number | null;
+  size: string | null;
+  tags: string[] | null;
+  listing_type: string | null;
 }
 
 const RegionPage = () => {
   const { region } = useParams<{ region: string }>();
+  const navigate = useNavigate();
   const [props, setProps] = useState<PropertyRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isFavorite, toggle } = useFavorites();
+  const [enquiryOpen, setEnquiryOpen] = useState(false);
+  const [enquiryProp, setEnquiryProp] = useState<EnquiryProperty | null>(null);
+
+  const openEnquiry = (p: PropertyRow, cat: string, img: string) => {
+    setEnquiryProp({
+      title: publicTitle(p.title),
+      cat,
+      location: publicLocation(p),
+      price: p.price,
+      status: p.status,
+      img,
+    });
+    setEnquiryOpen(true);
+  };
 
   const config = region ? REGIONS[region.toLowerCase()] : null;
 
@@ -129,7 +154,7 @@ const RegionPage = () => {
     (async () => {
       const { data } = await supabase
         .from('properties')
-        .select('id, slug, title, location, city, region, district, price, category, status, image_key, cover_image, description')
+        .select('id, slug, title, location, city, region, district, price, price_value, category, status, image_key, cover_image, images, description, beds, baths, size, tags, listing_type')
         .order('sort_order', { ascending: true });
       if (cancelled || !data) return;
       const filtered = (data as PropertyRow[]).filter((p) => {
@@ -250,45 +275,108 @@ const RegionPage = () => {
           </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {props.map((p) => {
+            {props.map((p, i) => {
               const img = p.cover_image || IMAGE_MAP[p.image_key] || hero;
-              const href = `/properties/${p.slug ?? p.id}`;
+              const images = (() => {
+                const list = [p.cover_image, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean) as string[];
+                const unique = Array.from(new Set(list));
+                return unique.length ? unique : [img];
+              })();
+              const cat = (p.category ?? '').trim();
+              const isProject = typeof p.title === 'string' && p.title.includes(' - ');
+              const favKey = p.id;
               return (
-                <Link
+                <article
                   key={p.id}
-                  to={href}
-                  className="group rounded-none overflow-hidden border border-border bg-card hover:border-foreground/40 transition-colors"
+                  onClick={() => navigate(`/properties/${p.slug ?? p.id}`)}
+                  className="group cursor-pointer rounded-none overflow-hidden bg-card hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                 >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-                    <img
-                      src={optimizeImage(img, 800)}
-                      alt={`${publicTitle(p.title)} in ${publicLocation(p)}`}
-                      width={800}
-                      height={600}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  <div className="relative">
+                    <ListingGallery
+                      images={images}
+                      alt={`${publicTitle(p.title)} — ${publicLocation(p)}`}
+                      eager={i < 6}
                     />
-                    {p.status && (
-                      <span className="absolute top-0 left-0 inline-flex items-center px-3 py-1.5 rounded-none bg-foreground/85 text-background text-[11px] font-semibold uppercase tracking-wide">
-                        {/sold|closed|under offer/i.test(p.status) ? 'Sold' : 'For Sale'}
-                      </span>
-                    )}
+
+                    {/* Status badge (top-left) */}
+                    <span className="absolute top-0 left-0 inline-flex items-center px-3 py-1.5 rounded-none bg-foreground text-background text-[11px] font-semibold uppercase tracking-wide">
+                      {/sold|closed|under offer/i.test(p.status) ? 'Sold' : p.listing_type === 'rent' ? 'For Rent' : 'For Sale'}
+                    </span>
+
+                    {/* Energy class badge (bottom-left) */}
+                    {(() => {
+                      const energy = p.tags?.find((t) => t.toLowerCase().startsWith('energy '));
+                      if (!energy) return null;
+                      const cls = energy.replace(/energy\s+/i, '').toUpperCase();
+                      return (
+                        <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 px-2 py-1 rounded-none bg-emerald-600 text-white font-semibold text-base tracking-wide shadow-sm">
+                          <span aria-hidden>⚡</span> Energy {cls}
+                        </span>
+                      );
+                    })()}
+
+                    {/* Save (top-right) */}
+                    <button
+                      type="button"
+                      aria-label={isFavorite(favKey) ? 'Remove from watchlist' : 'Save to watchlist'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggle({
+                          property_id: favKey,
+                          property_title: publicTitle(p.title),
+                          property_location: publicLocation(p),
+                          property_price: p.price,
+                          property_image: img,
+                        });
+                      }}
+                      className={`absolute top-0 right-0 w-8 h-8 flex items-center justify-center rounded-none backdrop-blur transition-colors text-xs shadow-sm ${
+                        isFavorite(favKey)
+                          ? 'bg-accent text-accent-foreground'
+                          : 'bg-white/90 hover:text-accent transition-colors text-xs text-foreground'
+                      }`}
+                    >
+                      <Star size={14} fill={isFavorite(favKey) ? 'currentColor' : 'none'} />
+                    </button>
                   </div>
                   <div className="p-5">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{p.category}</p>
-                    <h3 className="mt-1 font-semibold text-foreground line-clamp-2 text-xl">{publicTitle(p.title)}</h3>
-                    <p className="mt-1 text-muted-foreground flex items-center gap-1 text-base">
-                      <MapPin size={12} /> {publicLocation(p)}
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-lg sm:text-xl font-semibold text-foreground tracking-wider break-words">
+                        {publicPrice(p.price, p.price_value ?? undefined, p.status)}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); openEnquiry(p, cat, img); }}
+                        aria-label="More options"
+                        className="size-7 -mr-1 inline-flex items-center justify-center rounded-none text-accent hover:text-accent transition-colors text-xs"
+                      >
+                        <span className="text-lg leading-none tracking-tighter">•••</span>
+                      </button>
+                    </div>
+                    <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
+                      {[
+                        isProject && /closed|sold/i.test(p.status) ? p.status : null,
+                        cat === 'Land / Plot'
+                          ? (p.beds != null ? `${p.beds}% Building density` : null)
+                          : (p.beds != null ? `${p.beds} Bed` : null),
+                        cat === 'Land / Plot'
+                          ? (p.baths != null ? `${p.baths}% Cover factor` : null)
+                          : (p.baths != null ? `${p.baths} Baths` : null),
+                        p.size,
+                        cat,
+                      ].filter(Boolean).join(' | ')}
                     </p>
-                    <p className="mt-3 font-semibold text-foreground text-lg">{publicPrice(p.price, undefined, p.status)}</p>
+                    <p className="text-foreground/60 mt-0.5 text-base text-slate-700">
+                      {publicLocation(p)}
+                    </p>
                   </div>
-                </Link>
+                </article>
               );
             })}
           </div>
         )}
       </section>
+
+      <EnquiryDialog open={enquiryOpen} onOpenChange={setEnquiryOpen} property={enquiryProp} />
 
       {/* FAQ */}
       <FAQSection
