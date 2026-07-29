@@ -73,6 +73,7 @@ const REGIONS: Record<
     country: 'Cyprus',
     matchTerms: ['limassol', 'lemesos', 'germasogeia', 'germasoyia', 'agios tychonas', 'amathus', 'mouttagiaka', 'potamos', 'parekklisia'],
     heroImage: 'skyline',
+    heroImageUrl: '/images/hero-region-limassol.jpg',
     intro:
       'Limassol is Cyprus\'s most dynamic city — a cosmopolitan business and lifestyle hub with a world-class marina, beachfront high-rises, and a thriving international community. It commands the island\'s premium prices and the strongest investment liquidity.',
     market:
