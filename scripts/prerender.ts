@@ -32,6 +32,65 @@ const SUPABASE_ANON_KEY =
 const SITE_NAME = "Memories";
 const DEFAULT_IMAGE = `${BASE_URL}/og-image.jpg`;
 
+// Non-English languages the site supports, each under a URL prefix (e.g.
+// /ru, /pl, /de) — mirrors src/hooks/use-language.tsx's LANG_CODES.
+const LANG_CODES = ["ru", "pl", "de"] as const;
+type LangCode = (typeof LANG_CODES)[number];
+
+const addLangPrefix = (path: string, code: LangCode) =>
+  path === "/" ? `/${code}` : `/${code}${path}`;
+
+/**
+ * Calls the same `translate` Supabase Edge Function the live site uses for
+ * on-page translation, batching many strings into one request. Used here to
+ * pre-translate <title>/<meta description> at build time so search engines
+ * see real Russian/Polish/German text on first crawl, instead of only after
+ * client-side JS runs (which they largely don't credit for ranking).
+ */
+async function translateBatch(texts: string[], target: LangCode): Promise<string[] | null> {
+  if (texts.length === 0) return [];
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/translate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ texts, target }),
+    });
+    if (!res.ok) {
+      console.warn(`prerender: translate(${target}) failed (${res.status}), skipping this language`);
+      return null;
+    }
+    const data = (await res.json()) as { translations?: string[] };
+    if (!Array.isArray(data.translations) || data.translations.length !== texts.length) {
+      console.warn(`prerender: translate(${target}) returned malformed data, skipping this language`);
+      return null;
+    }
+    return data.translations;
+  } catch (err) {
+    console.warn(`prerender: translate(${target}) errored, skipping this language`, err);
+    return null;
+  }
+}
+
+/** Translates title+description for many routes in one request per chunk, to stay well within the model's response size. */
+async function translateRoutes(routes: RouteMeta[], target: LangCode): Promise<Map<string, { title: string; description: string }> | null> {
+  const CHUNK = 25; // routes per API call (title+description = 2 strings each)
+  const out = new Map<string, { title: string; description: string }>();
+  for (let i = 0; i < routes.length; i += CHUNK) {
+    const chunk = routes.slice(i, i + CHUNK);
+    const texts = chunk.flatMap((r) => [r.title, r.description]);
+    const translated = await translateBatch(texts, target);
+    if (!translated) return null; // bail out for this language entirely rather than mix translated/untranslated
+    chunk.forEach((r, idx) => {
+      out.set(r.path, { title: translated[idx * 2], description: translated[idx * 2 + 1] });
+    });
+  }
+  return out;
+}
+
 interface RouteMeta {
   path: string;
   title: string;
@@ -486,16 +545,24 @@ async function fetchDevelopmentRoutes(): Promise<RouteMeta[]> {
 
 // ---- head rewriting --------------------------------------------------------
 
-function buildHtml(template: string, route: RouteMeta): string {
-  const url = `${BASE_URL}${route.path}`;
-  const fullTitle = route.title.includes(SITE_NAME)
-    ? route.title
-    : `${route.title} | ${SITE_NAME}`;
-  const desc = truncate(route.description);
+function buildHtml(
+  template: string,
+  route: RouteMeta,
+  variant?: { lang: LangCode; title: string; description: string },
+): string {
+  const path = variant ? addLangPrefix(route.path, variant.lang) : route.path;
+  const url = `${BASE_URL}${path}`;
+  const rawTitle = variant ? variant.title : route.title;
+  const fullTitle = rawTitle.includes(SITE_NAME) ? rawTitle : `${rawTitle} | ${SITE_NAME}`;
+  const desc = truncate(variant ? variant.description : route.description);
   const image = route.image || DEFAULT_IMAGE;
   const type = route.type || "website";
 
   let html = template;
+
+  // <html lang="...">
+  const htmlLangValue = variant ? variant.lang : "en-GB";
+  html = html.replace(/<html lang="[^"]*"/, `<html lang="${htmlLangValue}"`);
 
   // <title>
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(fullTitle)}</title>`);
@@ -520,6 +587,18 @@ function buildHtml(template: string, route: RouteMeta): string {
     /<link rel="canonical" href="[\s\S]*?" \/>/,
     `<link rel="canonical" href="${esc(url)}" />`,
   );
+
+  // hreflang alternates — one per supported language plus x-default, so
+  // crawlers discover every translated variant directly from static HTML
+  // without needing to execute JavaScript first.
+  const hreflangLinks = [
+    `<link rel="alternate" hreflang="en" href="${esc(`${BASE_URL}${route.path}`)}" />`,
+    ...LANG_CODES.map(
+      (code) => `<link rel="alternate" hreflang="${code}" href="${esc(`${BASE_URL}${addLangPrefix(route.path, code)}`)}" />`,
+    ),
+    `<link rel="alternate" hreflang="x-default" href="${esc(`${BASE_URL}${route.path}`)}" />`,
+  ].join("\n    ");
+  html = html.replace("</head>", `    ${hreflangLinks}\n  </head>`);
 
   // open graph
   html = html
@@ -559,7 +638,8 @@ function buildHtml(template: string, route: RouteMeta): string {
       `<meta name="twitter:image" content="${esc(image)}" />`,
     );
 
-  // route-specific JSON-LD (appended before </head>)
+  // route-specific JSON-LD (appended before </head>) — kept in English since
+  // structured data values (prices, addresses) shouldn't be re-translated.
   if (route.jsonLd) {
     const blocks = (Array.isArray(route.jsonLd) ? route.jsonLd : [route.jsonLd])
       .map(
@@ -572,7 +652,10 @@ function buildHtml(template: string, route: RouteMeta): string {
 
   // Bake crawlable content into #root. React (createRoot) clears and re-renders
   // this container on hydration, so real users are unaffected; crawlers that
-  // don't execute JS still get a full, indexable document body.
+  // don't execute JS still get a full, indexable document body. Language
+  // variants reuse the English bodyHtml — full body translation would need a
+  // much bigger pipeline, but title/description/hreflang are the signals
+  // that matter most for a translated page to actually surface in search.
   if (route.bodyHtml) {
     html = html.replace(
       /<div id="root">\s*<\/div>/,
@@ -583,12 +666,17 @@ function buildHtml(template: string, route: RouteMeta): string {
   return html;
 }
 
-function writeRoute(template: string, route: RouteMeta): void {
+function writeRoute(
+  template: string,
+  route: RouteMeta,
+  variant?: { lang: LangCode; title: string; description: string },
+): void {
+  const path = variant ? addLangPrefix(route.path, variant.lang) : route.path;
   // "/" -> dist/index.html (already exists, overwrite with same-but-canonical)
-  const rel = route.path === "/" ? "index.html" : `${route.path.replace(/^\//, "")}/index.html`;
+  const rel = path === "/" ? "index.html" : `${path.replace(/^\//, "")}/index.html`;
   const out = resolve(DIST, rel);
   mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, buildHtml(template, route));
+  writeFileSync(out, buildHtml(template, route, variant));
 }
 
 async function main() {
@@ -611,8 +699,29 @@ async function main() {
     ...propertyRoutes,
   ];
   for (const route of routes) writeRoute(template, route);
-
   console.log(`prerender: wrote ${routes.length} static HTML pages`);
+
+  // Translated language variants (/ru, /pl, /de) — pre-translates
+  // title/description at build time so search engines see real text on
+  // first crawl, rather than relying on client-side JS translation (which
+  // Google largely doesn't credit for ranking). Runs languages sequentially
+  // and never fails the build — a translation hiccup just means that
+  // language's variants are skipped for this deploy.
+  for (const lang of LANG_CODES) {
+    const translated = await translateRoutes(routes, lang);
+    if (!translated) {
+      console.warn(`prerender: skipping ${lang} variants (translation unavailable this run)`);
+      continue;
+    }
+    let count = 0;
+    for (const route of routes) {
+      const t = translated.get(route.path);
+      if (!t) continue;
+      writeRoute(template, route, { lang, ...t });
+      count++;
+    }
+    console.log(`prerender: wrote ${count} static "${lang}" pages`);
+  }
 }
 
 main().catch((err) => {
