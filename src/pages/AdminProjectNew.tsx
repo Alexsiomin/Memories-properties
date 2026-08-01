@@ -1013,7 +1013,70 @@ export default function AdminProjectNew() {
       seen.set(key, i);
     }
 
+    for (let i = 0; i < lots.length; i++) {
+      const price = Number(lots[i].price_value);
+      if (!lots[i].price_value.trim() || !(price > 0)) {
+        return `Row ${i + 1} has no valid price. Every unit needs a price greater than €0 before saving.`;
+      }
+    }
+
     return null;
+  };
+
+  /**
+   * Soft sanity checks — values that are technically valid numbers but
+   * implausible for the field, or suspiciously identical across every unit
+   * in the batch (a common copy-paste mistake when bulk-adding). These don't
+   * block saving, since a genuinely unusual property is possible, but the
+   * admin should have to actively confirm rather than save silently. Built
+   * directly from real data-entry bugs found in this project (e.g. a
+   * "covered parking" value of 27 that was actually a mistyped area figure).
+   */
+  const getWarnings = (): string[] => {
+    const warnings: string[] = [];
+    const AREA_FIELDS: { key: keyof LotRow; label: string; max: number }[] = [
+      { key: 'covered_verandas', label: 'Covered Veranda', max: 300 },
+      { key: 'semi_covered_verandas', label: 'Semi Covered Veranda', max: 300 },
+      { key: 'uncovered_verandas', label: 'Uncovered Veranda', max: 300 },
+      { key: 'basement', label: 'Basement', max: 500 },
+      { key: 'semi_basement', label: 'Semi Basement', max: 500 },
+      { key: 'storage_room', label: 'Storage Room', max: 100 },
+      { key: 'roof_garden', label: 'Roof Garden', max: 300 },
+    ];
+
+    lots.forEach((l, i) => {
+      const parking = Number(l.covered_parking);
+      if (l.covered_parking && parking > 10) {
+        warnings.push(`Row ${i + 1}: Covered Parking is ${parking} spaces — that's unusually high for parking. Did you mean to enter this in a different field (e.g. an area in m²)?`);
+      }
+      const beds = Number(l.beds);
+      if (l.beds && beds > 20) warnings.push(`Row ${i + 1}: Beds is ${beds} — please double check.`);
+      const baths = Number(l.baths);
+      if (l.baths && baths > 20) warnings.push(`Row ${i + 1}: Baths is ${baths} — please double check.`);
+      const floor = Number(l.floor);
+      if (l.floor && floor > 60) warnings.push(`Row ${i + 1}: Floor is ${floor} — please double check.`);
+
+      for (const { key, label, max } of AREA_FIELDS) {
+        const raw = l[key];
+        const val = typeof raw === 'string' ? Number(raw) : NaN;
+        if (raw && val > max) {
+          warnings.push(`Row ${i + 1}: ${label} is ${val} m² — unusually large. Please double check this is the right field.`);
+        }
+      }
+    });
+
+    // Every unit sharing the exact same internal area AND price is a common
+    // sign of accidentally copying one row's data across the whole batch —
+    // these two fields in particular should almost always differ per unit.
+    if (lots.length > 1) {
+      const uniqueAreas = new Set(lots.map((l) => l.internal_area.trim()).filter(Boolean));
+      const uniquePrices = new Set(lots.map((l) => l.price_value.trim()).filter(Boolean));
+      if (uniqueAreas.size === 1 && uniquePrices.size === 1 && lots.every((l) => l.internal_area.trim() && l.price_value.trim())) {
+        warnings.push(`All ${lots.length} units have the exact same Internal Area and Price. If that's genuinely correct, ignore this — otherwise it looks like the per-unit values weren't filled in individually.`);
+      }
+    }
+
+    return warnings;
   };
 
   /** Turn a raw Postgres error into something an admin can actually act on. */
@@ -1027,6 +1090,15 @@ export default function AdminProjectNew() {
   const save = async () => {
     const err = validate();
     if (err) { toast.error(err); return; }
+
+    const warnings = getWarnings();
+    if (warnings.length > 0) {
+      const proceed = window.confirm(
+        `Before saving, please double check:\n\n${warnings.map((w) => `• ${w}`).join('\n')}\n\nSave anyway?`
+      );
+      if (!proceed) return;
+    }
+
     setSaving(true);
 
     const cover = images[coverIdx] ?? null;
