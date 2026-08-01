@@ -287,7 +287,7 @@ const Properties = () => {
     params.get('tags')?.split(',').filter(Boolean) ?? []
   );
   const [sort, setSort] = useState<Sort>('newest');
-  const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
+  const [gridCols, setGridCols] = useState<2 | 3 | 4>(4);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [listingTab, setListingTab] = useState<'Buy' | 'Rent' | 'Sold'>('Buy');
   const [surrounding, setSurrounding] = useState(false);
@@ -1411,7 +1411,7 @@ const Properties = () => {
 
 
       {/* Listings */}
-      <section className="container mx-auto px-0 sm:px-6 mt-8 mb-20">
+      <section className="mx-auto max-w-[1800px] px-0 sm:px-8 mt-8 mb-20">
         {loading ? (
           <div className="py-32 text-center text-foreground/50 text-base">Loading properties…</div>
         ) : filtered.length === 0 ? (
