@@ -75,20 +75,31 @@ async function translateBatch(texts: string[], target: LangCode): Promise<string
   }
 }
 
-/** Translates title+description for many routes in one request per chunk, to stay well within the model's response size. */
+/** Translates title+description for many routes, in parallel chunks (bounded concurrency) to keep build time reasonable. */
 async function translateRoutes(routes: RouteMeta[], target: LangCode): Promise<Map<string, { title: string; description: string }> | null> {
   const CHUNK = 25; // routes per API call (title+description = 2 strings each)
+  const CONCURRENCY = 6; // parallel in-flight requests per language
   const out = new Map<string, { title: string; description: string }>();
-  for (let i = 0; i < routes.length; i += CHUNK) {
-    const chunk = routes.slice(i, i + CHUNK);
-    const texts = chunk.flatMap((r) => [r.title, r.description]);
-    const translated = await translateBatch(texts, target);
-    if (!translated) return null; // bail out for this language entirely rather than mix translated/untranslated
-    chunk.forEach((r, idx) => {
-      out.set(r.path, { title: translated[idx * 2], description: translated[idx * 2 + 1] });
-    });
+  const chunks: RouteMeta[][] = [];
+  for (let i = 0; i < routes.length; i += CHUNK) chunks.push(routes.slice(i, i + CHUNK));
+
+  let failed = false;
+  let nextIndex = 0;
+  async function worker() {
+    while (!failed) {
+      const i = nextIndex++;
+      if (i >= chunks.length) return;
+      const chunk = chunks[i];
+      const texts = chunk.flatMap((r) => [r.title, r.description]);
+      const translated = await translateBatch(texts, target);
+      if (!translated) { failed = true; return; }
+      chunk.forEach((r, idx) => {
+        out.set(r.path, { title: translated[idx * 2], description: translated[idx * 2 + 1] });
+      });
+    }
   }
-  return out;
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, chunks.length) }, worker));
+  return failed ? null : out;
 }
 
 interface RouteMeta {
