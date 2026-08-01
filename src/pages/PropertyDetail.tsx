@@ -1495,7 +1495,7 @@ const PropertyDetail = () => {
                 {/* Zillow-style tour scheduler quick-pick */}
                 <div className="mt-5">
                   <p className="font-montserrat font-extrabold text-foreground mb-2 text-lg whitespace-pre-line">TOUR PROPERTY{"\n"}</p>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
                     {[0, 1, 2].map((i) => {
                       const d = new Date();
                       d.setHours(0, 0, 0, 0);
@@ -1519,13 +1519,13 @@ const PropertyDetail = () => {
                           key={i}
                           type="button"
                           onClick={() => setOpenTour(true)}
-                          className="h-[50px] flex flex-col items-center justify-center border border-border hover:border-accent hover:text-accent transition-colors text-center text-sm"
+                          className="flex flex-col items-center justify-center border border-border hover:border-accent hover:text-accent transition-colors text-center py-2 sm:py-2.5"
                         >
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          <p className="text-[0.65rem] sm:text-xs uppercase tracking-wide text-muted-foreground truncate max-w-full px-0.5">
                             {i === 0 ? 'Today' : d.toLocaleDateString(undefined, { weekday: 'short' })}
                           </p>
-                          <p className="text-lg font-semibold text-foreground leading-none mt-1">{d.getDate()}</p>
-                          <p className="text-xs uppercase text-muted-foreground mt-0.5">
+                          <p className="text-base sm:text-lg font-semibold text-foreground leading-none mt-1">{d.getDate()}</p>
+                          <p className="text-[0.65rem] sm:text-xs uppercase text-muted-foreground mt-0.5">
                             {d.toLocaleDateString(undefined, { month: 'short' })}
                           </p>
                         </button>
