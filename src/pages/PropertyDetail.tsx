@@ -1134,24 +1134,24 @@ const PropertyDetail = () => {
                 const showLand = !sampleTags?.includes('hidden:lot_size');
 
                 const gridTemplate = [
-                  '64px', '1.6fr',
-                  showInternal ? '0.9fr' : null,
-                  showCovered ? '1fr' : null,
-                  '0.9fr',
-                  showUncovered ? '1fr' : null,
-                  showBasement ? '0.9fr' : null,
-                  showStorage ? '0.9fr' : null,
-                  showRoofGarden ? '0.9fr' : null,
-                  showCoveredParking ? '0.9fr' : null,
-                  showBeds ? '0.7fr' : null,
-                  showBaths ? '0.7fr' : null,
-                  showLand ? '1fr' : null,
-                  '1fr',
+                  '64px', 'minmax(64px, auto)',
+                  showInternal ? 'minmax(72px, auto)' : null,
+                  showCovered ? 'minmax(72px, auto)' : null,
+                  'minmax(72px, auto)',
+                  showUncovered ? 'minmax(72px, auto)' : null,
+                  showBasement ? 'minmax(72px, auto)' : null,
+                  showStorage ? 'minmax(72px, auto)' : null,
+                  showRoofGarden ? 'minmax(72px, auto)' : null,
+                  showCoveredParking ? 'minmax(72px, auto)' : null,
+                  showBeds ? 'minmax(56px, auto)' : null,
+                  showBaths ? 'minmax(56px, auto)' : null,
+                  showLand ? 'minmax(72px, auto)' : null,
+                  'minmax(90px, auto)',
                 ].filter((c): c is string => !!c).join(' ');
 
                 return (
                   <div className="rounded-2xl bg-muted/40 p-4 overflow-x-auto" style={{ '--grid-cols': gridTemplate } as React.CSSProperties}>
-                    <div className="md:min-w-[1100px]">
+                    <div className="w-fit min-w-full">
                     <div className="hidden md:grid grid-cols-[var(--grid-cols)] gap-4 px-4 py-2 text-xs uppercase tracking-wider text-menu-foreground font-bold bg-menu">
                       <div>Plan</div>
                       <div>Lot</div>
