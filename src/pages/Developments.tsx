@@ -48,7 +48,7 @@ const Developments = () => {
   }, [query]);
   const [activeCats, setActiveCats] = useState<string[]>([]);
   const [openPopover, setOpenPopover] = useState<'type' | 'filters' | 'filters-mobile' | null>(null);
-  const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
+  const [gridCols, setGridCols] = useState<2 | 3 | 4>(4);
 
   useEffect(() => {
     let cancelled = false;
@@ -352,7 +352,7 @@ const Developments = () => {
       </section>
 
       {/* Listings — edge-to-edge on mobile, padded from sm: up, matching Buy page */}
-      <section className="container mx-auto px-0 sm:px-6 pb-10">
+      <section className="mx-auto max-w-[1800px] px-0 sm:px-8 pb-10">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array.from({ length: 6 }).map((_, i) => (

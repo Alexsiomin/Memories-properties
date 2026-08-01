@@ -84,7 +84,7 @@ const SoldProjects = () => {
 
       {/* Listings — fixed 1 column on mobile, 2 on desktop; edge-to-edge on
           mobile, padded from sm: up, matching the Projects page. */}
-      <section className="container mx-auto px-0 sm:px-6 pb-10">
+      <section className="mx-auto max-w-[1800px] px-0 sm:px-8 pb-10">
         {loading ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {Array.from({ length: 4 }).map((_, i) => (

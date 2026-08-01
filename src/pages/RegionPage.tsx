@@ -260,7 +260,7 @@ const RegionPage = () => {
       </section>
 
       {/* Listings */}
-      <section className="container mx-auto px-4 md:px-8 py-10">
+      <section className="mx-auto max-w-[1800px] px-4 md:px-8 py-10">
         <h2 className="text-2xl md:text-3xl font-semibold text-foreground">
           Available mandates in {config.name}
         </h2>
