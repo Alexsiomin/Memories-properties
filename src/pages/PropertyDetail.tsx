@@ -68,31 +68,37 @@ const HOUSE_LIKE_CATEGORIES = new Set(['Villa', 'Semi-detached', 'Maisonette']);
  *   skipped rather than blocking the calculation — a house with no
  *   basement still gets a valid total from whatever fields it does have.
  * Falls back to the raw `size` field if nothing could be computed at all.
+ *
+ * Basement/semi-basement/storage room aren't dedicated database columns —
+ * like several other secondary spec fields on this project, they're encoded
+ * as prefixed strings in the `tags` array (e.g. "basement 45 m²"), so the
+ * caller extracts them the same way the rest of this table already does
+ * and passes the parsed values in.
  */
-function lotTotalArea(lot: {
-  category?: string | null;
-  internal_area?: string | null;
-  covered_verandas?: string | null;
-  basement?: string | null;
-  semi_basement?: string | null;
-  storage_room?: string | null;
-  size?: string | null;
-}): string | null {
-  const internal = parseAreaNum(lot.internal_area);
-  const covered = parseAreaNum(lot.covered_verandas);
+function lotTotalArea(
+  category: string | null | undefined,
+  internalArea: string | null | undefined,
+  coveredVerandas: string | null | undefined,
+  basement: string | null | undefined,
+  semiBasement: string | null | undefined,
+  storageRoom: string | null | undefined,
+  size: string | null | undefined,
+): string | null {
+  const internal = parseAreaNum(internalArea);
+  const covered = parseAreaNum(coveredVerandas);
   let total = (internal ?? 0) + (covered ?? 0);
   let hasAny = internal != null || covered != null;
 
-  if (lot.category && HOUSE_LIKE_CATEGORIES.has(lot.category)) {
-    const basement = parseAreaNum(lot.basement);
-    const semiBasement = parseAreaNum(lot.semi_basement);
-    const storage = parseAreaNum(lot.storage_room);
-    if (basement != null) { total += basement; hasAny = true; }
-    if (semiBasement != null) { total += semiBasement; hasAny = true; }
-    if (storage != null) { total += storage; hasAny = true; }
+  if (category && HOUSE_LIKE_CATEGORIES.has(category)) {
+    const basementNum = parseAreaNum(basement);
+    const semiBasementNum = parseAreaNum(semiBasement);
+    const storageNum = parseAreaNum(storageRoom);
+    if (basementNum != null) { total += basementNum; hasAny = true; }
+    if (semiBasementNum != null) { total += semiBasementNum; hasAny = true; }
+    if (storageNum != null) { total += storageNum; hasAny = true; }
   }
 
-  if (!hasAny || total <= 0) return lot.size ?? null;
+  if (!hasAny || total <= 0) return size ?? null;
   return `${total.toFixed(2).replace(/\.00$/, '')} m²`;
 }
 
@@ -171,9 +177,6 @@ interface LotRow {
   lot_size: string | null;
   status: string | null;
   category: string | null;
-  basement: string | null;
-  semi_basement: string | null;
-  storage_room: string | null;
 }
 
 interface RelatedProperty {
@@ -583,7 +586,7 @@ const PropertyDetail = () => {
       if (row.seller_type === 'developer' && row.developer_id) {
         const { data: lotData } = await supabase
           .from('properties')
-          .select('id, slug, title, reference_code, cover_image, image_key, internal_area, size, covered_verandas, beds, baths, price, price_value, tags, lot_size, status, category, basement, semi_basement, storage_room')
+          .select('id, slug, title, reference_code, cover_image, image_key, internal_area, size, covered_verandas, beds, baths, price, price_value, tags, lot_size, status, category')
           .eq('developer_id', row.developer_id)
           .eq('title', row.title)
           .order('reference_code', { ascending: true });
@@ -1230,9 +1233,11 @@ const PropertyDetail = () => {
                           const href = `/properties/${lot.slug ?? lot.id}`;
                           const uncovered = lot.tags?.find((x) => /^uncovered verandas?\s+/i.test(x))?.replace(/^uncovered verandas?\s+/i, '') ?? null;
                           const basement = lot.tags?.find((x) => /^basement\s+/i.test(x))?.replace(/^basement\s+/i, '') ?? null;
+                          const semiBasement = lot.tags?.find((x) => /^semi basement\s+/i.test(x))?.replace(/^semi basement\s+/i, '') ?? null;
                           const storage = lot.tags?.find((x) => /^storage room\s+/i.test(x))?.replace(/^storage room\s+/i, '') ?? null;
                           const roofGarden = lot.tags?.find((x) => /^roof garden\s+/i.test(x))?.replace(/^roof garden\s+/i, '') ?? null;
                           const coveredParking = lot.tags?.find((x) => /^covered parking\s+/i.test(x))?.replace(/^covered parking\s+/i, '') ?? null;
+                          const totalArea = lotTotalArea(lot.category, lot.internal_area, lot.covered_verandas, basement, semiBasement, storage, lot.size);
                           return (
                             <Link
                               key={lot.id}
@@ -1252,7 +1257,7 @@ const PropertyDetail = () => {
                                 </div>
                                 {showInternal && <LotMetric label="Internal" value={lot.internal_area} highlighted={isCurrent} />}
                                 {showCovered && <LotMetric label="Veranda" value={lot.covered_verandas} highlighted={isCurrent} />}
-                                <LotMetric label="Total" value={lotTotalArea(lot)} highlighted={isCurrent} />
+                                <LotMetric label="Total" value={totalArea} highlighted={isCurrent} />
                                 {showUncovered && <LotMetric label="Uncovered" value={uncovered} highlighted={isCurrent} />}
                                 {showBasement && <LotMetric label="Basement" value={basement} highlighted={isCurrent} />}
                                 {showStorage && <LotMetric label="Storage" value={storage} highlighted={isCurrent} />}
