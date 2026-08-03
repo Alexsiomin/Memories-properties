@@ -33,6 +33,7 @@ type Property = {
   covered_verandas?: string | null;
   lot_size?: string | null;
   developer_id?: string | null;
+  tags?: string[] | null;
 };
 
 const parseAreaNum = (s: string | null | undefined): number | null => {
@@ -49,7 +50,15 @@ const APARTMENT_CATS = new Set(['Apartment', 'Studio']);
 const filterByTab = (rows: Property[], tab: Tab): Property[] => {
   const sold = (s: string) => /sold|under offer/i.test(s);
   const activeSale = (r: Property) => r.listing_type === 'sale' && !sold(r.status);
-  if (tab === 'Featured') return rows.filter(activeSale);
+  if (tab === 'Featured') {
+    const active = rows.filter(activeSale);
+    // Manually hand-picked via the "Featured" star in the admin properties
+    // list (stored as a "featured" tag). Falls back to the full active-sale
+    // list (most recent first, since rows are already fetched in that
+    // order) if nothing has been marked yet, so the section is never empty.
+    const handPicked = active.filter((r) => r.tags?.includes('featured'));
+    return handPicked.length > 0 ? handPicked : active;
+  }
   if (tab === 'Houses') return rows.filter((r) => activeSale(r) && HOUSE_CATS.has(r.cat));
   if (tab === 'Apartments') return rows.filter((r) => activeSale(r) && APARTMENT_CATS.has(r.cat));
   // "Projects" means units that belong to a developer-led project, matching
@@ -70,7 +79,7 @@ const PropertiesPreview = () => {
     (async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('id, slug, title, location, city, region, district, category, price, price_value, beds, baths, cover_image, images, status, listing_type, sort_order, created_at, size, internal_area, covered_verandas, lot_size, developer_id')
+        .select('id, slug, title, location, city, region, district, category, price, price_value, beds, baths, cover_image, images, status, listing_type, sort_order, created_at, size, internal_area, covered_verandas, lot_size, developer_id, tags')
         .eq('listing_type', 'sale')
         .not('status', 'ilike', '%sold%')
         .not('status', 'ilike', '%under offer%')
@@ -100,6 +109,7 @@ const PropertiesPreview = () => {
         covered_verandas: row.covered_verandas,
         lot_size: row.lot_size,
         developer_id: row.developer_id,
+        tags: row.tags,
       }));
       setRows(mapped);
     })();
