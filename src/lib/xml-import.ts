@@ -699,7 +699,7 @@ export async function syncProjectsFeed(xmlUrl: string): Promise<ProjectsSyncResu
   for (const project of projects) {
     const { data: units, error } = await supabase
       .from('properties')
-      .select('id, status')
+      .select('id, status, images, cover_image')
       .ilike('project_name', project.name);
     if (error) throw new Error(error.message);
     if (!units || units.length === 0) {
@@ -710,26 +710,29 @@ export async function syncProjectsFeed(xmlUrl: string): Promise<ProjectsSyncResu
 
     const feedSaysSold = /sold/i.test(project.status);
     const allAlreadySold = units.every((u) => /sold/i.test(u.status || ''));
-
-    const patch: Record<string, unknown> = {};
-    if (project.descriptionEnglish) patch.description = project.descriptionEnglish;
-    if (project.photos.length) {
-      patch.images = project.photos;
-      patch.cover_image = project.photos[0];
-    }
     // Only ever move toward sold, never away from it.
-    if (feedSaysSold && !allAlreadySold) patch.status = 'Sold';
+    const newStatus = feedSaysSold && !allAlreadySold ? 'Sold' : null;
 
-    if (Object.keys(patch).length === 0) continue;
+    for (const unit of units) {
+      const patch: Record<string, unknown> = {};
+      if (project.descriptionEnglish) patch.description = project.descriptionEnglish;
+      if (project.photos.length) {
+        // MERGE, never replace — a sparse project-level photo set (some
+        // projects only have 1-2 official photos) must never wipe out a
+        // richer set of images a unit already has from its own listing.
+        const existing: string[] = Array.isArray(unit.images) ? unit.images : [];
+        const merged = Array.from(new Set([...existing, ...project.photos]));
+        patch.images = merged;
+        if (!unit.cover_image) patch.cover_image = merged[0];
+      }
+      if (newStatus) patch.status = newStatus;
+      if (Object.keys(patch).length === 0) continue;
 
-    const ids = units.map((u) => u.id);
-    const { error: updErr, count } = await supabase
-      .from('properties')
-      .update(patch, { count: 'exact' })
-      .in('id', ids);
-    if (updErr) throw new Error(updErr.message);
-    unitsUpdated += count ?? ids.length;
-    if (patch.status === 'Sold') markedSold += ids.length;
+      const { error: updErr } = await supabase.from('properties').update(patch).eq('id', unit.id);
+      if (updErr) throw new Error(updErr.message);
+      unitsUpdated++;
+      if (newStatus) markedSold++;
+    }
   }
 
   return { totalProjects: projects.length, matchedProjects, unitsUpdated, markedSold, unmatched };

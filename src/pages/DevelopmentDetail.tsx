@@ -41,13 +41,37 @@ const parseAreaNum = (s: string | null | undefined): number | null => {
   const n = parseFloat(String(s).replace(/[^\d.]/g, ''));
   return isNaN(n) ? null : n;
 };
-const totalAreaValue = (u: any): string | null => {
-  if (u.size) return u.size;
+const HOUSE_LIKE_CATEGORIES = new Set(['Villa', 'Semi-detached', 'Maisonette']);
+
+/**
+ * Total covered area, formula depends on unit type:
+ * - Apartments/Studios etc: Internal area + Covered verandas.
+ * - Houses (Villa/Semi-detached/Maisonette): Internal area + Covered
+ *   verandas + Basement/Semi-basement (whichever is present, or both if
+ *   both happen to be filled in) + Storage room. Missing pieces are simply
+ *   skipped rather than blocking the calculation.
+ * Falls back to the raw `size` field only if nothing could be computed at
+ * all — previously this checked `size` FIRST, which returned a stale value
+ * identical to internal_area instead of ever actually calculating anything.
+ * Matches the same fix already deployed on individual property pages.
+ */
+const totalAreaValue = (u: UnitRow): string | null => {
   const internal = parseAreaNum(u.internal_area);
   const covered = parseAreaNum(u.covered_verandas);
-  if (internal != null && covered != null) return `${(internal + covered).toFixed(2).replace(/\.00$/, '')} m²`;
-  if (internal != null) return `${internal.toFixed(2).replace(/\.00$/, '')} m²`;
-  return null;
+  let total = (internal ?? 0) + (covered ?? 0);
+  let hasAny = internal != null || covered != null;
+
+  if (u.category && HOUSE_LIKE_CATEGORIES.has(u.category)) {
+    const basement = parseAreaNum(tagValue(u.tags, /^basement\s+/i));
+    const semiBasement = parseAreaNum(tagValue(u.tags, /^semi basement\s+/i));
+    const storage = parseAreaNum(tagValue(u.tags, /^storage room\s+/i));
+    if (basement != null) { total += basement; hasAny = true; }
+    if (semiBasement != null) { total += semiBasement; hasAny = true; }
+    if (storage != null) { total += storage; hasAny = true; }
+  }
+
+  if (!hasAny || total <= 0) return u.size ?? null;
+  return `${total.toFixed(2).replace(/\.00$/, '')} m²`;
 };
 const tagValue = (tags: string[] | null | undefined, re: RegExp) => {
   const t = tags?.find((x) => re.test(x));
