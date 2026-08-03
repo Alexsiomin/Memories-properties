@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { Star } from 'lucide-react';
 
 interface Property {
   id: string;
@@ -116,6 +117,24 @@ export default function AdminProperties() {
   const load = async () => {
     const { data } = await supabase.from('properties').select('*').order('sort_order');
     setProperties((data as Property[]) || []);
+  };
+
+  /**
+   * Manually hand-pick which properties show under the "Featured" tab on
+   * the homepage. Stored as a "featured" entry in the tags array, matching
+   * this codebase's existing pattern for flag-like fields (e.g. "hidden:x")
+   * rather than adding a new database column, which would need a separate
+   * manual migration step through Supabase to actually take effect.
+   */
+  const toggleFeatured = async (p: Property) => {
+    const isFeatured = p.tags?.includes('featured');
+    const newTags = isFeatured
+      ? (p.tags || []).filter((t) => t !== 'featured')
+      : [...(p.tags || []), 'featured'];
+    const { error } = await supabase.from('properties').update({ tags: newTags }).eq('id', p.id);
+    if (error) { toast.error(error.message); return; }
+    setProperties((prev) => prev.map((x) => (x.id === p.id ? { ...x, tags: newTags } : x)));
+    toast.success(isFeatured ? `Removed ${p.title} from Featured` : `${p.title} is now Featured`);
   };
 
   useEffect(() => { if (isAdmin) { load(); loadDevelopers(); } }, [isAdmin]);
@@ -590,6 +609,16 @@ export default function AdminProperties() {
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => toggleFeatured(p)}
+                  aria-label={p.tags?.includes('featured') ? 'Remove from Featured' : 'Mark as Featured'}
+                  title={p.tags?.includes('featured') ? 'Remove from Featured' : 'Mark as Featured'}
+                  className={p.tags?.includes('featured') ? 'text-accent border-accent bg-accent/10' : ''}
+                >
+                  <Star size={14} fill={p.tags?.includes('featured') ? 'currentColor' : 'none'} />
+                </Button>
                 <Link to={`/admin/properties/${p.id}/edit`}>
                   <Button size="sm" variant="outline">Edit</Button>
                 </Link>
