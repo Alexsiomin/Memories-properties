@@ -581,21 +581,28 @@ export async function syncDeveloperFeed(
     const refs = withRef.map((p) => p.external_ref) as string[];
     const { data: existing, error: exErr } = await supabase
       .from('properties')
-      .select('id, external_ref')
+      .select('id, external_ref, status')
       .eq('developer_id', developerId)
       .in('external_ref', refs);
     if (exErr) throw new Error(exErr.message);
 
-    const byRef = new Map<string, string>();
-    (existing || []).forEach((r: any) => { if (r.external_ref) byRef.set(r.external_ref, r.id); });
+    const byRef = new Map<string, { id: string; status: string | null }>();
+    (existing || []).forEach((r: any) => { if (r.external_ref) byRef.set(r.external_ref, { id: r.id, status: r.status }); });
 
     const toInsert: any[] = [];
     for (const row of withRef) {
-      const id = byRef.get(row.external_ref!);
-      if (id) {
-        // update existing — strip reference_code so we don't overwrite our own ID
+      const match = byRef.get(row.external_ref!);
+      if (match) {
+        // update existing — strip reference_code so we don't overwrite our own ID.
+        // Also strip status if we've already marked this unit sold: a
+        // developer's feed often doesn't reflect sales made through our own
+        // agency, so blindly overwriting status here would silently "un-sell"
+        // units (and whole projects) on every re-sync. Reserved/under-offer
+        // are left feed-driven since those are genuinely provisional states.
         const { reference_code: _omit, ...rest } = row;
-        const { error } = await supabase.from('properties').update(rest).eq('id', id);
+        const alreadySold = /sold/i.test(match.status || '');
+        if (alreadySold) delete rest.status;
+        const { error } = await supabase.from('properties').update(rest).eq('id', match.id);
         if (!error) updated++;
       } else {
         toInsert.push(row);
