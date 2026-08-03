@@ -57,6 +57,45 @@ const parseAreaNum = (s: string | null | undefined): number | null => {
   return isNaN(n) ? null : n;
 };
 
+const HOUSE_LIKE_CATEGORIES = new Set(['Villa', 'Semi-detached', 'Maisonette']);
+
+/**
+ * Total covered area, formula depends on unit type:
+ * - Apartments/Studios etc: Internal area + Covered verandas.
+ * - Houses (Villa/Semi-detached/Maisonette): Internal area + Covered
+ *   verandas + Basement/Semi-basement (whichever is present, or both if
+ *   both happen to be filled in) + Storage room. Missing pieces are simply
+ *   skipped rather than blocking the calculation — a house with no
+ *   basement still gets a valid total from whatever fields it does have.
+ * Falls back to the raw `size` field if nothing could be computed at all.
+ */
+function lotTotalArea(lot: {
+  category?: string | null;
+  internal_area?: string | null;
+  covered_verandas?: string | null;
+  basement?: string | null;
+  semi_basement?: string | null;
+  storage_room?: string | null;
+  size?: string | null;
+}): string | null {
+  const internal = parseAreaNum(lot.internal_area);
+  const covered = parseAreaNum(lot.covered_verandas);
+  let total = (internal ?? 0) + (covered ?? 0);
+  let hasAny = internal != null || covered != null;
+
+  if (lot.category && HOUSE_LIKE_CATEGORIES.has(lot.category)) {
+    const basement = parseAreaNum(lot.basement);
+    const semiBasement = parseAreaNum(lot.semi_basement);
+    const storage = parseAreaNum(lot.storage_room);
+    if (basement != null) { total += basement; hasAny = true; }
+    if (semiBasement != null) { total += semiBasement; hasAny = true; }
+    if (storage != null) { total += storage; hasAny = true; }
+  }
+
+  if (!hasAny || total <= 0) return lot.size ?? null;
+  return `${total.toFixed(2).replace(/\.00$/, '')} m²`;
+}
+
 const IMAGE_MAP: Record<string, string> = {
   residential, vineyard, coastal, mixed, hero, skyline, desert, library, markets, tech,
 };
@@ -131,6 +170,10 @@ interface LotRow {
   tags: string[] | null;
   lot_size: string | null;
   status: string | null;
+  category: string | null;
+  basement: string | null;
+  semi_basement: string | null;
+  storage_room: string | null;
 }
 
 interface RelatedProperty {
@@ -540,7 +583,7 @@ const PropertyDetail = () => {
       if (row.seller_type === 'developer' && row.developer_id) {
         const { data: lotData } = await supabase
           .from('properties')
-          .select('id, slug, title, reference_code, cover_image, image_key, internal_area, size, covered_verandas, beds, baths, price, price_value, tags, lot_size, status')
+          .select('id, slug, title, reference_code, cover_image, image_key, internal_area, size, covered_verandas, beds, baths, price, price_value, tags, lot_size, status, category, basement, semi_basement, storage_room')
           .eq('developer_id', row.developer_id)
           .eq('title', row.title)
           .order('reference_code', { ascending: true });
@@ -1209,7 +1252,7 @@ const PropertyDetail = () => {
                                 </div>
                                 {showInternal && <LotMetric label="Internal" value={lot.internal_area} highlighted={isCurrent} />}
                                 {showCovered && <LotMetric label="Veranda" value={lot.covered_verandas} highlighted={isCurrent} />}
-                                <LotMetric label="Total" value={lot.size} highlighted={isCurrent} />
+                                <LotMetric label="Total" value={lotTotalArea(lot)} highlighted={isCurrent} />
                                 {showUncovered && <LotMetric label="Uncovered" value={uncovered} highlighted={isCurrent} />}
                                 {showBasement && <LotMetric label="Basement" value={basement} highlighted={isCurrent} />}
                                 {showStorage && <LotMetric label="Storage" value={storage} highlighted={isCurrent} />}
