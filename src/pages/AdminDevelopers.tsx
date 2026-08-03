@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import {
   syncDeveloperFeed,
+  syncProjectsFeed,
+  parseProjectsXml,
   FEED_FORMAT_OPTIONS,
   FeedFormat,
   parsePropertiesXml,
@@ -42,6 +44,13 @@ export default function AdminDevelopers() {
 
   const runTest = (xml: string, source: string) => {
     try {
+      if (form.feed_format === 'islandblue-projects') {
+        const projects = parseProjectsXml(xml);
+        setTestResult(null);
+        setTestError(null);
+        toast.success(`Parsed ${projects.length} project${projects.length === 1 ? '' : 's'} from ${source}. First: "${projects[0]?.name ?? 'n/a'}" (status: ${projects[0]?.status ?? 'n/a'})`);
+        return;
+      }
       const rows = parsePropertiesXml(xml, form.feed_format);
       setTestResult({ rows, source });
       setTestError(null);
@@ -83,8 +92,16 @@ export default function AdminDevelopers() {
     if (!d.xml_url) { toast.error('No XML feed URL set for this developer'); return; }
     setSyncingId(d.id);
     try {
-      const res = await syncDeveloperFeed(d.id, d.xml_url, d.feed_format || 'auto');
-      toast.success(`Synced ${d.name}: ${res.inserted} new, ${res.updated} updated (of ${res.total})`);
+      if (d.feed_format === 'islandblue-projects') {
+        const res = await syncProjectsFeed(d.xml_url);
+        toast.success(
+          `Synced ${d.name}: ${res.matchedProjects}/${res.totalProjects} projects matched, ${res.unitsUpdated} units enriched, ${res.markedSold} marked sold` +
+          (res.unmatched.length ? ` (${res.unmatched.length} project name${res.unmatched.length === 1 ? '' : 's'} had no matching units — check spelling)` : ''),
+        );
+      } else {
+        const res = await syncDeveloperFeed(d.id, d.xml_url, d.feed_format || 'auto');
+        toast.success(`Synced ${d.name}: ${res.inserted} new, ${res.updated} updated (of ${res.total})`);
+      }
     } catch (e: any) {
       toast.error(e.message || 'Sync failed');
     } finally {

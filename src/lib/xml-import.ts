@@ -31,9 +31,10 @@ export interface ParsedProperty {
   internal_area?: string | null;
   covered_verandas?: string | null;
   vat_included?: boolean;
+  project_name?: string | null;
 }
 
-export type FeedFormat = 'auto' | 'flat' | 'xml2u' | 'aristo' | 'islandblue';
+export type FeedFormat = 'auto' | 'flat' | 'xml2u' | 'aristo' | 'islandblue' | 'islandblue-projects';
 
 export const FEED_FORMAT_OPTIONS: { value: FeedFormat; label: string; desc: string }[] = [
   { value: 'auto', label: 'Auto-detect', desc: 'Try every known adapter and use the first match.' },
@@ -41,6 +42,7 @@ export const FEED_FORMAT_OPTIONS: { value: FeedFormat; label: string; desc: stri
   { value: 'xml2u', label: 'XML2U / nested', desc: 'XML2U-style with <Address>, <Price>, <Description>, <images>.' },
   { value: 'aristo', label: 'Aristo Developers', desc: 'Aristo feed: <Title>, <Type>, <Area>, <Price> string, <gallery><image>.' },
   { value: 'islandblue', label: 'Island Blue (units)', desc: 'Island Blue units feed: <Property> with <Price><Value>, <Features>, <Attributes>. Use the /units link.' },
+  { value: 'islandblue-projects', label: 'Island Blue (projects)', desc: 'Island Blue project-info feed: <Projects><Project> with Name/Status/Photos/Description. Does NOT insert new listings — enriches existing units grouped by project name with better photos + description, and marks a project sold once Island Blue\u2019s own feed confirms it (never un-sells). Use the /projects link.' },
 ];
 
 // ---------- helpers ----------
@@ -504,6 +506,7 @@ const islandBlueAdapter: Adapter = {
         reference_code: ref || null,
         internal_area,
         covered_verandas,
+        project_name: projectName || null,
       };
     });
   },
@@ -627,4 +630,107 @@ export async function syncDeveloperFeed(
   }
 
   return { total: parsed.length, inserted, updated };
+}
+
+// ---------- Island Blue "projects" feed (project-info, not sellable units) ----------
+//
+// This feed has a fundamentally different shape from every other feed above:
+// <Projects Total="66"><Project><Id/><Name/><Status/><Location/>
+//   <Photos><Photo>url</Photo>…</Photos><ArtistImpressions/><FloorPlans/>
+//   <DescriptionEnglish><![CDATA[…]]></DescriptionEnglish>…
+// </Project></Projects>
+// There's no price/beds/baths/unit data — it's pure project metadata. We
+// don't have a separate "projects" table (projects are just grouped
+// properties), so instead of inserting rows, this ENRICHES existing units
+// that share a project name: better photos + description, and — once Island
+// Blue's own feed confirms a project is sold — marks every matched unit
+// sold. It only ever moves a project TOWARD sold, never away from it, for
+// the same reason the units-feed sync above no longer overwrites an
+// already-sold status: a developer's own systems don't always know about
+// sales made privately through us, so treating "not sold" as authoritative
+// in that direction would silently un-sell real sales.
+
+export interface ProjectFeedEntry {
+  name: string;
+  status: string;
+  photos: string[];
+  descriptionEnglish: string;
+}
+
+export function parseProjectsXml(xmlText: string): ProjectFeedEntry[] {
+  const doc = parseDoc(xmlText);
+  const projectNodes = Array.from(doc.getElementsByTagName('*')).filter(
+    (n) => n.tagName.toLowerCase() === 'project',
+  );
+  return projectNodes.map((el) => {
+    const photosEl = findChild(el, 'Photos');
+    const photos: string[] = photosEl
+      ? Array.from(photosEl.children)
+          .map((n) => n.textContent?.trim() ?? '')
+          .filter(Boolean)
+      : [];
+    return {
+      // Island Blue's feed uses a bare <n> tag for the project name.
+      name: (txt(el, 'n') || txt(el, 'Name')).trim(),
+      status: txt(el, 'Status').trim(),
+      photos,
+      descriptionEnglish: txt(el, 'DescriptionEnglish').trim(),
+    };
+  }).filter((p) => p.name);
+}
+
+export interface ProjectsSyncResult {
+  totalProjects: number;
+  matchedProjects: number;
+  unitsUpdated: number;
+  markedSold: number;
+  unmatched: string[];
+}
+
+export async function syncProjectsFeed(xmlUrl: string): Promise<ProjectsSyncResult> {
+  const xml = await fetchFeedXml(xmlUrl);
+  const projects = parseProjectsXml(xml);
+
+  let matchedProjects = 0;
+  let unitsUpdated = 0;
+  let markedSold = 0;
+  const unmatched: string[] = [];
+
+  for (const project of projects) {
+    const { data: units, error } = await supabase
+      .from('properties')
+      .select('id, status')
+      .ilike('project_name', project.name);
+    if (error) throw new Error(error.message);
+    if (!units || units.length === 0) {
+      unmatched.push(project.name);
+      continue;
+    }
+    matchedProjects++;
+
+    const feedSaysSold = /sold/i.test(project.status);
+    const allAlreadySold = units.every((u) => /sold/i.test(u.status || ''));
+
+    const patch: Record<string, unknown> = {};
+    if (project.descriptionEnglish) patch.description = project.descriptionEnglish;
+    if (project.photos.length) {
+      patch.images = project.photos;
+      patch.cover_image = project.photos[0];
+    }
+    // Only ever move toward sold, never away from it.
+    if (feedSaysSold && !allAlreadySold) patch.status = 'Sold';
+
+    if (Object.keys(patch).length === 0) continue;
+
+    const ids = units.map((u) => u.id);
+    const { error: updErr, count } = await supabase
+      .from('properties')
+      .update(patch, { count: 'exact' })
+      .in('id', ids);
+    if (updErr) throw new Error(updErr.message);
+    unitsUpdated += count ?? ids.length;
+    if (patch.status === 'Sold') markedSold += ids.length;
+  }
+
+  return { totalProjects: projects.length, matchedProjects, unitsUpdated, markedSold, unmatched };
 }
