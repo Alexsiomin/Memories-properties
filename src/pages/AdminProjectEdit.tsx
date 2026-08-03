@@ -14,6 +14,7 @@ type Row = {
   developer_id: string | null;
   region: string | null;
   created_at: string;
+  status: string | null;
 };
 
 type Group = {
@@ -21,6 +22,7 @@ type Group = {
   developer_id: string | null;
   region: string | null;
   count: number;
+  soldCount: number;
   created_at: string;
 };
 
@@ -31,13 +33,14 @@ export default function AdminProjectEdit() {
   const [developers, setDevelopers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [soldFilter, setSoldFilter] = useState<'all' | 'sold' | 'available'>('all');
 
   useEffect(() => {
     (async () => {
       const [{ data: props }, { data: devs }] = await Promise.all([
         supabase
           .from('properties')
-          .select('id, title, developer_id, region, created_at')
+          .select('id, title, developer_id, region, created_at, status')
           .not('developer_id', 'is', null)
           .order('created_at', { ascending: false })
           .limit(2000),
@@ -50,6 +53,7 @@ export default function AdminProjectEdit() {
   }, []);
 
   const groups = useMemo(() => {
+    const isSold = (s: string | null) => /sold|under offer/i.test(s || '');
     const map = new Map<string, Group>();
     for (const r of rows) {
       const name = projectName(r.title) || r.title;
@@ -57,23 +61,27 @@ export default function AdminProjectEdit() {
       const g = map.get(key);
       if (g) {
         g.count += 1;
+        if (isSold(r.status)) g.soldCount += 1;
       } else {
         map.set(key, {
           title: name,
           developer_id: r.developer_id,
           region: r.region,
           count: 1,
+          soldCount: isSold(r.status) ? 1 : 0,
           created_at: r.created_at,
         });
       }
     }
     let list = Array.from(map.values());
+    if (soldFilter === 'sold') list = list.filter((g) => g.soldCount === g.count);
+    else if (soldFilter === 'available') list = list.filter((g) => g.soldCount < g.count);
     if (q.trim()) {
       const s = q.toLowerCase();
       list = list.filter((g) => g.title.toLowerCase().includes(s));
     }
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [rows, q]);
+  }, [rows, q, soldFilter]);
 
   if (authLoading || adminLoading) return <div className="container mx-auto px-6 py-24">Loading…</div>;
   if (!user) return <Navigate to="/admin" replace />;
@@ -89,12 +97,32 @@ export default function AdminProjectEdit() {
         Pick a developer project to edit all its units together.
       </p>
 
-      <Input
-        placeholder="Search projects…"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        className="mb-4 max-w-sm"
-      />
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <Input
+          placeholder="Search projects…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="max-w-sm"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setSoldFilter((f) => (f === 'sold' ? 'all' : 'sold'))}
+          aria-pressed={soldFilter === 'sold'}
+          className={soldFilter === 'sold' ? 'border-foreground bg-foreground/5' : ''}
+        >
+          Sold out
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setSoldFilter((f) => (f === 'available' ? 'all' : 'available'))}
+          aria-pressed={soldFilter === 'available'}
+          className={soldFilter === 'available' ? 'border-emerald-600 text-emerald-600 bg-emerald-50' : ''}
+        >
+          Available
+        </Button>
+      </div>
 
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground py-12">
