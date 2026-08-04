@@ -1014,9 +1014,11 @@ export default function AdminProjectNew() {
     }
 
     for (let i = 0; i < lots.length; i++) {
+      const isSoldOrReserved = /^(sold|reserved)$/i.test((lots[i].status || '').trim());
+      if (isSoldOrReserved) continue; // price isn't required once a unit is off the market
       const price = Number(lots[i].price_value);
       if (!lots[i].price_value.trim() || !(price > 0)) {
-        return `Row ${i + 1} has no valid price. Every unit needs a price greater than €0 before saving.`;
+        return `Row ${i + 1} has no valid price. Every unit still for sale needs a price greater than €0 before saving.`;
       }
     }
 
