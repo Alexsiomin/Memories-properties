@@ -31,6 +31,7 @@ import { useFavorites } from '@/hooks/use-favorites';
 import EnquiryDialog, { type EnquiryProperty } from '@/components/EnquiryDialog';
 import TourDialog, { type TourProperty } from '@/components/TourDialog';
 import Thumbnail from '@/components/Thumbnail';
+import ListingGallery from '@/components/ListingGallery';
 import PropertyMap from '@/components/PropertyMap';
 import { optimizeImage } from '@/lib/img';
 import SEO from '@/components/SEO';
@@ -192,6 +193,7 @@ interface RelatedProperty {
   district: string | null;
   image_key: string;
   cover_image: string | null;
+  images?: string[] | null;
   beds: number | null;
   baths: number | null;
   status: string | null;
@@ -199,6 +201,7 @@ interface RelatedProperty {
   covered_verandas?: string | null;
   size?: string | null;
   tags?: string[] | null;
+  listing_type?: string | null;
 }
 
 interface LightboxSliderProps {
@@ -434,6 +437,7 @@ const PropertyDetail = () => {
   }, [related.length]);
   const [loading, setLoading] = useState(true);
   const [openEnquiry, setOpenEnquiry] = useState(false);
+  const [relatedEnquiry, setRelatedEnquiry] = useState<EnquiryProperty | null>(null);
   const [openTour, setOpenTour] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -493,7 +497,7 @@ const PropertyDetail = () => {
 
       // Fetch related properties — smart tiered matching, available listings only:
       // 1) same project (developer + title), 2) same area + similar budget, 3) same type.
-      const selectCols = 'id, slug, title, location, price, price_value, category, region, city, district, image_key, cover_image, beds, baths, status, internal_area, covered_verandas, size, tags';
+      const selectCols = 'id, slug, title, location, price, price_value, category, region, city, district, image_key, cover_image, images, beds, baths, status, internal_area, covered_verandas, size, tags, listing_type';
       const RELATED_LIMIT = 6;
       const CANDIDATE_POOL = 24; // fetch a wider pool per tier, then rank by feature overlap and keep the best RELATED_LIMIT
       const excludeSold = <T,>(q: T): T =>
@@ -1444,7 +1448,8 @@ const PropertyDetail = () => {
 
               {property.description?.trim() ? (
                 (() => {
-                  const lines = property.description.trim().split(/\n+/);
+                  const normalized = property.description.trim().replace(/<br\s*\/?>/gi, '\n');
+                  const lines = normalized.split(/\n+/);
                   const blocks: { type: 'p' | 'ul'; lines: string[] }[] = [];
                   for (const line of lines) {
                     const isBullet = /^[-•]\s+/.test(line.trim());
@@ -1659,7 +1664,14 @@ const PropertyDetail = () => {
           >
             {related.map((r) => {
               const relImg = r.cover_image || IMAGE_MAP[r.image_key] || hero;
+              const relImages = r.images && r.images.length ? r.images : [relImg];
               const href = `/properties/${r.slug ?? r.id}`;
+              const favKey = r.id;
+              const energy = r.tags?.find((t) => t.toLowerCase().startsWith('energy '));
+              const rInternal = parseAreaNum(r.internal_area);
+              const rCovered = parseAreaNum(r.covered_verandas);
+              const rTotal = (rInternal ?? 0) + (rCovered ?? 0);
+              const rArea = rTotal > 0 ? `${rTotal.toFixed(2).replace(/\.00$/, '')} m²` : r.size;
               return (
                 <Link
                   key={r.id}
@@ -1667,30 +1679,77 @@ const PropertyDetail = () => {
                   className="group snap-start shrink-0 basis-[85%] xs:basis-[70%] sm:basis-[calc(50%-0.75rem)] lg:basis-auto lg:shrink overflow-hidden bg-card border border-border rounded-none hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                 >
                   <div className="relative">
-                    <Thumbnail
-                      src={relImg}
+                    <ListingGallery
+                      images={relImages}
                       alt={`${publicTitle(r.title)} — ${publicLocation(r)}`}
-                      wrapperClassName="aspect-[4/3]"
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
                     />
+
+                    {/* Status badge (top-left) */}
+                    <span className="absolute top-0 left-0 inline-flex items-center px-3 py-1.5 rounded-none bg-foreground text-background text-[11px] font-semibold uppercase tracking-wide">
+                      {/sold|closed|under offer/i.test(r.status ?? '') ? 'Sold' : r.listing_type === 'rent' ? 'For Rent' : 'For Sale'}
+                    </span>
+
+                    {/* Energy class badge (bottom-left) */}
+                    {energy && (
+                      <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 px-2 py-1 rounded-none bg-emerald-600 text-white font-semibold text-base tracking-wide shadow-sm">
+                        <span aria-hidden>⚡</span> Energy {energy.replace(/energy\s+/i, '').toUpperCase()}
+                      </span>
+                    )}
+
+                    {/* Save (top-right) */}
+                    <button
+                      type="button"
+                      aria-label={isFavorite(favKey) ? 'Remove from watchlist' : 'Save to watchlist'}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggle({
+                          property_id: favKey,
+                          property_title: publicTitle(r.title),
+                          property_location: publicLocation(r),
+                          property_price: r.price,
+                          property_image: relImg,
+                        });
+                      }}
+                      className={`absolute top-0 right-0 w-8 h-8 flex items-center justify-center rounded-none backdrop-blur transition-colors text-xs shadow-sm ${
+                        isFavorite(favKey)
+                          ? 'bg-accent text-accent-foreground'
+                          : 'bg-white/90 hover:text-accent transition-colors text-xs text-foreground'
+                      }`}
+                    >
+                      <Star size={14} fill={isFavorite(favKey) ? 'currentColor' : 'none'} />
+                    </button>
                   </div>
                   <div className="p-5">
-                    <p className="text-lg sm:text-xl font-semibold text-foreground break-words">{publicPrice(r.price, undefined, r.status)}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-lg sm:text-xl font-semibold text-foreground tracking-wider break-words">{publicPrice(r.price, r.price_value ?? undefined, r.status ?? undefined)}</p>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setRelatedEnquiry({
+                            title: publicTitle(r.title),
+                            cat: r.category,
+                            location: publicLocation(r),
+                            price: r.price,
+                            status: r.status ?? '',
+                            img: relImg,
+                          });
+                        }}
+                        aria-label="More options"
+                        className="size-7 -mr-1 inline-flex items-center justify-center rounded-none text-accent hover:text-accent transition-colors text-xs"
+                      >
+                        <span className="text-lg leading-none tracking-tighter">•••</span>
+                      </button>
+                    </div>
                     <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
-                      {(() => {
-                        const rInternal = parseAreaNum(r.internal_area);
-                        const rCovered = parseAreaNum(r.covered_verandas);
-                        const rTotal = (rInternal ?? 0) + (rCovered ?? 0);
-                        const rArea = rTotal > 0
-                          ? `${rTotal.toFixed(2).replace(/\.00$/, '')} m²`
-                          : r.size;
-                        return [
-                          r.beds && r.beds > 0 ? `${r.beds} bds` : null,
-                          r.baths && r.baths > 0 ? `${r.baths} ba` : null,
-                          rArea || null,
-                          `${r.category} · ${r.status ?? ''}`,
-                        ].filter(Boolean).join(' | ');
-                      })()}
+                      {[
+                        r.beds && r.beds > 0 ? `${r.beds} bds` : null,
+                        r.baths && r.baths > 0 ? `${r.baths} ba` : null,
+                        rArea || null,
+                        r.category,
+                      ].filter(Boolean).join(' | ')}
                     </p>
                     <p className="text-foreground/60 mt-0.5 text-base">
                       {publicLocation(r)}
@@ -1772,6 +1831,7 @@ const PropertyDetail = () => {
       })()}
 
       <EnquiryDialog open={openEnquiry} onOpenChange={setOpenEnquiry} property={enquiryProp} />
+      <EnquiryDialog open={!!relatedEnquiry} onOpenChange={(v) => { if (!v) setRelatedEnquiry(null); }} property={relatedEnquiry} />
       <TourDialog
         open={openTour}
         onOpenChange={setOpenTour}
