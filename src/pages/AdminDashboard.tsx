@@ -13,6 +13,8 @@ import {
   MessageSquare,
   CalendarClock,
   Wallet,
+  AlertTriangle,
+  ImageOff,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useIsAdmin } from '@/hooks/use-is-admin';
@@ -58,6 +60,24 @@ type StatusRow = {
 
 type ViewRow = { property_slug: string | null; title: string | null };
 
+const STALE_SYNC_DAYS = 7;
+
+type StaleDeveloper = { id: string; name: string; last_synced_at: string | null };
+type RecentEnquiry = { id: string; first_name: string | null; phone: string | null; property_type: string | null; region: string | null; created_at: string };
+type RecentTour = { id: string; full_name: string | null; property_title: string | null; preferred_date: string | null; created_at: string };
+
+function relativeTime(iso: string | null): string {
+  if (!iso) return 'never';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useIsAdmin();
@@ -80,13 +100,18 @@ export default function AdminDashboard() {
   const [topViews, setTopViews] = useState<{ key: string; title: string; count: number }[]>([]);
   const [recent, setRecent] = useState<StatusRow[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [staleDevelopers, setStaleDevelopers] = useState<StaleDeveloper[]>([]);
+  const [dataQuality, setDataQuality] = useState({ missingImage: 0, missingPrice: 0, missingDescription: 0 });
+  const [recentEnquiries, setRecentEnquiries] = useState<RecentEnquiry[]>([]);
+  const [recentTours, setRecentTours] = useState<RecentTour[]>([]);
+  const [trackingStale, setTrackingStale] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
     let cancelled = false;
     (async () => {
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const [propsRes, viewsRes, historyRes, totalRes, clientsRes, enquiriesRes, toursRes] =
+      const [propsRes, viewsRes, historyRes, totalRes, clientsRes, enquiriesRes, toursRes, developersRes, qualityRes, recentEnquiriesRes, recentToursRes, lastViewRes] =
         await Promise.all([
           supabase
             .from('properties')
@@ -110,9 +135,54 @@ export default function AdminDashboard() {
           supabase.from('clients').select('id', { count: 'exact', head: true }),
           supabase.from('enquiries').select('id', { count: 'exact', head: true }),
           supabase.from('tour_requests').select('id', { count: 'exact', head: true }),
+          supabase.from('developers').select('id, name, last_synced_at, xml_url'),
+          supabase.from('properties').select('cover_image, images, price_value, description').limit(5000),
+          supabase.from('enquiries').select('id, first_name, phone, property_type, region, created_at').order('created_at', { ascending: false }).limit(5),
+          supabase.from('tour_requests').select('id, full_name, property_id, preferred_date, created_at').order('created_at', { ascending: false }).limit(5),
+          supabase.from('page_views').select('created_at').order('created_at', { ascending: false }).limit(1),
         ]);
 
       if (cancelled) return;
+
+      // Feed health: developers with an XML feed that haven't synced in a while.
+      const stale = ((developersRes.data as { id: string; name: string; last_synced_at: string | null; xml_url: string | null }[]) ?? [])
+        .filter((d) => d.xml_url)
+        .filter((d) => !d.last_synced_at || (Date.now() - new Date(d.last_synced_at).getTime()) / 86_400_000 > STALE_SYNC_DAYS)
+        .map((d) => ({ id: d.id, name: d.name, last_synced_at: d.last_synced_at }));
+      setStaleDevelopers(stale);
+
+      // Site-wide data quality flags.
+      const qualityRows = (qualityRes.data as { cover_image: string | null; images: string[] | null; price_value: number | null; description: string | null }[]) ?? [];
+      setDataQuality({
+        missingImage: qualityRows.filter((p) => !p.cover_image && !(p.images && p.images.length > 0)).length,
+        missingPrice: qualityRows.filter((p) => !p.price_value || p.price_value <= 0).length,
+        missingDescription: qualityRows.filter((p) => !p.description || !p.description.trim()).length,
+      });
+
+      // Recent enquiries — shown as-is, no property join needed for a quick glance.
+      setRecentEnquiries((recentEnquiriesRes.data as RecentEnquiry[]) ?? []);
+
+      // Recent tours — join property titles for readability.
+      const tourRows = (recentToursRes.data as { id: string; full_name: string | null; property_id: string | null; preferred_date: string | null; created_at: string }[]) ?? [];
+      const tourPropIds = [...new Set(tourRows.map((r) => r.property_id).filter(Boolean))] as string[];
+      let tourPropMap: Record<string, string> = {};
+      if (tourPropIds.length) {
+        const { data: tourProps } = await supabase.from('properties').select('id, title').in('id', tourPropIds);
+        (tourProps ?? []).forEach((p: any) => { tourPropMap[p.id] = p.title; });
+      }
+      setRecentTours(tourRows.map((r) => ({
+        id: r.id,
+        full_name: r.full_name,
+        property_title: r.property_id ? (tourPropMap[r.property_id] ?? null) : null,
+        preferred_date: r.preferred_date,
+        created_at: r.created_at,
+      })));
+
+      // Tracking staleness: flag if the most recent page view is itself old,
+      // so the Views (30d) figure doesn't look silently authoritative while
+      // tracking may be incomplete.
+      const lastView = (lastViewRes.data as { created_at: string }[] | null)?.[0];
+      setTrackingStale(!lastView || (Date.now() - new Date(lastView.created_at).getTime()) / 3_600_000 > 24);
 
       const rows = (propsRes.data as PropRow[]) ?? [];
       const projects = new Set(rows.map((r) => projectName(r.title)).filter(Boolean));
@@ -183,6 +253,42 @@ export default function AdminDashboard() {
       <h1 className="text-4xl font-semibold mb-2 text-foreground">Admin dashboard</h1>
       <p className="text-muted-foreground mb-8">Overview of your portfolio, activity and content.</p>
 
+      {/* Rollup warnings — surfaced here so problems are visible without
+          having to visit each management page individually. */}
+      {!statsLoading && (staleDevelopers.length > 0 || dataQuality.missingImage > 0 || dataQuality.missingPrice > 0) && (
+        <div className="space-y-2 mb-8">
+          {staleDevelopers.length > 0 && (
+            <Link
+              to="/admin/developers"
+              className="flex items-start gap-3 border border-amber-200 bg-amber-50 text-amber-900 p-4 rounded-xl hover:border-amber-300 transition-colors"
+            >
+              <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+              <p className="text-sm">
+                <span className="font-semibold">{staleDevelopers.length} developer feed{staleDevelopers.length === 1 ? '' : 's'}</span>
+                {' '}not synced in over {STALE_SYNC_DAYS} days: {staleDevelopers.map((d) => d.name).join(', ')}.
+              </p>
+            </Link>
+          )}
+          {(dataQuality.missingImage > 0 || dataQuality.missingPrice > 0) && (
+            <Link
+              to="/admin/properties"
+              className="flex items-start gap-3 border border-amber-200 bg-amber-50 text-amber-900 p-4 rounded-xl hover:border-amber-300 transition-colors"
+            >
+              <ImageOff size={18} className="shrink-0 mt-0.5" />
+              <p className="text-sm">
+                {dataQuality.missingImage > 0 && (
+                  <><span className="font-semibold">{dataQuality.missingImage}</span> propert{dataQuality.missingImage === 1 ? 'y' : 'ies'} missing photos</>
+                )}
+                {dataQuality.missingImage > 0 && dataQuality.missingPrice > 0 && ' · '}
+                {dataQuality.missingPrice > 0 && (
+                  <><span className="font-semibold">{dataQuality.missingPrice}</span> missing a price</>
+                )}
+              </p>
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Portfolio summary */}
       <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">Portfolio</h2>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -193,7 +299,7 @@ export default function AdminDashboard() {
         {stat(<TrendingUp size={16} />, 'Sold value', formatEur(summary.soldValue) || '€0')}
         {stat(<Wallet size={16} />, 'Avg. sold price', formatEur(summary.avgSold) || '€0')}
         {stat(<Percent size={16} />, 'Sell-through', `${summary.soldPct}%`)}
-        {stat(<Eye size={16} />, 'Views (30d)', String(summary.views30d))}
+        {stat(<Eye size={16} />, 'Views (30d)', String(summary.views30d), trackingStale ? 'Tracking data may be incomplete right now' : undefined)}
       </div>
 
       {/* Engagement summary */}
@@ -250,6 +356,53 @@ export default function AdminDashboard() {
               ))}
             </ul>
           )}
+        </div>
+
+        {/* Recent enquiries */}
+        <div className="border border-border bg-card p-6 rounded-xl">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-foreground"><MessageSquare size={18} className="text-accent" /> Recent enquiries</h2>
+          {statsLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : recentEnquiries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No enquiries yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {recentEnquiries.map((e) => (
+                <li key={e.id} className="text-sm">
+                  <p className="font-medium truncate">{e.first_name || 'Anonymous'}{e.phone ? ` · ${e.phone}` : ''}</p>
+                  <p className="text-muted-foreground truncate">
+                    {[e.property_type, e.region].filter(Boolean).join(' · ') || 'General enquiry'}
+                    {' · '}{relativeTime(e.created_at)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link to="/admin/emails" className="inline-block mt-4 text-sm text-accent hover:underline">View all →</Link>
+        </div>
+
+        {/* Recent tour requests */}
+        <div className="border border-border bg-card p-6 rounded-xl">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-foreground"><CalendarClock size={18} className="text-accent" /> Recent tour requests</h2>
+          {statsLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : recentTours.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No tour requests yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {recentTours.map((t) => (
+                <li key={t.id} className="text-sm">
+                  <p className="font-medium truncate">{t.full_name || 'Anonymous'}</p>
+                  <p className="text-muted-foreground truncate">
+                    {t.property_title || 'Property'}
+                    {t.preferred_date ? ` · ${new Date(t.preferred_date).toLocaleDateString()}` : ''}
+                    {' · '}{relativeTime(t.created_at)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link to="/admin/emails" className="inline-block mt-4 text-sm text-accent hover:underline">View all →</Link>
         </div>
       </div>
 
