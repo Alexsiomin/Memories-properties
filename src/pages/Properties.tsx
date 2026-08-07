@@ -100,8 +100,8 @@ const parseAreaNum = (s: string | null | undefined): number | null => {
 function formatTotalCoveredArea(p: Property): string | null {
   const internalNum = parseAreaNum(p.internalArea);
   const coveredNum = parseAreaNum(p.coveredVerandas);
-  const totalNum = internalNum != null && coveredNum != null ? internalNum + coveredNum : parseAreaNum(p.size);
-  if (totalNum != null) {
+  const totalNum = (internalNum ?? 0) + (coveredNum ?? 0);
+  if (totalNum > 0) {
     return `${totalNum.toLocaleString(undefined, { maximumFractionDigits: 2 })} m²`;
   }
   return p.size ?? null;
