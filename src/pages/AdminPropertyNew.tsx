@@ -38,7 +38,7 @@ const propertySchema = z.object({
   category: z.string().trim().min(1, 'Category is required'),
   status: z.string().trim().min(1, 'Status is required'),
   currency: z.string().trim().min(1),
-  price_value: z.coerce.number().positive('Enter a price'),
+  price_value: z.coerce.number().min(0, 'Enter a price'),
   description: z.string().trim().max(4000).optional().or(z.literal('')),
   share_title: z.string().trim().max(200).optional().or(z.literal('')),
   share_description: z.string().trim().max(300).optional().or(z.literal('')),
@@ -75,7 +75,10 @@ const propertySchema = z.object({
   heating: z.string().optional().or(z.literal('')),
   cooling: z.string().optional().or(z.literal('')),
   condition: z.string().optional().or(z.literal('')),
-});
+}).refine(
+  (v) => /^(sold|reserved)$/i.test(v.status) || v.price_value > 0,
+  { message: 'Enter a price (only Sold/Reserved units can be saved without one)', path: ['price_value'] },
+);
 
 const empty = {
   listing_type: 'sale',
@@ -405,6 +408,41 @@ export default function AdminPropertyNew() {
     });
   };
 
+  /**
+   * Soft warnings for values that are technically valid but look like a
+   * likely typo (e.g. the real "27 covered parking spaces" bug found in the
+   * Velaro project — almost certainly a mistyped area figure). Doesn't block
+   * saving, just asks the admin to double check before proceeding. Matches
+   * the same protection already built into the bulk project entry tool.
+   */
+  const getWarnings = (): string[] => {
+    const warnings: string[] = [];
+    const parking = Number(form.parking_spaces);
+    if (form.parking_spaces && parking > 10) {
+      warnings.push(`Covered Parking is ${parking} spaces — that's unusually high for parking. Did you mean to enter this in a different field (e.g. an area in m²)?`);
+    }
+    const beds = Number(form.beds);
+    if (form.beds && beds > 20) warnings.push(`Beds is ${beds} — please double check.`);
+    const baths = Number(form.baths);
+    if (form.baths && baths > 20) warnings.push(`Baths is ${baths} — please double check.`);
+    const floor = Number(form.floor);
+    if (form.floor && floor > 60) warnings.push(`Floor is ${floor} — please double check.`);
+
+    const AREA_FIELDS: { key: 'covered_verandas_value' | 'uncovered_verandas_value' | 'basement_value'; label: string; max: number }[] = [
+      { key: 'covered_verandas_value', label: 'Covered Veranda', max: 300 },
+      { key: 'uncovered_verandas_value', label: 'Uncovered Veranda', max: 300 },
+      { key: 'basement_value', label: 'Basement', max: 500 },
+    ];
+    for (const { key, label, max } of AREA_FIELDS) {
+      const raw = form[key];
+      const val = Number(raw);
+      if (raw && val > max) {
+        warnings.push(`${label} is ${val} m² — unusually large. Please double check this is the right field.`);
+      }
+    }
+    return warnings;
+  };
+
   const save = async () => {
     const parsed = propertySchema.safeParse(form);
     if (!parsed.success) {
@@ -419,6 +457,15 @@ export default function AdminPropertyNew() {
       toast.error('Please add a location (city / area)');
       return;
     }
+
+    const warnings = getWarnings();
+    if (warnings.length > 0) {
+      const proceed = window.confirm(
+        `Before saving, please double check:\n\n${warnings.map((w) => `• ${w}`).join('\n')}\n\nSave anyway?`
+      );
+      if (!proceed) return;
+    }
+
     setErrors({});
     setSaving(true);
     const v = parsed.data;
