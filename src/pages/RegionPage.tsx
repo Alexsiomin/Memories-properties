@@ -102,6 +102,14 @@ const REGIONS: Record<
   },
 };
 
+const parseAreaNum = (s: string | null | undefined): number | null => {
+  if (!s) return null;
+  const m = s.match(/[\d,]+(?:\.\d+)?/);
+  if (!m) return null;
+  const n = parseFloat(m[0].replace(/,/g, ''));
+  return isNaN(n) ? null : n;
+};
+
 interface PropertyRow {
   id: string;
   slug: string | null;
@@ -121,6 +129,8 @@ interface PropertyRow {
   beds: number | null;
   baths: number | null;
   size: string | null;
+  internal_area: string | null;
+  covered_verandas: string | null;
   tags: string[] | null;
   listing_type: string | null;
 }
@@ -154,7 +164,7 @@ const RegionPage = () => {
     (async () => {
       const { data } = await supabase
         .from('properties')
-        .select('id, slug, title, location, city, region, district, price, price_value, category, status, image_key, cover_image, images, description, beds, baths, size, tags, listing_type')
+        .select('id, slug, title, location, city, region, district, price, price_value, category, status, image_key, cover_image, images, description, beds, baths, size, internal_area, covered_verandas, tags, listing_type')
         .order('sort_order', { ascending: true });
       if (cancelled || !data) return;
       const filtered = (data as PropertyRow[]).filter((p) => {
@@ -353,17 +363,25 @@ const RegionPage = () => {
                       </button>
                     </div>
                     <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
-                      {[
-                        isProject && /closed|sold/i.test(p.status) ? p.status : null,
-                        cat === 'Land / Plot'
-                          ? (p.beds != null ? `${p.beds}% Building density` : null)
-                          : (p.beds != null ? `${p.beds} Bed` : null),
-                        cat === 'Land / Plot'
-                          ? (p.baths != null ? `${p.baths}% Cover factor` : null)
-                          : (p.baths != null ? `${p.baths} Baths` : null),
-                        p.size,
-                        cat,
-                      ].filter(Boolean).join(' | ')}
+                      {(() => {
+                        const internalNum = parseAreaNum(p.internal_area);
+                        const coveredNum = parseAreaNum(p.covered_verandas);
+                        const totalNum = (internalNum ?? 0) + (coveredNum ?? 0);
+                        const area = totalNum > 0
+                          ? `${totalNum.toFixed(2).replace(/\.00$/, '')} m²`
+                          : p.size;
+                        return [
+                          isProject && /closed|sold/i.test(p.status) ? p.status : null,
+                          cat === 'Land / Plot'
+                            ? (p.beds != null ? `${p.beds}% Building density` : null)
+                            : (p.beds != null ? `${p.beds} Bed` : null),
+                          cat === 'Land / Plot'
+                            ? (p.baths != null ? `${p.baths}% Cover factor` : null)
+                            : (p.baths != null ? `${p.baths} Baths` : null),
+                          area,
+                          cat,
+                        ].filter(Boolean).join(' | ');
+                      })()}
                     </p>
                     <p className="text-foreground/60 mt-0.5 text-base text-slate-700">
                       {publicLocation(p)}

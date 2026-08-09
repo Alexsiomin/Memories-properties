@@ -341,8 +341,10 @@ export function totalCoveredAreaRange(units: UnitRow[]): string | null {
   for (const u of units) {
     const internal = parseAreaNum(u.internal_area);
     const covered = parseAreaNum(u.covered_verandas);
-    const total = internal != null && covered != null ? internal + covered : parseAreaNum(u.size);
-    if (total != null) areas.push(total);
+    const total = (internal ?? 0) + (covered ?? 0);
+    if (total > 0) { areas.push(total); continue; }
+    const rawSize = parseAreaNum(u.size);
+    if (rawSize != null) areas.push(rawSize);
   }
   if (!areas.length) return null;
   const min = Math.min(...areas);

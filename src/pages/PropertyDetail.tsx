@@ -752,7 +752,7 @@ const PropertyDetail = () => {
     ? `${computedTotalNum.toFixed(2).replace(/\.00$/, '')} m²`
     : property.size;
   const sizeNumeric = totalCoveredArea ? parseFloat(totalCoveredArea.replace(/[^\d.]/g, '')) : null;
-  const isSold = property.status?.toLowerCase().includes('sold');
+  const isSold = /sold|closed|under offer/i.test(property.status ?? '');
   const locationWithDistrict = publicLocation(property);
   const locationName = locationWithDistrict.split('·')[0]?.trim() || '';
   const safeDescription = `${displayTitle} in ${locationWithDistrict}. ${property.category}.`;
