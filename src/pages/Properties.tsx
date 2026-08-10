@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 
 import { toast } from 'sonner';
-import { BookmarkPlus, ArrowUpRight, Lock, Clock, Navigation, MapPin } from 'lucide-react';
+import { BookmarkPlus, ArrowUpRight, Lock, Clock, Navigation, MapPin, MessageCircle } from 'lucide-react';
 import { trackSearch } from '@/lib/visitor-journey';
 import { useRecentSearches } from '@/hooks/use-recent-searches';
 import { parseNaturalLanguageQuery } from '@/lib/nlSearchParser';
@@ -1551,14 +1551,29 @@ const Properties = () => {
                     {isLocked ? (
                       <Lock size={18} className="mt-1 text-foreground/70" />
                     ) : (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); openEnquiry(p); }}
-                        aria-label="More options"
-                        className="size-7 -mr-1 inline-flex items-center justify-center rounded-none text-accent hover:text-accent transition-colors text-xs"
-                      >
-                        <span className="text-lg leading-none tracking-tighter">•••</span>
-                      </button>
+                      <div className="flex items-center gap-1 -mr-1">
+                        <a
+                          href={`https://wa.me/35797947862?text=${encodeURIComponent(
+                            `Hi, I'm interested in ${publicTitle(p.title)}${p.referenceCode ? ` (Ref: ${p.referenceCode})` : ''} — ${window.location.origin}/properties/${p.slug || p.id}`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Ask about this property on WhatsApp"
+                          title="Ask on WhatsApp"
+                          className="size-7 inline-flex items-center justify-center rounded-none text-emerald-600 hover:text-emerald-700 transition-colors"
+                        >
+                          <MessageCircle size={16} />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openEnquiry(p); }}
+                          aria-label="More options"
+                          className="size-7 inline-flex items-center justify-center rounded-none text-accent hover:text-accent transition-colors text-xs"
+                        >
+                          <span className="text-lg leading-none tracking-tighter">•••</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                   <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">

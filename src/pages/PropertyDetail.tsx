@@ -497,7 +497,7 @@ const PropertyDetail = () => {
 
       // Fetch related properties — smart tiered matching, available listings only:
       // 1) same project (developer + title), 2) same area + similar budget, 3) same type.
-      const selectCols = 'id, slug, title, location, price, price_value, category, region, city, district, image_key, cover_image, images, beds, baths, status, internal_area, covered_verandas, size, tags, listing_type';
+      const selectCols = 'id, slug, title, location, price, price_value, category, region, city, district, image_key, cover_image, images, beds, baths, status, internal_area, covered_verandas, size, tags, listing_type, reference_code';
       const RELATED_LIMIT = 6;
       const CANDIDATE_POOL = 24; // fetch a wider pool per tier, then rank by feature overlap and keep the best RELATED_LIMIT
       const excludeSold = <T,>(q: T): T =>
@@ -1723,25 +1723,40 @@ const PropertyDetail = () => {
                   <div className="p-5">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-lg sm:text-xl font-semibold text-foreground tracking-wider break-words">{publicPrice(r.price, r.price_value ?? undefined, r.status ?? undefined)}</p>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setRelatedEnquiry({
-                            title: publicTitle(r.title),
-                            cat: r.category,
-                            location: publicLocation(r),
-                            price: r.price,
-                            status: r.status ?? '',
-                            img: relImg,
-                          });
-                        }}
-                        aria-label="More options"
-                        className="size-7 -mr-1 inline-flex items-center justify-center rounded-none text-accent hover:text-accent transition-colors text-xs"
-                      >
-                        <span className="text-lg leading-none tracking-tighter">•••</span>
-                      </button>
+                      <div className="flex items-center gap-1 -mr-1">
+                        <a
+                          href={`https://wa.me/35797947862?text=${encodeURIComponent(
+                            `Hi, I'm interested in ${publicTitle(r.title)}${r.reference_code ? ` (Ref: ${r.reference_code})` : ''} — ${window.location.origin}/properties/${r.slug || r.id}`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Ask about this property on WhatsApp"
+                          title="Ask on WhatsApp"
+                          className="size-7 inline-flex items-center justify-center rounded-none text-emerald-600 hover:text-emerald-700 transition-colors"
+                        >
+                          <MessageCircle size={16} />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setRelatedEnquiry({
+                              title: publicTitle(r.title),
+                              cat: r.category,
+                              location: publicLocation(r),
+                              price: r.price,
+                              status: r.status ?? '',
+                              img: relImg,
+                            });
+                          }}
+                          aria-label="More options"
+                          className="size-7 inline-flex items-center justify-center rounded-none text-accent hover:text-accent transition-colors text-xs"
+                        >
+                          <span className="text-lg leading-none tracking-tighter">•••</span>
+                        </button>
+                      </div>
                     </div>
                     <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
                       {[

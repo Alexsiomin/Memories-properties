@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useNavigate, Navigate } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { Star, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import { publicLocation, publicTitle, publicPrice } from '@/lib/propertyDisplay';
@@ -131,6 +131,7 @@ interface PropertyRow {
   size: string | null;
   internal_area: string | null;
   covered_verandas: string | null;
+  reference_code: string | null;
   tags: string[] | null;
   listing_type: string | null;
 }
@@ -164,7 +165,7 @@ const RegionPage = () => {
     (async () => {
       const { data } = await supabase
         .from('properties')
-        .select('id, slug, title, location, city, region, district, price, price_value, category, status, image_key, cover_image, images, description, beds, baths, size, internal_area, covered_verandas, tags, listing_type')
+        .select('id, slug, title, location, city, region, district, price, price_value, category, status, image_key, cover_image, images, description, beds, baths, size, internal_area, covered_verandas, reference_code, tags, listing_type')
         .order('sort_order', { ascending: true });
       if (cancelled || !data) return;
       const filtered = (data as PropertyRow[]).filter((p) => {
@@ -353,14 +354,29 @@ const RegionPage = () => {
                       <p className="text-lg sm:text-xl font-semibold text-foreground tracking-wider break-words">
                         {publicPrice(p.price, p.price_value ?? undefined, p.status)}
                       </p>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); openEnquiry(p, cat, img); }}
-                        aria-label="More options"
-                        className="size-7 -mr-1 inline-flex items-center justify-center rounded-none text-accent hover:text-accent transition-colors text-xs"
-                      >
-                        <span className="text-lg leading-none tracking-tighter">•••</span>
-                      </button>
+                      <div className="flex items-center gap-1 -mr-1">
+                        <a
+                          href={`https://wa.me/35797947862?text=${encodeURIComponent(
+                            `Hi, I'm interested in ${publicTitle(p.title)}${p.reference_code ? ` (Ref: ${p.reference_code})` : ''} — ${window.location.origin}/properties/${p.slug || p.id}`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Ask about this property on WhatsApp"
+                          title="Ask on WhatsApp"
+                          className="size-7 inline-flex items-center justify-center rounded-none text-emerald-600 hover:text-emerald-700 transition-colors"
+                        >
+                          <MessageCircle size={16} />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openEnquiry(p, cat, img); }}
+                          aria-label="More options"
+                          className="size-7 inline-flex items-center justify-center rounded-none text-accent hover:text-accent transition-colors text-xs"
+                        >
+                          <span className="text-lg leading-none tracking-tighter">•••</span>
+                        </button>
+                      </div>
                     </div>
                     <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-base">
                       {(() => {
