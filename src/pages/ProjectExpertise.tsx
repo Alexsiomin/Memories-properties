@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
-import heroAsset from '@/assets/project-expertise-hero.jpg';
 import currentProjectsImg from '@/assets/new-development.jpg';
 import soldProjectsImg from '@/assets/proj-sold-thumb.jpg';
 import buyerFaqsImg from '@/assets/project-buyer-faqs-hero.jpg';
@@ -43,12 +42,13 @@ const ProjectExpertise = () => {
       <SEO
         title="Project Expertise | Memories"
         description="How Memories Properties works with developers to bring new projects to market across Cyprus."
+        image="/images/project-expertise-hero.jpg"
       />
 
       {/* ─── Hero ─── */}
       <section className="relative w-full h-screen min-h-[600px] overflow-hidden">
         <img
-          src={heroAsset}
+          src="/images/project-expertise-hero.jpg"
           alt="New residential development in Cyprus"
           className="absolute inset-0 w-full h-full object-cover"
           width={1440}

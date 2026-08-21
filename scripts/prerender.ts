@@ -188,18 +188,21 @@ const staticRoutes: RouteMeta[] = [
     title: "Our Expertise \u2014 Buy, Sell & Projects in Cyprus",
     description:
       "Discover the Memories Properties expertise: bespoke buying, strategic selling, premium leasing and off-the-plan projects across Cyprus.",
+    image: `${BASE_URL}/images/expertise-hero.jpg`,
   },
   {
     path: "/project-expertise",
     title: "Project Expertise | Memories",
     description:
       "How Memories Properties works with developers to bring new projects to market across Cyprus.",
+    image: `${BASE_URL}/images/project-expertise-hero.jpg`,
   },
   {
     path: "/project-buyer-faqs",
     title: "Project Buyer FAQs \u2014 Off-the-Plan Property in Cyprus | Memories",
     description:
       "Everything off-the-plan buyers need to know about Cyprus property: how buying new works, downsizer and first home buyer guidance, investor insights and our points of difference.",
+    image: `${BASE_URL}/images/project-buyer-faqs-hero.jpg`,
   },
   {
     path: "/blog",
@@ -218,18 +221,21 @@ const staticRoutes: RouteMeta[] = [
     title: "Our Story \u2014 A Decade of Real Estate Leadership",
     description:
       "Since 2014 Memories has led a private real estate practice grounded in deep local knowledge, refined strategy and an uncompromising commitment to service.",
+    image: `${BASE_URL}/images/about-hero-villa.jpg`,
   },
   {
     path: "/advisory",
     title: "Buyer Advisory",
     description:
       "A buyer\u2019s advisor can be your professional advantage \u2014 finding the right property, negotiating on your behalf, and securing the deal across Cyprus.",
+    image: `${BASE_URL}/images/advisory-paphos-castle.jpg`,
   },
   {
     path: "/sell",
     title: "Sell Your Property With Memories",
     description:
       "Experience the difference with Memories. Expert agents, world-class marketing campaigns, and a commitment to exceptional results across Cyprus.",
+    image: `${BASE_URL}/images/sell-hero.jpg`,
   },
   {
     path: "/insights",

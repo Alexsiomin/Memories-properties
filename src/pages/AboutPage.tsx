@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
-import heroVilla from '@/assets/about-hero-villa.jpg';
 import portrait from '@/assets/concierge-agent.jpg';
 import eraCyprus from '@/assets/about-era-cyprus.jpg';
 import era3 from '@/assets/about-era-3.jpg';
@@ -74,6 +73,7 @@ const About = () => {
       <SEO
         title="Our Story — A Decade of Real Estate Leadership"
         description="Since 2014 Memories has led a private real estate practice grounded in deep local knowledge, refined strategy and an uncompromising commitment to service."
+        image="/images/about-hero-villa.jpg"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'Organization',
@@ -88,7 +88,7 @@ const About = () => {
       {/* HERO */}
       <section className="relative -mt-px h-screen min-h-[600px] w-full overflow-hidden">
         <img
-          src={heroVilla}
+          src="/images/about-hero-villa.jpg"
           alt="Grand classical villa facade framed by mature trees"
           width={1920}
           height={1080}

@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 
-import heroAsset from '@/assets/expertise-hero.jpg';
 import buyImg from '@/assets/our-story-2.jpg';
 import sellImg from '@/assets/cyprus-sunset-villas.jpg';
 
@@ -49,12 +48,13 @@ const OurExpertise = () => {
       <SEO
         title="Our Expertise — Buy, Sell & Projects in Cyprus"
         description="Discover the Memories Properties expertise: bespoke buying, strategic selling, premium leasing and off-the-plan projects across Cyprus."
+        image="/images/expertise-hero.jpg"
       />
 
       {/* HERO */}
       <section className="relative -mt-px h-screen min-h-[600px] w-full overflow-hidden">
         <img
-          src={heroAsset}
+          src="/images/expertise-hero.jpg"
           alt="Iconic Cyprus architecture"
           className="absolute inset-0 h-full w-full object-cover"
         />

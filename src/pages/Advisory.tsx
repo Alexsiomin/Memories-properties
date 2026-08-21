@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 
-import advisorsImg from '@/assets/advisory-paphos-castle.jpg';
 
 
 const PAGE_TITLE = 'Property Advocacy in Cyprus';
@@ -90,6 +89,7 @@ const Advisory = () => {
       <SEO
         title={PAGE_TITLE}
         description={PAGE_DESCRIPTION}
+        image="/images/advisory-paphos-castle.jpg"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'Service',
@@ -143,7 +143,7 @@ const Advisory = () => {
             </p>
           </div>
           <img
-            src={advisorsImg}
+            src="/images/advisory-paphos-castle.jpg"
             alt="Two property advisors reviewing documents"
             width={1200}
             height={1400}
