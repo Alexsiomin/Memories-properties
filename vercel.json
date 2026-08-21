@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/)(?!.*\\.[a-zA-Z0-9]+$).*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    { "path": "/api/run-property-alerts", "schedule": "0 9 * * *" }
   ]
 }
