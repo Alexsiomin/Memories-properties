@@ -150,6 +150,16 @@ function projectName(title?: string | null): string {
   return (idx === -1 ? title : title.slice(0, idx)).trim();
 }
 
+/**
+ * Stable grouping key for a unit's project — mirrors src/lib/developments.ts
+ * exactly, so the live app and this prerender script always compute the
+ * same slug for the same project. Prefers the real project_name column when
+ * set, falling back to parsing it out of the title.
+ */
+function projectGroupKey(row: { project_name?: string | null; title?: string | null }): string {
+  return row.project_name?.trim() || projectName(row.title);
+}
+
 // ---- static routes ---------------------------------------------------------
 
 const staticRoutes: RouteMeta[] = [
@@ -472,9 +482,10 @@ async function fetchPropertyRoutes(): Promise<RouteMeta[]> {
 async function fetchDevelopmentRoutes(): Promise<RouteMeta[]> {
   try {
     const rows = (await fetchJson(
-      `${SUPABASE_URL}/rest/v1/properties?select=title,location,price_value,beds,category,cover_image,images&developer_id=not.is.null`,
+      `${SUPABASE_URL}/rest/v1/properties?select=title,project_name,location,price_value,beds,category,cover_image,images&developer_id=not.is.null`,
     )) as Array<{
       title: string | null;
+      project_name: string | null;
       location: string | null;
       price_value: number | null;
       beds: number | null;
@@ -484,7 +495,7 @@ async function fetchDevelopmentRoutes(): Promise<RouteMeta[]> {
     }>;
     const groups = new Map<string, typeof rows>();
     for (const row of rows) {
-      const name = projectName(row.title);
+      const name = projectGroupKey(row);
       if (!name) continue;
       const list = groups.get(name) ?? [];
       list.push(row);
@@ -492,18 +503,16 @@ async function fetchDevelopmentRoutes(): Promise<RouteMeta[]> {
     }
     const fmtEur = (n: number | null) =>
       n != null && Number.isFinite(n) && n > 0 ? `\u20ac${Math.round(n).toLocaleString("en-US")}` : "";
-    const devSlug = (uCount: number, mPrice: number | null, loc: string) => {
+    const devSlug = (name: string, loc: string) => {
+      const namePart = projectSlug(name);
       const l = loc
         .toLowerCase()
         .normalize("NFKD")
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
-      const pricePart = mPrice != null && mPrice > 0 ? `-from${Math.round(mPrice)}` : "";
-      const locPart = l ? `-${l}` : "";
-      return `${uCount}units${pricePart}${locPart}`;
+      return l ? `${namePart}-${l}` : namePart;
     };
-    return Array.from(groups.entries()).map(([, units]) => {
-      const name = projectName(units[0].title);
+    return Array.from(groups.entries()).map(([name, units]) => {
       const prices = units.map((u) => u.price_value).filter((v): v is number => v != null && v > 0);
       const minPrice = prices.length ? Math.min(...prices) : null;
       const beds = units.map((u) => u.beds).filter((v): v is number => v != null && v > 0);
@@ -545,7 +554,7 @@ async function fetchDevelopmentRoutes(): Promise<RouteMeta[]> {
   </article>
 </main>`;
       return {
-        path: `/developments/${devSlug(units.length, minPrice, location)}`,
+        path: `/developments/${devSlug(name, location)}`,
         title: `New Development in ${location || "Cyprus"}${fromPart}`,
         description,
         image,

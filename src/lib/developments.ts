@@ -90,22 +90,20 @@ export function projectSlug(name: string): string {
 }
 
 /**
- * Build a development URL slug from its stats, e.g. "34units-from706000-peyia".
- * Format: {unitCount}units-from{minPrice}-{location}
+ * Build a development URL slug from its stable name and location, e.g.
+ * "agios-theodoros-villas-paphos". Deliberately does NOT include unit count
+ * or price — those change whenever a unit sells or a price is adjusted,
+ * which would silently break any link already shared or indexed. The name
+ * and location are effectively permanent for a given project.
  */
-export function developmentSlug(
-  unitCount: number,
-  minPrice: number | null,
-  location: string | null,
-): string {
+export function developmentSlug(name: string, location: string | null): string {
+  const namePart = projectSlug(name);
   const loc = (location ?? '')
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  const pricePart = minPrice != null && minPrice > 0 ? `-from${Math.round(minPrice)}` : '';
-  const locPart = loc ? `-${loc}` : '';
-  return `${unitCount}units${pricePart}${locPart}`;
+  return loc ? `${namePart}-${loc}` : namePart;
 }
 
 /** True when a unit is genuinely sold (not merely reserved / under offer). */
@@ -224,7 +222,7 @@ export function buildDevelopments(rows: UnitRow[], opts?: { sold?: boolean; all?
     })();
     developments.push({
       name,
-      slug: developmentSlug(unitCount, minPrice, location),
+      slug: developmentSlug(name, location),
       units,
       unitCount,
       minPrice,
