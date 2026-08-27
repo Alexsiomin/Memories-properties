@@ -64,6 +64,7 @@ const AdminSoldProperties = lazy(() => import("./pages/AdminSoldProperties"));
 const AdminClients = lazy(() => import("./pages/AdminClients"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const AdminUsersList = lazy(() => import("./pages/AdminUsersList"));
+const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail"));
 const AdminFaqs = lazy(() => import("./pages/AdminFaqs"));
 const AdminBrandWords = lazy(() => import("./pages/AdminBrandWords"));
 const AdminInsights = lazy(() => import("./pages/AdminInsights"));
@@ -135,6 +136,7 @@ const LocalizedRoutes = () => (
         <Route path="admin/sold" element={<AdminSoldProperties />} />
         <Route path="admin/users" element={<AdminUsers />} />
         <Route path="admin/users-list" element={<AdminUsersList />} />
+        <Route path="admin/users-list/:id" element={<AdminUserDetail />} />
         <Route path="admin/faqs" element={<AdminFaqs />} />
         <Route path="admin/brand-words" element={<AdminBrandWords />} />
         <Route path="admin/insights" element={<AdminInsights />} />
