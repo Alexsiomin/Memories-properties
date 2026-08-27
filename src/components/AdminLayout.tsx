@@ -83,6 +83,27 @@ export default function AdminLayout({ children }: { children?: ReactNode }) {
   const [searchParams] = useSearchParams();
   const unreadEmails = useUnreadEmails();
 
+  const currentPath = pathname + search + hash;
+  const isItemActive = (to: string, exact?: boolean) => {
+    if (to.includes('#')) return currentPath === to;
+    if (to.includes('?')) return pathname + search === to;
+    if (exact) return pathname === to;
+    if (search) return false;
+    return pathname === to || pathname.startsWith(to + '/');
+  };
+
+  // None of the 19 admin pages set their own document title, so without
+  // this the browser tab is stuck showing whatever title the previously
+  // visited page (e.g. the public Account page) happened to set. Derive a
+  // sensible title from the same ADMIN_NAV list already used for sidebar
+  // highlighting, so every admin page gets a correct, distinct tab title
+  // for free with no per-page changes needed. Must run before the early
+  // returns below, alongside the other hooks, per the Rules of Hooks.
+  useEffect(() => {
+    const match = ADMIN_NAV.find((c) => isItemActive(c.to, c.exact));
+    document.title = match ? `${match.title} | Memories Admin` : 'Admin | Memories';
+  }, [pathname, search, hash]);
+
   if (authLoading || adminLoading) return <div className="container mx-auto px-6 py-24">Loading…</div>;
   if (!user) {
     if (searchParams.get('auth') === '1') {
@@ -93,15 +114,6 @@ export default function AdminLayout({ children }: { children?: ReactNode }) {
     return <Navigate to={`${pathname}?${next.toString()}${hash}`} replace />;
   }
   if (!isAdmin) return <div className="container mx-auto px-6 py-24"><h1 className="text-4xl">Forbidden</h1></div>;
-
-  const currentPath = pathname + search + hash;
-  const isItemActive = (to: string, exact?: boolean) => {
-    if (to.includes('#')) return currentPath === to;
-    if (to.includes('?')) return pathname + search === to;
-    if (exact) return pathname === to;
-    if (search) return false;
-    return pathname === to || pathname.startsWith(to + '/');
-  };
 
   return (
     <SidebarProvider>
