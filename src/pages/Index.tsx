@@ -14,6 +14,7 @@ const About = lazy(() => import('@/components/About'));
 const EnquiryList = lazy(() => import('@/components/EnquiryList'));
 const Appraisal = lazy(() => import('@/components/Appraisal'));
 const PropertiesPreview = lazy(() => import('@/components/PropertiesPreview'));
+const RecentlyViewed = lazy(() => import('@/components/RecentlyViewed'));
 
 
 const SectionSkeleton = ({ height = 'min-h-[40vh]' }: { height?: string }) => (
@@ -68,6 +69,9 @@ const Index = () => {
         <div className="container mx-auto px-0 sm:px-6 py-12">
           <Suspense fallback={<SectionSkeleton />}>
             <PropertiesPreview />
+          </Suspense>
+          <Suspense fallback={null}>
+            <RecentlyViewed className="mt-4" />
           </Suspense>
           <Suspense fallback={<SectionSkeleton height="min-h-[20vh]" />}>
             <StayUpdated />

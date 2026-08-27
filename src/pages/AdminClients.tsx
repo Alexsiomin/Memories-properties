@@ -362,6 +362,17 @@ export default function AdminClients() {
   };
 
   const remove = async (id: string) => {
+    // Defensive guard: virtual rows (built from enquiries, tours, signups,
+    // saved searches, favorites - none of which have a real row in the
+    // clients table) use an id like "eq:<uuid>" rather than a bare UUID.
+    // Real UUIDs never contain a colon, so this catches any such row even
+    // if a future virtual-row type is added without updating isVirtual's
+    // prefix list above - exactly the kind of one-line omission that
+    // caused this same bug for enquiry-sourced rows.
+    if (id.includes(':')) {
+      toast({ title: 'Cannot delete', description: 'This is a lead derived from an enquiry, tour request, or signup, not a saved client record.', variant: 'destructive' });
+      return;
+    }
     if (!confirm('Delete this client?')) return;
     const { error } = await supabase.from('clients').delete().eq('id', id);
     if (error) toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
@@ -805,7 +816,7 @@ export default function AdminClients() {
                 <tbody>
                   {filtered.map((c) => {
                     const stage = STAGES.find((s) => s.key === (c.pipeline_stage || 'lead'));
-                    const isVirtual = c.id.startsWith('ss:') || c.id.startsWith('sg:') || c.id.startsWith('fv:') || c.id.startsWith('tr:');
+                    const isVirtual = c.id.startsWith('ss:') || c.id.startsWith('sg:') || c.id.startsWith('fv:') || c.id.startsWith('tr:') || c.id.startsWith('eq:');
                     const last = c.last_activity_at ? new Date(c.last_activity_at) : null;
                     const stale = c.source === 'manual' && !['won', 'lost'].includes(c.pipeline_stage) &&
                       (Date.now() - (last?.getTime() || new Date(c.created_at).getTime())) / 86400000 >= 14;

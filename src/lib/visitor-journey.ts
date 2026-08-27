@@ -21,6 +21,23 @@ const trackingAllowed = () => hasConsent('functional') || hasConsent('analytics'
 
 type ViewedProperty = { id: string; title: string; slug: string | null; viewedAt: string };
 
+/**
+ * Property IDs the visitor has recently looked at, most recent first.
+ * Used to show them a "Continue browsing" section — separate from
+ * getVisitorJourneySnapshot(), which is for internal lead-context only.
+ * Callers should fetch fresh data for these IDs rather than trusting the
+ * stored title/slug, since price/status may have changed since the view.
+ */
+export function getRecentlyViewedIds(excludeId?: string): string[] {
+  if (typeof window === 'undefined' || !trackingAllowed()) return [];
+  try {
+    const views: ViewedProperty[] = JSON.parse(localStorage.getItem(VIEWS_KEY) ?? '[]');
+    return views.map((v) => v.id).filter((id) => id !== excludeId);
+  } catch {
+    return [];
+  }
+}
+
 /** Call once when a property detail page mounts. */
 export function trackPropertyView(id: string, title: string, slug: string | null) {
   if (typeof window === 'undefined' || !trackingAllowed()) return;
