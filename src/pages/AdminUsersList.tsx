@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsAdmin } from '@/hooks/use-is-admin';
 import { useAuth } from '@/hooks/use-auth';
@@ -138,7 +138,7 @@ export default function AdminUsersList() {
             const phone = [r.phone_country, r.phone_number].filter(Boolean).join(' ');
             const age = ageFrom(r.dob);
             return (
-              <div key={r.id} className="border p-4 flex items-start gap-4 text-lg">
+              <Link key={r.id} to={`/admin/users-list/${r.id}`} className="border p-4 flex items-start gap-4 text-lg hover:bg-muted/40 transition-colors">
                 {r.avatar_url ? (
                   <img src={r.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
                 ) : (
@@ -186,7 +186,7 @@ export default function AdminUsersList() {
 
                   <div className="mt-1 text-xs text-muted-foreground/70 font-mono truncate">{r.id}</div>
                 </div>
-              </div>
+              </Link>
             );
           })}
           {filtered.length === 0 && (
