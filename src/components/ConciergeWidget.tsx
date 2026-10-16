@@ -144,10 +144,10 @@ export default function ConciergeWidget() {
         }
       }
       if (!acc.trim()) {
-        setMessages([...next, { role: 'assistant', content: 'Sorry — I had trouble responding. Please try again.' }]);
+        setMessages([...next, { role: 'assistant', content: 'Sorry — I had trouble responding. Please try again later, thank you.' }]);
       }
     } catch (e: any) {
-      setMessages([...next, { role: 'assistant', content: `Sorry — ${e.message ?? 'something went wrong'}. Please try again.` }]);
+      setMessages([...next, { role: 'assistant', content: `Sorry — ${e.message ?? 'something went wrong'}. Please try again later, thank you.` }]);
     } finally {
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 50);

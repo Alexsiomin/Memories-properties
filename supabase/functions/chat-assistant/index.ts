@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (settings && settings.enabled === false) {
-      return jsonError('The concierge is temporarily unavailable.', 503);
+      return jsonError('the concierge is temporarily unavailable', 503);
     }
 
     const SYSTEM_PROMPT = (settings?.system_prompt?.trim()) || FALLBACK_PROMPT;
