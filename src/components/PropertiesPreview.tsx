@@ -118,10 +118,20 @@ const PropertiesPreview = () => {
 
   const visible = useMemo(() => {
     const filtered = filterByTab(rows, tab);
-    if (filtered.length > 0) return filtered.slice(0, 4);
-    // Fallback: show the most recent active sale listing so the section is never empty
-    const activeSales = rows.filter((r) => r.listing_type === 'sale' && !/sold|under offer/i.test(r.status));
-    return activeSales.slice(0, 4);
+    if (filtered.length === 0) {
+      // Fallback: show the most recent active sale listing so the section is never empty
+      const activeSales = rows.filter((r) => r.listing_type === 'sale' && !/sold|under offer/i.test(r.status));
+      return activeSales.slice(0, 4);
+    }
+    if (tab === 'Featured' && filtered.length > 1) {
+      // Rotate which listing leads the "Featured" big image, once per
+      // calendar day (UTC) — deterministic, so every visitor sees the same
+      // one on a given day, and it changes automatically at midnight.
+      const dayIndex = Math.floor(Date.now() / 86_400_000) % filtered.length;
+      const rotated = [...filtered.slice(dayIndex), ...filtered.slice(0, dayIndex)];
+      return rotated.slice(0, 4);
+    }
+    return filtered.slice(0, 4);
   }, [rows, tab]);
 
   const openEnquiry = (p: Property) => {
