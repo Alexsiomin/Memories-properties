@@ -20,12 +20,13 @@ interface Settings {
   enabled: boolean;
 }
 
+// Calls the Gemini API directly (see supabase/functions/chat-assistant), so
+// these must be real Gemini model ids — no vendor prefix.
 const MODELS = [
-  { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (fast, balanced)' },
-  { value: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite (cheapest)' },
-  { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro (best reasoning)' },
-  { value: 'openai/gpt-5-mini', label: 'GPT-5 Mini' },
-  { value: 'openai/gpt-5', label: 'GPT-5 (premium)' },
+  { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash (fast, balanced)' },
+  { value: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite (cheapest)' },
+  { value: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
+  { value: 'gemini-4-argon', label: 'Gemini 4 Argon (best reasoning)' },
 ];
 
 const DEFAULT_PROMPT = `You are the Memories Properties Concierge — a warm, discreet, knowledgeable real-estate advisor for Memories Properties, a private property firm focused on Cyprus and select European markets.
